@@ -5,7 +5,7 @@ Evidence levels: implemented; automated tests passed; local gameplay passed; Rea
 - [x] Microsoft device flow, encrypted session cache, profile and Realm list adapters, version gate, observed inventory, bounded reconnect implemented. **Current 26.3 Realm protocol unsupported; licensed account/Realm testing remains blocked.**
 - [x] Six localhost dashboard pages, controls, SQLite, WebSockets and desktop/mobile browser verification.
 - [x] Actual local STT/Piper and Codex calls, device selection, browser PTT/VAD, opt-in desktop F8, cancellation. **Physical audio/F8 and streaming speech unverified or unfinished.**
-- [x] Reused movement/gathering/crafting executor with cancellation, mining-area approval and initial reflexes. **Advanced survival/progression and vanilla crafting gameplay unverified.**
+- [x] Reused movement/gathering/crafting executor with cancellation, mining-area approval and initial reflexes. Official1.21.5 vanilla crafting passed after explicit EULA acceptance. **Advanced survival/progression remains unfinished.**
 - [x] Validated JSON/Sponge blueprints, real text-based Codex architecture, actual-block 3D preview, provenance and versioned BOM. **Media vision/keyframes/captions unfinished.**
 - [x] Independent shares, manual user provenance, observed AI stock allocated once, reservations and bounded assigned wood batches. **Chests and voice reassignment unfinished.**
 - [x] Approval-gated full-cube survival construction, observed verification, SQLite checkpoints and real interruption/resume. **Oriented blocks, terrain/scaffolding/resupply/repair unfinished.**

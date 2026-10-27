@@ -7,6 +7,7 @@ import minecraftData from 'minecraft-data';
 import { secureCacheFactory } from './secure-cache.js';
 
 export const supportedVersions = mineflayer.testedVersions.filter(version => mcProtocol.supportedVersions.includes(version));
+export const supportedVersionForProtocol = protocol => [...supportedVersions].reverse().find(version => minecraftData.versionsByMinecraftVersion.pc[version]?.version === protocol) ?? null;
 
 export function assertSupportedVersion(version, protocol) {
   const supported = supportedVersions.includes(version);
@@ -16,6 +17,15 @@ export function assertSupportedVersion(version, protocol) {
 
 export function inspectServer(host, port) {
   return new Promise((resolve, reject) => mcProtocol.ping({ host, port, closeTimeout: 8_000 }, (error, result) => error ? reject(error) : resolve(result)));
+}
+
+export function deviceCodePrompt(message) {
+  const uri = new URL(message.verificationUri || 'https://www.microsoft.com/link');
+  if (uri.protocol !== 'https:' || !['www.microsoft.com', 'microsoft.com', 'login.microsoftonline.com'].includes(uri.hostname) || uri.username || uri.password) throw new Error('Invalid Microsoft authentication URL.');
+  if (typeof message.userCode !== 'string' || !/^[A-Za-z0-9-]{4,32}$/.test(message.userCode)) throw new Error('Invalid Microsoft device code.');
+  const seconds = Number(message.expiresIn ?? 900);
+  if (!Number.isFinite(seconds) || seconds < 1 || seconds > 3600) throw new Error('Invalid Microsoft device code expiry.');
+  return { verificationUri: uri.href, userCode: message.userCode, expiresAt: new Date(Date.now() + seconds * 1000).toISOString() };
 }
 
 export class RealmConnector extends EventEmitter {
@@ -36,9 +46,8 @@ export class RealmConnector extends EventEmitter {
     worker.on('message', message => {
       if (this.worker !== worker) return;
       if (message.type === 'device') {
-        const uri = new URL(message.verificationUri || 'https://www.microsoft.com/link');
-        if (uri.protocol !== 'https:' || !['www.microsoft.com', 'microsoft.com', 'login.microsoftonline.com'].includes(uri.hostname)) return;
-        this.auth.device = { verificationUri: uri.href, userCode: message.userCode, expiresAt: new Date(Date.now() + (message.expiresIn || 900) * 1000).toISOString() };
+        try { this.auth.device = deviceCodePrompt(message); }
+        catch { this.auth.status = 'error'; this.auth.device = null; this.emit('diagnostic', 'Microsoft returned an invalid device prompt. Reconnect the account.'); void this.cancelAuth().catch(() => {}); }
       }
       if (message.type === 'profile') this.auth = { status: 'connected', username: message.username, device: null };
       if (message.type === 'realms') this.realms = message.realms;
@@ -75,7 +84,7 @@ export class RealmConnector extends EventEmitter {
       worker.send({ type: 'resolve', directory: this.directory, realmId });
     });
     const protocol = status.protocol;
-    const detected = [...supportedVersions].reverse().find(version => minecraftData(version)?.version.version === protocol);
+    const detected = supportedVersionForProtocol(protocol);
     assertSupportedVersion(detected || status.version, protocol);
     return mineflayer.createBot({
       username: 'companion-account', auth: 'microsoft', profilesFolder: secureCacheFactory(this.directory),

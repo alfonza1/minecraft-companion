@@ -84,9 +84,14 @@ npm test
 npm run typecheck
 npm run build
 node scripts/test-companion-game.mjs
+# Optional official-server tests, after accepting the linked Minecraft EULA:
+.\scripts\Setup-VanillaTest.ps1 -AcceptMinecraftEula
+node scripts/test-vanilla-game.mjs
+# Explicit live Codex requests, using a disposable app database:
+node scripts/test-companion-live.mjs --codex
 ```
 
-See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. None proves26.3 Realm compatibility.
+See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. After explicit EULA acceptance, official1.21.5 vanilla crafting also passed with actual inventory transactions. The private test JRE is outside Minecraft and never changes system Java/PATH. None proves26.3 Realm compatibility.
 
 Unfinished requested scope includes advanced cave/branch mining, farming, furnaces/chests/trading, armor optimization, guard coordination, Nether/End progression, strategic initiative, voice project reassignment, media vision/keyframes/captions, oriented construction/scaffolding/terrain/resupply/repair, player inventory companion, streaming speech, provider-selection UI, configurable hotkeys, conversation summarization and full project import. Stored autonomy preferences do not implement those behaviors. This is a functional foundation with explicit limits, not all eight completed phases.
 

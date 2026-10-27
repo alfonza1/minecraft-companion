@@ -10,7 +10,7 @@ import { Store } from '../services/memory/store.js';
 import { CompanionRuntime } from '../services/companion-runtime/index.js';
 import { observeWorld } from '../services/world-state/index.js';
 import { secureCacheFactory, dpapi } from '../services/realm-connector/secure-cache.js';
-import { assertSupportedVersion, supportedVersions, RealmConnector } from '../services/realm-connector/index.js';
+import { assertSupportedVersion, supportedVersions, supportedVersionForProtocol, RealmConnector, deviceCodePrompt } from '../services/realm-connector/index.js';
 
 function fixture() {
   const collections = new Map();
@@ -184,6 +184,8 @@ test('supported protocol whitelist rejects current unsupported releases instead 
   assert.equal(assertSupportedVersion('1.21.11', 774), '1.21.11');
   assert.throws(() => assertSupportedVersion('26.3', 999), /No supported Realm connection/);
   assert.equal(supportedVersions.includes('26.3'), false);
+  assert.equal(supportedVersionForProtocol(754), '1.16.5');
+  assert.equal(supportedVersionForProtocol(99999), null);
 });
 
 test('Realm account validation rejects uninvited or unselected account before network activity', async () => {
@@ -191,6 +193,14 @@ test('Realm account validation rejects uninvited or unselected account before ne
   await assert.rejects(connector.createBot(1), /licensed/);
   connector.auth.status = 'connected';
   await assert.rejects(connector.createBot(1), /available/);
+});
+
+test('device prompt accepts official Microsoft codes without exposing the provider token response', () => {
+  const prompt = deviceCodePrompt({ verificationUri: 'https://www.microsoft.com/link', userCode: 'ABCD-EFGH', expiresIn: 900, accessToken: 'must-not-leak' });
+  assert.equal(prompt.userCode, 'ABCD-EFGH'); assert.equal(prompt.accessToken, undefined);
+  assert.throws(() => deviceCodePrompt({ verificationUri: 'https://attacker.example/login', userCode: 'ABCD' }), /authentication URL/);
+  assert.throws(() => deviceCodePrompt({ verificationUri: 'not a URL', userCode: 'ABCD' }));
+  assert.throws(() => deviceCodePrompt({ userCode: 'ABCD', expiresIn: 'invalid' }), /expiry/);
 });
 
 test('secure supported cache factory persists encrypted bytes and merges refreshed sessions', async () => {
