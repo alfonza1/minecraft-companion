@@ -1,0 +1,124 @@
+.planning-invitation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid #45533c;
+  background: #242b20;
+  padding: 18px 20px;
+  border-radius: 7px;
+  margin-bottom: 22px;
+}
+.planning-invitation h3 {
+  font-size: 13px;
+  color: #d4d8bb;
+}
+.planning-invitation p {
+  font-size: 11px;
+  color: #aab899;
+  max-width: 590px;
+  margin-top: 7px;
+}
+.data-management {
+  margin-top: 22px;
+  border-top: 1px solid #34443c;
+  padding-top: 20px;
+}
+.data-management h3 {
+  font-size: 12px;
+}
+.material-split {
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #34443c;
+}
+.material-split summary {
+  font-size: 10px;
+  color: #a6beb0;
+  cursor: pointer;
+  line-height: 1.7;
+}
+.data-management .note {
+  overflow-wrap: anywhere;
+}
+.panel .note,
+.panel .quiet-empty,
+.panel .empty p,
+.companion-detail p {
+  font-size: 12px;
+  color: #a0b1b1;
+}
+.data-row,
+.data-row strong {
+  font-size: 11px;
+}
+.three-columns .panel .note,
+.three-columns .panel .empty p {
+  font-size: 11px;
+}
+.activity-line p {
+  font-size: 12px;
+}
+.realm-row p,
+.account-row p {
+  font-size: 11px;
+}
+.field-label {
+  font-size: 11px;
+}
+.voice-dock-status small {
+  font-size: 10px;
+  color: #a2b4aa;
+}
+.message p {
+  color: #d0ddd4;
+}
+.panel .text-button,
+.button {
+  font-size: 11px;
+}
+.panel-heading .eyebrow,
+.page-heading .eyebrow {
+  color: #a7bcaf;
+}
+.preview-caption {
+  font-size: 9px;
+  color: #a0b7a9;
+}
+.vital > div:first-child {
+  font-size: 11px;
+  color: #adbfbe;
+}
+.native-voice p {
+  color: #a5b6aa;
+}
+.info-note p {
+  font-size: 11px;
+}
+.planning-invitation .button {
+  flex-shrink: 0;
+}
+@media (max-width: 800px) {
+  .planning-invitation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .planning-invitation .button {
+    align-self: flex-start;
+  }
+  .panel .note,
+  .panel .quiet-empty,
+  .panel .empty p,
+  .companion-detail p {
+    font-size: 11px;
+  }
+  .panel .text-button,
+  .button {
+    font-size: 10px;
+  }
+  .data-row,
+  .data-row strong {
+    font-size: 10px;
+  }
+}

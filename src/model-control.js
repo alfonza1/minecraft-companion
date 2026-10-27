@@ -43,7 +43,7 @@ function readJson(path) {
 
 // One supervisor per teammate. Files keep the Paper command local and work
 // whether the teammates were launched together or in separate terminals.
-export function superviseModel({ provider, command, args, cwd, logFile, readyTimeoutMs = 90000, pollMs = 500 }) {
+export function superviseModel({ provider, command, commandPrefix = [], args, cwd, logFile, readyTimeoutMs = 90000, pollMs = 500 }) {
   const configFile = join(cwd, 'model.json');
   const requestFile = join(cwd, 'model-request.json');
   const readyFile = join(cwd, 'model-ready.json');
@@ -60,11 +60,19 @@ export function superviseModel({ provider, command, args, cwd, logFile, readyTim
     const previous = child;
     if (!previous) return;
     if (!previous.pid) { child = null; return; }
-    try { process.kill(-previous.pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    if (process.platform === 'win32') {
+      await new Promise((resolve, reject) => {
+        const killer = spawn('taskkill.exe', ['/PID', String(previous.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+        killer.once('error', reject);
+        killer.once('exit', resolve);
+      });
+    } else {
+      try { process.kill(-previous.pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    }
     const deadline = Date.now() + 3000;
     while (previous.exitCode === null && previous.signalCode === null && Date.now() < deadline) await delay(50);
     if (previous.exitCode === null && previous.signalCode === null) {
-      try { process.kill(-previous.pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+      try { if (process.platform === 'win32') previous.kill('SIGKILL'); else process.kill(-previous.pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
       while (previous.exitCode === null && previous.signalCode === null) await delay(50);
     }
     if (child === previous) child = null;
@@ -78,7 +86,7 @@ export function superviseModel({ provider, command, args, cwd, logFile, readyTim
     const argv = provider === 'codex' ? [args[0], ...flags, ...args.slice(1)] : [...flags, ...args];
     const fd = openSync(logFile, 'a');
     try {
-      child = spawn(command, argv, { cwd, detached: true, stdio: ['ignore', fd, fd],
+      child = spawn(command, [...commandPrefix, ...argv], { cwd, detached: true, windowsHide: true, stdio: ['ignore', fd, fd],
         env: { ...process.env, CLAUDE_CODE_ENABLE_TELEMETRY: '0' } });
     } finally { closeSync(fd); }
     const started = child;

@@ -1,0 +1,13 @@
+# Model boundary
+
+The installed Codex native CLI is used through supported `codex exec --json --output-schema` arguments. Authentication is the existing Codex login; no API key or token is copied. Each invocation runs in a fresh temporary directory, ignores user config and exec rules, and uses ephemeral sessions. Command tools, apps, hooks, delegation, code mode, local image tools, web search, MCP, and plugins are disabled; read-only sandboxing supplies another boundary. No Minecraft chat string, media metadata, tool name, or model output is ever used as a shell command. The model cannot directly control a bot; independently validated JSON selects a narrow set of survival actions through the sole runtime controller.
+
+The orchestrator makes requests only for explicit conversation/design requests. Deterministic gameplay runs in a separate cancellable plan so ordinary conversation can continue during gathering. No model loop runs when idle. Errors stop a plan without automatic repeated retries. Unsupported high-level goals require prerequisites/new requests; this is not a full autonomous strategic survival planner.
+
+Conversation plans allow tree chopping, exact block gathering, crafting, following, and travel. Construction is handled separately through an approved stored blueprint. General/casual/project/reference questions cannot return gameplay actions. Blueprint generation is a bounded, validated reconstruction from text and metadata; it does not claim to have viewed unseen image pixels or video frames. All generated dimensions/placements are validated again by the build module before approval.
+
+Actual token usage is accumulated from CLI `turn.completed` events. Billing cost remains null. Codex system overhead can be substantial: the observed minimal smoke request used 20,078 input tokens and 26 output tokens. Configured budgets limit whether another request can start; they cannot predict exact size or retroactively stop tokens already consumed by a request. Aborted CLI requests may not emit final usage, so account/provider usage can exceed reported completed-request totals.
+
+The runtime must abort gameplay before awaiting `cancel()` because the current deterministic plan may be waiting for `runtime.execute()`. Stopping the model means terminating its native process, not merely abandoning a frontend HTTP request. Tests exercise actual child process cancellation and limits with local fixtures, independent of paid inference.
+
+The real configured Codex CLI successfully returned a schema-valid casual reply with zero Minecraft actions in an observed smoke test. The test did not exercise real Realm play, inference interruption under provider load, or long-term conversational quality.

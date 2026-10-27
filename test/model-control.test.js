@@ -18,7 +18,7 @@ assert.throws(() => modelSelection('cursor', 'model;command'), /model ID/);
 assert.throws(() => modelSelection('codex', 'gpt-5.6-sol', 'ultra'), /Effort/);
 
 const directory = mkdtempSync(join(tmpdir(), 'mineness-model-'));
-const command = join(directory, 'fake-cli');
+const command = join(directory, 'fake-cli.cjs');
 writeFileSync(command, `#!/usr/bin/env node
 const fs = require('node:fs');
 const model = process.argv[process.argv.indexOf('--model') + 1];
@@ -38,7 +38,7 @@ const request = (model, effort) => {
   atomicJson(join(directory, 'model-request.json'), { id, model, effort });
   return id;
 };
-const start = () => superviseModel({ provider: 'cursor', command, args: [], cwd: directory, logFile: join(directory, 'cli.log'), readyTimeoutMs: 1000, pollMs: 20 });
+const start = () => superviseModel({ provider: 'cursor', command: process.execPath, commandPrefix: [command], args: [], cwd: directory, logFile: join(directory, 'cli.log'), readyTimeoutMs: 1000, pollMs: 20 });
 let session = start();
 try {
   await until(() => status().status === 'running');

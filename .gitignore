@@ -1,4 +1,14 @@
 node_modules/
+dist/
+apps/dashboard/dist/
+playwright-report/
+test-results/
+.venv/
+.env
+.env.*
+!.env.example
+*.sqlite*
+*.dpapi
 mc-server/world/
 mc-server/world_nether/
 mc-server/world_the_end/

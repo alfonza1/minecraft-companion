@@ -1,0 +1,12 @@
+{
+  "realmId": null,
+  "playerName": "",
+  "autonomy": "instructions",
+  "combat": "retreat",
+  "followDistance": 3,
+  "alertFrequency": "normal",
+  "model": "",
+  "maxRequestsPerHour": 30,
+  "maxInputTokens": 100000,
+  "voice": { "enabled": false, "handsFree": false, "speed": 1, "volume": 0.8, "inputDevice": "", "outputDevice": "" }
+}

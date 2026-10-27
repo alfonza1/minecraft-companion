@@ -12,7 +12,7 @@ const coordinate = z.number().int().min(-29_999_984).max(29_999_984);
 const faces = [new Vec3(0, -1, 0), new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(0, 1, 0)];
 const replaceable = new Set(['air', 'cave_air', 'void_air', 'leaf_litter', 'short_grass', 'tall_grass', 'fern', 'large_fern']);
 
-async function collect(bot, blocks, signal) {
+export async function collect(bot, blocks, signal) {
   if (!blocks.length) throw new Error("No matching blocks nearby. Move to a different area and try again.");
   const before = inventoryCounts(bot);
   let mined = 0;

@@ -1,0 +1,158 @@
+import Fastify from 'fastify';
+import websocket from '@fastify/websocket';
+import multipart from '@fastify/multipart';
+import staticFiles from '@fastify/static';
+import minecraftAssets from 'minecraft-assets';
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { join, resolve, sep } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { Store } from '../memory/store.js';
+import { RealmConnector, supportedVersions } from '../realm-connector/index.js';
+import { CompanionRuntime } from '../companion-runtime/index.js';
+import { lockBody } from '../../src/session.js';
+
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const voiceSettings = z.object({ enabled: z.boolean().optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional() }).strict();
+const miningZoneSchema = z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800), radius: z.number().int().min(1).max(32) }).strict();
+export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), model: z.string().regex(/^[A-Za-z0-9_.:/-]*$/).max(100).optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
+
+export async function createApp(options = {}) {
+  const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024, trustProxy: false });
+  const store = options.store || new Store();
+  const connector = options.connector || new RealmConnector(store.directory);
+  const runtime = options.runtime || new CompanionRuntime({ store, connector });
+  const clients = new Set();
+  let orchestrator, voiceModule;
+  let codexStatus = { available: null, authenticated: null, version: null, error: null };
+  const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
+    projects: store.get('projects'), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
+    usage: orchestrator?.usage || { requests: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billingCost: null },
+    settings: store.settings(), codex: codexStatus, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
+  });
+  let scheduled = false;
+  const publish = () => {
+    if (scheduled) return; scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      if (!clients.size) return;
+      const event = JSON.stringify({ type: 'state', state: snapshot() });
+      for (const client of clients) { if (client.readyState === 1 && client.bufferedAmount < 1024 * 1024) client.send(event); }
+    });
+  };
+  const context = { store, connector, runtime, publish, dataDir: store.directory };
+  app.decorate('companion', { ...context, snapshot });
+  const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
+  app.addHook('onRequest', async (request, reply) => {
+    const host = request.headers.host;
+    if (!host || !allowedHosts.has(host.replace(/:\d+$/, ''))) return reply.code(403).send({ error: 'Dashboard accepts localhost requests only.' });
+    const origin = request.headers.origin;
+    if (origin) {
+      let url;
+      try { url = new URL(origin); } catch { return reply.code(403).send({ error: 'Invalid request origin.' }); }
+      const port = new URL(`http://${host}`).port;
+      if (url.protocol !== 'http:' || !allowedHosts.has(url.hostname) || ![port, '4366'].includes(url.port)) return reply.code(403).send({ error: 'Cross-origin dashboard request rejected.' });
+    }
+    reply.header('Cache-Control', 'no-store').header('X-Content-Type-Options', 'nosniff').header('Referrer-Policy', 'no-referrer');
+    if (request.method !== 'GET' && request.method !== 'HEAD' && !/^(application\/json|multipart\/form-data)(?:;|$)/i.test(request.headers['content-type'] || '')) return reply.code(415).send({ error: 'Use application/json or a supported file upload.' });
+  });
+  app.setErrorHandler((error, request, reply) => {
+    const status = error instanceof z.ZodError ? 400 : error.statusCode || (/must|requires|choose|already|unsupported|invalid|cannot|select|connect|resume|active|paused|companion/i.test(error.message) ? 409 : 500);
+    const message = error instanceof z.ZodError ? error.issues.map(issue => `${issue.path.join('.') || 'input'}: ${issue.message}`).join('; ') : error.message;
+    reply.code(Math.min(Math.max(status, 400), 599)).send({ error: message.slice(0, 1500) });
+  });
+  await app.register(websocket, { options: { maxPayload: 1024 } });
+  await app.register(multipart, { limits: { fileSize: 24 * 1024 * 1024, files: 1, fields: 5, parts: 6 } });
+  app.get('/api/events', { websocket: true }, socket => {
+    clients.add(socket); socket.send(JSON.stringify({ type: 'state', state: snapshot() }));
+    socket.on('close', () => clients.delete(socket)); socket.on('error', () => clients.delete(socket));
+  });
+  runtime.on('change', publish); connector.on('change', publish);
+  connector.on('diagnostic', message => runtime.log('error', message));
+  app.get('/api/state', async () => snapshot());
+  app.get('/api/health', async () => ({ name: 'Minecraft Companion', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: ['Current Java 26.3 is newer than the supported 26.1 protocol stack.', 'Full-cube construction only; oriented blocks, automatic scaffolding and advanced progression require further gameplay validation.'] }));
+  app.post('/api/auth/connect', async () => { connector.connectAccount(); return { started: true }; });
+  app.post('/api/realms/refresh', async () => { connector.connectAccount(); return { started: true }; });
+  app.post('/api/settings', async request => { const settings = store.updateSettings(settingsSchema.parse(request.body)); publish(); return settings; });
+  app.post('/api/permissions/mining', async request => {
+    const { zone } = z.object({ zone: miningZoneSchema.nullable() }).strict().parse(request.body);
+    const settings = store.updateSettings({ miningZone: zone }); publish(); return settings;
+  });
+  app.post('/api/control', async request => {
+    const { command } = z.object({ command: z.enum(['start','plan','pause','resume','stop','cancel','emergency','disconnect']) }).strict().parse(request.body);
+    await runtime.control(command); publish(); return snapshot();
+  });
+  app.post('/api/tasks', async request => {
+    const { tool, args } = z.object({ tool: z.string().max(60), args: z.record(z.string(), z.unknown()).default({}) }).strict().parse(request.body);
+    const result = await runtime.execute(tool, args); publish(); return result;
+  });
+  app.post('/api/conversation', async request => {
+    const { text } = z.object({ text: z.string().trim().min(1).max(4000) }).strict().parse(request.body);
+    if (!orchestrator) throw new Error('Conversation service unavailable.');
+    return { text: await orchestrator.respond(text) };
+  });
+  app.post('/api/conversation/cancel', async () => { await orchestrator?.cancelInference(); return { cancelled: true }; });
+  app.post('/api/memories', async request => {
+    const value = z.object({ label: z.string().trim().min(1).max(100), value: z.string().trim().min(1).max(3000) }).strict().parse(request.body);
+    const record = store.put('memories', { ...value, id: randomUUID(), provenance: 'user-reported', at: new Date().toISOString() }); publish(); return record;
+  });
+  app.post('/api/memories/delete', async request => { const { id } = z.object({ id: z.string().uuid() }).strict().parse(request.body); store.delete('memories', id); publish(); return { deleted: true }; });
+  app.post('/api/data/backup', async () => ({ path: store.backup() }));
+  app.post('/api/system/shutdown', async (_, reply) => { reply.send({ shuttingDown: true }); setImmediate(() => app.close().catch(() => { process.exitCode = 1; })); });
+  app.get('/api/data/export', async () => ({ format: 'minecraft-companion/v1', settings: store.settings(), projects: store.get('projects'), memories: store.get('memories'), exportedAt: new Date().toISOString() }));
+  app.get('/api/assets/:kind/:name', async (request, reply) => {
+    const { kind, name } = request.params;
+    if (!['item','block'].includes(kind) || !/^[a-z0-9_]+$/.test(name)) return reply.code(404).send({ error: 'Unknown Minecraft asset.' });
+    const assets = minecraftAssets(runtime.connection.version || '1.21.11');
+    const embedded = assets?.textureContent?.[name]?.texture;
+    if (typeof embedded === 'string' && embedded.startsWith('data:image/png;base64,')) return reply.type('image/png').header('Cache-Control', 'private,max-age=3600').send(Buffer.from(embedded.slice('data:image/png;base64,'.length), 'base64'));
+    const record = (kind === 'item' ? assets?.items : assets?.blocks)?.[name];
+    if (!record?.texture) return reply.code(404).send({ error: 'No texture in installed asset pack.' });
+    const texture = resolve(assets.directory, `${record.texture.replace('minecraft:', '')}.png`);
+    if (!texture.startsWith(resolve(assets.directory) + sep)) return reply.code(404).send({ error: 'Invalid asset path.' });
+    try { const bytes = await readFile(texture); return reply.type('image/png').header('Cache-Control', 'private,max-age=3600').send(bytes); }
+    catch { return reply.code(404).send({ error: 'Texture unavailable.' }); }
+  });
+  if (!options.skipExtensions) {
+    voiceModule = await import('../voice/index.js');
+    voiceModule.registerVoiceRoutes(app, context);
+    const { createOrchestrator, getCodexStatus } = await import('../agent-orchestrator/index.js');
+    orchestrator = createOrchestrator(context);
+    context.orchestrator = orchestrator;
+    runtime.modelCancel = () => orchestrator.cancel(); runtime.audioStop = () => voiceModule.cancelSpeech(); runtime.fullAudioStop = () => voiceModule.stopVoice();
+    runtime.on('conversation', text => orchestrator.respond(text).catch(error => runtime.log('error', error.message)));
+    const { registerBuildRoutes } = await import('../build-planner/index.js');
+    await registerBuildRoutes(app, context);
+    void voiceModule.checkVoice().then(publish);
+    void getCodexStatus().then(status => { codexStatus = status; publish(); });
+  }
+  const dashboard = join(root, 'apps', 'dashboard', 'dist');
+  if (existsSync(dashboard)) {
+    await app.register(staticFiles, { root: dashboard, prefix: '/' });
+    app.setNotFoundHandler((request, reply) => request.url.startsWith('/api/') ? reply.code(404).send({ error: 'API endpoint not found.' }) : reply.sendFile('index.html'));
+  } else app.get('/', async (_, reply) => reply.type('text/plain').send('Minecraft Companion: run npm run build, then restart the launcher.'));
+  app.addHook('onClose', async () => {
+    for (const client of clients) client.close(1001, 'Companion shutting down'); clients.clear();
+    await runtime.close(); await orchestrator?.close(); store.close();
+  });
+  return app;
+}
+
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  const store = new Store();
+  let unlock;
+  try { unlock = lockBody(join(store.directory, 'runtime.pid')); }
+  catch (error) { store.close(); throw error; }
+  process.on('exit', unlock);
+  let app;
+  try { app = await createApp({ store }); }
+  catch (error) { unlock(); store.close(); throw error; }
+  let closing = false;
+  const shutdown = async () => { if (closing) return; closing = true; await app.close(); unlock(); };
+  process.on('SIGINT', () => shutdown().catch(() => process.exitCode = 1));
+  process.on('SIGTERM', () => shutdown().catch(() => process.exitCode = 1));
+  try { await app.listen({ host: '127.0.0.1', port: Number(process.env.COMPANION_PORT || 4365) }); console.log('Minecraft Companion: http://127.0.0.1:4365'); }
+  catch (error) { await shutdown(); console.error(error.message); process.exitCode = 1; }
+}

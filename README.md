@@ -1,129 +1,93 @@
-# Mineness
+# Minecraft Companion
 
-Claude, Codex, Grok, and Cursor as Minecraft teammates. Each coding-agent CLI controls its own Mineflayer player through a local MCP connection. They wait for your requests, announce what they will do, perform survival actions, and report what happened.
+Local Minecraft Java teammate and build workspace extending [Mineness](https://github.com/SpectrumTantrum/mineness). React/TypeScript, Mineflayer, Microsoft device authentication, Codex conversation/planning, local Whisper/Piper speech, SQLite and a real blueprint viewer.
 
-![The four teammate skins](skins/skins-mockup.png)
+**Current Realm blocker:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1**; Minecraft Java's current release is **26.3**. Unsupported Realms are refused. Authentication and selection are implemented but no licensed bot account or Realm gameplay was validated. Protocol support must catch up; changing dashboard settings cannot bypass it. Do not buy an account just to test this version.
 
-## Run locally
+## Launch
 
-The included [demo server](mc-server/README.md) provides the example configuration, teammate datapack, and `/model` plugin. Run everything from this `mineness` folder.
+Dependencies, dashboard and free speech models are installed on this PC. Double-click **Start Minecraft Companion.cmd**, or:
 
-Requires Java 21 or newer, Node.js 22.12 or newer, and Minecraft Java Edition **1.21.11**. Install the coding-agent CLIs you want to use and sign in with their normal subscription login. No model API key is required by Mineness.
-
-```bash
-git clone --recurse-submodules https://github.com/SpectrumTantrum/mineness.git
-cd mineness
-npm ci
-npm run setup
+```powershell
+.\scripts\Start.ps1
 ```
 
-Setup downloads pinned Paper and SkinsRestorer jars and verifies their SHA-256 checksums. Read the [Minecraft EULA](https://aka.ms/MinecraftEULA), then set `eula=true` in `mc-server/eula.txt` if you accept it.
+Open **http://127.0.0.1:4365**. No browser opens automatically. Keep the console open; Ctrl+C shuts down the service. Dashboard Stop disconnects the bot/audio while keeping the dashboard available.
 
-Start the server in one terminal:
+Use **Start planning offline** in Companion/Build Studio for conversation, voice and text architecture without a Minecraft connection. This explicit control enables requests; starting the session and remaining idle make zero model calls. Pause prevents further inference until explicit resume.
 
-```bash
-npm run server
+Fresh checkout:
+
+```powershell
+.\scripts\Bootstrap.ps1
+# Optional desktop shortcut:
+.\scripts\Bootstrap.ps1 -DesktopShortcut
 ```
 
-In another terminal, apply the skins once, then start your teammates:
+Bootstrap installs lockfile dependencies, builds the dashboard and prepares private Python speech dependencies/models. Safe missing Node/Git/Python prerequisites use winget. Node 22.12+ required; this PC runs24. No new Java is needed for Realms. Minecraft files are preserved. Optional recipe extraction reads exact-version client JARs without modifying them. `.env.example` documents process environment variables; `.env` files are not automatically loaded.
 
-```bash
-npm run skins
-npm run play -- claude codex grok cursor
-```
+## Account onboarding
 
-You can select one provider, for example `npm run play -- codex`. `npm run play` defaults to all four. Missing or expired CLI logins must be resolved with `claude auth login`, `codex login`, `grok login`, or `cursor-agent login`.
+1. Settings → **Connect Minecraft Account**, using the separate licensed bot account.
+2. Follow the official Microsoft URL/device code. Enter passwords/MFA only at Microsoft. Never paste passwords, recovery codes or tokens into this app.
+3. Invite the bot account and accept any pending invitation through Minecraft. Refresh and select an available Realm.
+4. Set your player username for trusted in-game `@companion` messages.
+5. Start Companion. The selected Realm is pinged and its protocol validated before login. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
 
-Cursor_Bot defaults to Cursor Grok 4.6 with high reasoning, `cursor-grok-4.6-high`.
+Sessions use prismarine-auth's supported CacheFactory with **Windows DPAPI CurrentUser**, outside Git in `%LOCALAPPDATA%\MinecraftCompanion\auth`. Tokens never enter dashboard state. Connection preparation is cancellable. Reconnect uses bounded backoff, returns paused and never silently resumes interrupted work.
 
-Grok requires one initial workspace trust decision. Prepare its configuration, open the isolated game workspace, accept its trust prompt, then quit Grok and start the launcher:
+## Voice and Codex
 
-```bash
-npm run play -- grok --prepare
-grok --cwd "$PWD/.runtime/grok"
-npm run play -- grok
-```
+Free local defaults: faster-whisper tiny.en CPU int8, Silero VAD and Piper LJ Speech neural TTS. Piper's dataset is public domain; its model card is retained. Windows SAPI is fallback. See [speech setup, evidence and licenses](services/voice/README.md).
 
-Join **localhost:25565** in Minecraft Java 1.21.11. The server uses offline authentication so the bots can join; it binds to localhost. Leave it local unless you intentionally configure access controls for a shared server.
+- Explicitly enable browser voice, then select devices, PTT/hands-free, speed and volume. Browser noise suppression/echo cancellation are requested. Headphones improve reliable barge-in.
+- Optional **desktop F8 voice** works while Minecraft is focused, with native input/output device selection. It polls only F8; no keyboard hook installation or system settings changes.
+- Browser capture stops on pause/stop/disconnect/focus loss. Native F8 runs independently of browser focus. Physical microphone/headphone/F8 validation still requires the user.
+- Barge-in cancels speech/current conversation inference while safe work can continue. Explicit stop/wait/forget-that/new-plan/cancel stops the gameplay plan. Emergency Stop disconnects.
+- Microphone audio stays in RAM and is piped to local workers. No recording retention. Conversation text is stored locally and sent to Codex when requested.
 
-## Play together
+Codex uses the existing authenticated CLI subscription. If needed, `codex login` restores login. A restricted native CLI process has shell, apps, hooks, plugins, browsing and delegation disabled, an empty working directory and validated structured JSON plans. Game chat/media cannot become shell commands. No paid speech API or OpenAI API key is required.
 
-Type requests in Minecraft chat:
+Actual request/input/output/cached-token usage is shown when supplied. Dollar costs/account limits are unknown. Configure hourly requests and lifetime input-token budget in Settings. CLI system overhead can contribute about20k input tokens per small request; cached counts are separate. No inference polling loop runs. Current-information browsing is not implemented.
 
-```text
-@claude chop 4 oak logs and bring them to me
-@codex follow me
-@grok craft a crafting table and place it next to you
-@cursor build a small wall with the blocks you have
-@all what are you carrying?
-stop
-```
+## Survival controls
 
-Full nametags such as `@Claude_Bot` also work. `@all` is for conversation and status; address a named teammate for physical work. A plain `stop` immediately stops every body. `@codex stop` stops just Codex. They wait for another request afterward.
+One runtime owns one body. Upstream MCP survives separately as `npm run upstream:mcp -- --username NAME`; never launch competing controllers for one account.
 
-Use the server's `/model` command to inspect or change one teammate:
+Available skills reuse Mineness observation, walking, following, tree collection, bounded approved-area mining and crafting. Initial deterministic controllers handle eating, surfacing, nearby threat retreat and basic in-reach defense. Movement disables terrain digging/towers, parkour, sprinting and large drops by default. These are initial controllers, not human-level survival competence.
 
-```text
-/model @cursor
-/model @cursor grok-4.6 high
-/model @claude sonnet high
-/model @codex gpt-5.6-sol high
-/model @grok grok-4.6 high
-/model @cursor default
-```
+Approve expendable natural terrain under **Companion → Approved mining area** before generic mining. Targets must be observed, within that area and at/above foot height. Models cannot grant that permission. Tree checks require natural soil and matching observed leaves; they cannot prove a tree was never player-built or decorated. Supervise important areas.
 
-The format is `/model @bot [model-id] [effort]`. Model IDs must be supported by that bot's CLI and account. Without a model, it shows the configured model and connection status. `default` restores the project default. The command reconnects only the selected teammate, stops its current action, and preserves its Minecraft location and inventory. If the new model fails to connect, the launcher attempts to restore the previous one and reports the result in chat.
+Pause gates new work before cancelling processes/gameplay and saves progress. In-flight library operations remain owned until settled; resume/new jobs cannot overlap them. Stop shuts down capture/inference and disconnects. A stuck dependency can keep resume blocked rather than permit conflicting actions.
 
-Selections persist in `.runtime/<provider>/model.json`. Human players can use the command through the `mineness.model` permission, enabled by default on this local server.
+## Build Studio and resource planning
 
-Keep requests within survival abilities. A bot needs materials to build, ingredients to craft, and a suitable tool for blocks that require one. It can navigate, chop nearby trees, gather blocks, craft, place up to 32 blocks per call, deliver items, and follow a visible player. Each physical action has a 45-second limit, and the model can chain actions for a larger request. Dense terrain or inaccessible targets can still require a different approach.
+Create a project using an installed supported Java version. Import complete blueprint JSON or Sponge `.schem` v1-v3. A bounded parser worker rejects invalid palettes, unknown blocks/states, oversized volumes and decompression bombs. MCEdit/Litematica are unsupported.
 
-The models see structured tool results. `look_around` includes leaves and leaf litter, and its `inspect` argument reports exact blocks at requested coordinates, including air. Before building, inspect the footprint and the blocks underneath it. `place_blocks` clears grass and leaf litter at the requested positions, preserves solid blocks, and skips blocks already placed correctly. High walls and roofs can require temporary access steps made from the bot's materials.
+**Generate design** makes a real Codex request from a written description. Its complete saved design is validated and labeled reconstructed. Sharing text/title reference summaries is explicit. Uploaded binary pixels stay local: image/video architecture analysis is not implemented. YouTube supports bounded public oEmbed metadata only, without unrestricted downloads or invented dimensions/captions.
 
-Skin setup uses a temporary connection for each body. **Apply skins before starting the agents.** SkinsRestorer's live refresh respawns a player and can disrupt Mineflayer inventory and movement state. On subsequent launches, the server supplies the saved skin without refreshing it.
+Three.js renders actual saved blocks with local textures, orbit/zoom, floor/roof/section filters and observed progress. Special shapes use voxel geometry, not a complete Minecraft model renderer.
 
-## How it works
+Placement counts are exact for complete saved designs. Actual versioned crafting recipes/yields aggregate intermediate requirements before batch rounding. Placed blocks, required items, raw resources and contingency are separate. Existing exact-version vanilla JARs provide read-only smelting/stonecutting recipes/tags with SHA256 provenance (this PC has1.21.5). Missing production data and fuel choices stay explicitly unresolved.
 
-```text
-Minecraft chat → named teammate's inbox → its coding-agent CLI
-                       ↑                         ↓
-                 Minecraft body ← Mineness MCP tools
-```
+Split globally or per material; manual user stock is labeled user-reported. Bot stock comes from live inventory observations and is allocated once across projects. It does not imply knowledge of your inventory or remote chests. Reservations prevent double spending. Explicit assigned wood gathering runs a bounded batch and reconciles observed inventory.
 
-Each CLI starts one `src/server.js --username NAME_Bot` process. A lock prevents a second local session from taking the same body. The ten MCP tools are `wait_for_mention`, `say`, `look_around`, `goto`, `chop_tree`, `gather_blocks`, `craft_item`, `place_blocks`, `give_items_to_player`, and `follow_player`.
+Approve every revised blueprint before construction. Current placement supports **inert full cubes only** and refuses conflicts, unloaded sites, unavailable materials and special/gravity/interactive blocks. No terrain clearing, OP permissions or server commands. Each placement and final completion are observed; persistent checkpoints are reverified on resume. Automatic scaffolding, oriented blocks, site preparation, resupply and destructive repair remain unfinished.
 
-The shared operating prompt is in `prompts/shared-operating-prompt.md`. The launcher builds provider-specific configurations in ignored `.runtime/` directories and disables unrelated tool access. Minecraft chat cannot run slash commands through `say`. Bot messages do not wake other bots. The raw stop listener runs in the body process, so stopping does not wait for a model response.
+## Data, verification and limitations
 
-CLI output goes to `.runtime/claude.log`, `.runtime/codex.log`, `.runtime/grok.log`, and `.runtime/cursor.log`. Completed tool calls are recorded in `calls.jsonl`, including duration, result, and failures. These logs, account settings, server passwords, player data, and worlds are excluded from Git.
+SQLite/auth/models live outside Git under `%LOCALAPPDATA%\MinecraftCompanion`. Settings offers SQLite backup and JSON export; backup includes saved conversation but excludes the separate encrypted auth cache. Memory supports inspect/add/delete. JSON import, memory editing and automatic older-context summarization remain incomplete.
 
-Press Ctrl+C in the launcher terminal to disconnect its teammates. Their Minecraft inventories remain in the world. Type `stop` in the server terminal to save and stop Paper. `python3 scripts/rcon.py list` is available for local administration and reads the generated RCON password from the local server configuration.
-
-## Checks
-
-```bash
+```powershell
+npm run health
 npm test
-npm run test:game
-node scripts/test-building.mjs
-node scripts/test-agents.mjs claude codex grok cursor
-node scripts/test-model-command.mjs
+npm run typecheck
+npm run build
+node scripts/test-companion-game.mjs
 ```
 
-`npm test` checks routing, inbox behavior, cancellation, deadlines, duplicate-body protection, and model switching with rollback. `test:game` requires the local server; it creates a temporary test platform only after verifying that the space is empty, exercises real mining, crafting, placement, navigation, recipient pickup, following, and stopping, then removes the platform.
+See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. None proves26.3 Realm compatibility.
 
-`test-agents.mjs` requires the selected CLI teammates to be running. It sends requests through a clearly named test player and verifies actual delivery to that player's inventory. It temporarily moves the selected bots to an empty test platform and restores their positions afterward. Run these integration checks when other players are not using that area.
+Unfinished requested scope includes advanced cave/branch mining, farming, furnaces/chests/trading, armor optimization, guard coordination, Nether/End progression, strategic initiative, voice project reassignment, media vision/keyframes/captions, oriented construction/scaffolding/terrain/resupply/repair, player inventory companion, streaming speech, provider-selection UI, configurable hotkeys, conversation summarization and full project import. Stored autonomy preferences do not implement those behaviors. This is a functional foundation with explicit limits, not all eight completed phases.
 
-`test-building.mjs` uses a separate test bot and an empty temporary platform. It checks bulk crafting against server inventory, terrain inspection, building over leaf litter, a complete small shelter with a roof, and harvesting a tree beside an isolated canopy log. It removes the platform afterward.
-
-The `/model` plugin's Java source and compiled jar are in `mc-server/model-command/`. Setup installs the jar. To rebuild it, use a JDK 21 or newer and run `npm run build:plugin` after Paper has started once and extracted its libraries. Restart Paper after rebuilding. The launcher and server share the local `.runtime` directory.
-
-`test-model-command.mjs` sends real player slash commands, temporarily switches Cursor's reasoning effort, verifies that the other bots stay connected, and restores Cursor's original model. Run it when Cursor is idle.
-
-## Sources and attribution
-
-The starting Mineflayer/MCP connection code came from [yuniko-software/minecraft-mcp-server](https://github.com/yuniko-software/minecraft-mcp-server), under Apache-2.0. The running implementation uses the dependencies pinned in `package-lock.json`; the old reference checkout is not required. See `LICENSE` and `NOTICE`.
-
-The small client collision margin follows the proposed [Minecraft 1.21.x pathfinder fix](https://github.com/PrismarineJS/mineflayer-pathfinder/pull/364). It prevents the bot from aligning exactly with block edges, where server collision checks can reject its movement.
-
-CLI configuration follows the official [Claude Code CLI reference](https://code.claude.com/docs/en/cli-reference), [Codex configuration reference](https://developers.openai.com/codex/config-reference/), [Grok headless documentation](https://docs.x.ai/build/cli/headless-scripting), and [Cursor CLI permissions](https://cursor.com/docs/cli/reference/permissions). Skins use [SkinsRestorer](https://skinsrestorer.net/docs/installation/quick-start) and the separate [Mineness skins repository](https://github.com/SpectrumTantrum/mineness-skins).
-
-Mineness is an independent project. Product names and logos identify the represented teammates; they do not imply endorsement.
+The API binds **127.0.0.1 only**, with host/origin checks for HTTP/WebSockets. Remote access/authentication are unavailable. No public ports, purchases, paid accounts or sensitive system changes were made. Paper/RCON/skins/plugin workflows remain offline upstream tools and are not used for Realms. Original [Mineness README](docs/UPSTREAM.md), LICENSE and NOTICE retain attribution. Minecraft is a Mojang/Microsoft product; no affiliation is implied.
