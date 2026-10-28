@@ -64,6 +64,8 @@ export interface CompanionState {
   };
   auth: {
     status: string;
+    error?: string | null;
+    issue?: string | null;
     username: string | null;
     device: null | {
       verificationUri: string;

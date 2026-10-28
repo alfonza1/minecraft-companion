@@ -3,6 +3,7 @@ import prismarineRealms from 'prismarine-realms';
 import { secureCacheFactory } from './secure-cache.js';
 import mcProtocol from 'minecraft-protocol';
 import { authorizeSession } from './session-join.js';
+import { accountFailure, requireJavaProfile } from './java-profile.js';
 
 const { Authflow, Titles } = prismarineAuth;
 const { RealmAPI } = prismarineRealms;
@@ -26,8 +27,8 @@ process.on('message', async message => {
       send({ type: 'device', verificationUri: code.verification_uri, userCode: code.user_code, expiresIn: code.expires_in });
     });
     const credentials = await flow.getMinecraftJavaToken({ fetchProfile: true, fetchCertificates: message.type === 'session' });
-    const { profile } = credentials;
-    if (!profile?.name) throw new Error('This Microsoft account does not have a Minecraft Java profile.');
+    const profile = await requireJavaProfile(credentials);
+    credentials.profile = profile;
     if (message.type === 'connect') send({ type: 'profile', username: profile.name });
     const realms = await RealmAPI.from(flow, 'java', { minecraftVersion: '26.3' }).getRealms();
     if (message.type !== 'connect') {
@@ -46,10 +47,10 @@ process.on('message', async message => {
     }
     send({ type: 'realms', realms: realms.map(realm => ({ id: realm.id, name: realm.name, owner: realm.owner, state: realm.state, expired: realm.expired })) });
     process.disconnect();
-  } catch {
+  } catch (error) {
     // Provider exceptions may contain HTTP credentials or tokens. Send only a
     // stable diagnosis across IPC; raw auth output never reaches the dashboard.
-    send({ type: 'failure', error: 'Microsoft/Minecraft sign-in or Realm listing failed. Check account ownership, Xbox permissions, network access and Realm invitation, then reconnect.' });
+    send({ type: 'failure', ...accountFailure(error) });
     process.disconnect();
   }
 });

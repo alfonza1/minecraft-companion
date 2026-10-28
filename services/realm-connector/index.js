@@ -42,7 +42,7 @@ export class RealmConnector extends EventEmitter {
   connectAccount() {
     if (this.worker) return;
     this.realms = []; this.compatibility = null;
-    this.auth = { ...this.auth, status: 'authenticating', device: null };
+    this.auth = { ...this.auth, status: 'authenticating', device: null, error: null, issue: null };
     this.emit('change');
     const worker = fork(new URL('./auth-worker.js', import.meta.url), [], { windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     this.worker = worker;
@@ -57,7 +57,10 @@ export class RealmConnector extends EventEmitter {
       }
       if (message.type === 'profile') this.auth = { status: 'connected', username: message.username, device: null };
       if (message.type === 'realms') this.realms = message.realms;
-      if (message.type === 'failure') { this.auth.status = 'error'; this.auth.device = null; this.emit('diagnostic', message.error); }
+      if (message.type === 'failure') {
+        this.auth = { ...this.auth, status: message.code === 'JAVA_PROFILE_REQUIRED' ? 'profile-required' : 'error', device: null, error: message.error, issue: message.code || null };
+        this.emit('diagnostic', message.error);
+      }
       this.emit('change');
     });
     worker.on('error', () => { this.auth.status = 'error'; this.emit('change'); });

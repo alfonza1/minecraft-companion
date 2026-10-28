@@ -57,6 +57,8 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
             </p>
           </div>
         </div>
+        {state.auth.error ? <p className="inline-error" role="alert">{state.auth.error}</p> : null}
+        {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? <a className="button" href="https://www.minecraft.net/en-us/msaprofile/mygames" target="_blank" rel="noreferrer">Open Minecraft account setup <ArrowRight size={14} /></a> : null}
         {state.auth.device ? (
           <div className="device-code">
             <p>
@@ -99,7 +101,9 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
             onClick={() => attempt(mutate("/auth/connect", {}))}
           >
             <Users size={16} />
-            {state.auth.username
+            {state.auth.issue === "JAVA_PROFILE_REQUIRED"
+              ? "Check Java profile again"
+              : state.auth.username
               ? "Reconnect Minecraft account"
               : "Connect Minecraft account"}
           </button>

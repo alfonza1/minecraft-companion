@@ -32,6 +32,7 @@ Bootstrap installs lockfile dependencies, builds the dashboard, prepares private
 
 1. Setup → **Minecraft account** → **Connect Minecraft account**, using the separate licensed bot account.
 2. Follow the official Microsoft URL/device code. Enter passwords/MFA only at Microsoft. Never paste passwords, recovery codes or tokens into this app.
+   If Minecraft reports **profile required**, finish the bot account's Java username setup on Minecraft.net or in the official launcher, then use **Check Java profile again**. The saved Microsoft session is reused; a missing Java profile is distinct from an unverified license or a temporary profile service failure.
 3. Invite the bot account and accept any pending invitation through Minecraft. Refresh and select an available Realm.
 4. Set your player username for trusted in-game `@companion` messages.
 5. Check Realm compatibility, then connect in **First session**. The selected Realm is pinged and its protocol validated before login. Native/translated protocols are distinguished. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
