@@ -10,6 +10,7 @@ Evidence levels: implemented; automated tests passed; local gameplay passed; Rea
 - [x] Independent shares, manual user provenance, observed AI stock allocated once, reservations and bounded assigned wood batches. **Chests and voice reassignment unfinished.**
 - [x] Approval-gated full-cube survival construction, observed verification, SQLite checkpoints and real interruption/resume. **Oriented blocks, terrain/scaffolding/resupply/repair unfinished.**
 - [x] Windows bootstrap/launcher, diagnostics, security review and automated/runtime/browser evidence. Publication status is reported separately; a rejected push is not concealed.
+- [x] Dedicated WebView2 desktop window, stable application identity, source-following desktop/Start/taskbar launcher and in-app update control. Actual native open/close/reopen/update checks passed; the taskbar pin target and AppID were read back after pinning through Windows. Native binaries are versioned outside Git and generated build files do not trigger update loops.
 
 These checked increments are subsets of the requested phases, not claims that the entire production specification is finished. See README for remaining requested scope and docs/VERIFICATION.md for evidence boundaries.
 

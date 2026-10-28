@@ -23,6 +23,7 @@ if (-not (Test-Path -LiteralPath $compiler)) { throw 'The Windows .NET Framework
 $executable = Join-Path $directory 'Minecraft Companion.exe'
 & $compiler /nologo /target:winexe "/out:$executable" "/win32icon:$(Join-Path $directory 'companion.ico')" /reference:System.Windows.Forms.dll (Join-Path $PSScriptRoot 'desktop/Launcher.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Desktop launcher compilation failed.' }
+$nativeExecutable = & (Join-Path $PSScriptRoot 'Build-Desktop.ps1')
 $shell = New-Object -ComObject WScript.Shell
 $programs = [Environment]::GetFolderPath('Programs')
 $locations = @($programs)
@@ -34,6 +35,8 @@ foreach ($location in $locations) {
     $shortcut.IconLocation = Join-Path $directory 'companion.ico'
     $shortcut.Description = 'Open the local working copy; rebuild changes and start its localhost service'
     $shortcut.Save()
+    $registration = Start-Process -FilePath $nativeExecutable -ArgumentList @('--register-shortcut', ('"' + $shortcut.FullName + '"')) -WindowStyle Hidden -PassThru -Wait
+    if ($registration.ExitCode -ne 0) { throw 'Could not register the desktop application identity.' }
 }
 Write-Output "Installed launcher: $executable"
 Write-Output "Start menu shortcut: $(Join-Path $programs 'Minecraft Companion.lnk')"

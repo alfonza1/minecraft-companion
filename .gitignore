@@ -47,6 +47,8 @@ handoff.md
 CHANGES.md
 vendor/
 __pycache__/
+apps/desktop/bin/
+apps/desktop/obj/
 scripts/call-*.mjs
 scripts/torres-ping.mjs
 scripts/wfm-proof.mjs

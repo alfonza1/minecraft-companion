@@ -29,6 +29,13 @@ if (-not $SkipBridge) {
     & (Join-Path $PSScriptRoot 'Setup-ProtocolBridge.ps1')
 }
 if ($DesktopShortcut) {
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+    $desktopSdk = Get-Command dotnet -ErrorAction SilentlyContinue
+    if (-not $desktopSdk -or -not ((& $desktopSdk.Source --list-sdks) -match '^10\.')) {
+        & winget install --id Microsoft.DotNet.SDK.10 --exact --silent --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -ne 0) { throw 'Could not install the .NET 10 desktop build tools.' }
+        $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
+    }
     & (Join-Path $PSScriptRoot 'Install-DesktopLauncher.ps1') -DesktopShortcut
 }
 & node (Join-Path $PSScriptRoot 'health.mjs')

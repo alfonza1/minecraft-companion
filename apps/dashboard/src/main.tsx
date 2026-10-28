@@ -4,6 +4,7 @@ import App from "./App";
 import "./polish.css";
 import "./style.css";
 import "./voice.css";
+import './desktop.css';
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

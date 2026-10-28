@@ -1,9 +1,13 @@
 [CmdletBinding()]
-param([switch]$NoOpen, [switch]$CheckOnly)
+param([switch]$NoOpen, [switch]$CheckOnly, [string]$ResultFile)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $cache = Join-Path $env:LOCALAPPDATA 'MinecraftCompanion/launcher'
 $base = 'http://127.0.0.1:4365'
+if ($ResultFile) {
+    $ResultFile = [System.IO.Path]::GetFullPath($ResultFile)
+    if ([System.IO.Path]::GetDirectoryName($ResultFile) -ne [System.IO.Path]::GetFullPath($cache) -or [System.IO.Path]::GetFileName($ResultFile) -notmatch '^desktop-update-[a-f0-9]{32}\.json$') { throw 'Invalid desktop update receipt path.' }
+}
 $mutex = New-Object System.Threading.Mutex($false, 'Local\MinecraftCompanionDesktopLauncher')
 $locked = $false
 function Read-Health {
@@ -67,18 +71,22 @@ try {
         if (-not $health) { throw 'The local service did not become ready. Try the launcher again.' }
     }
     if (-not $NoOpen) {
-        $edge = @("${env:ProgramFiles(x86)}/Microsoft/Edge/Application/msedge.exe", "$env:ProgramFiles/Microsoft/Edge/Application/msedge.exe") | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-        if ($edge) {
-            # Separate local browser profile; never automates the user's Firefox.
-            $profile = Join-Path $cache 'browser-profile'
-            Start-Process -FilePath $edge -ArgumentList @("--app=$base", ('--user-data-dir="' + $profile + '"'), '--no-first-run') | Out-Null
-        } else { Start-Process $base | Out-Null }
-        if ($updatesPending) {
-            Add-Type -AssemblyName System.Windows.Forms
-            [System.Windows.Forms.MessageBox]::Show('The dashboard is updated. Backend updates are waiting so your current session stays running. Use Stop in the app, then click the launcher again to apply them.', 'Minecraft Companion updates') | Out-Null
+        $launcher = Join-Path $cache 'Minecraft Companion.exe'
+        if (-not (Test-Path -LiteralPath $launcher)) { & (Join-Path $PSScriptRoot 'Install-DesktopLauncher.ps1') | Out-Null }
+        $nativeExecutable = & (Join-Path $PSScriptRoot 'Build-Desktop.ps1')
+        # Reuse the selected account when reopening after a service update.
+        # First-time account setup still starts from the Connect button.
+        $accountState = Invoke-RestMethod -Uri "$base/api/state" -TimeoutSec 3
+        if ($accountState.settings.realmId -and $accountState.auth.status -eq 'disconnected') {
+            Invoke-RestMethod -Uri "$base/api/realms/refresh" -Method Post -ContentType 'application/json' -Body '{}' -TimeoutSec 5 | Out-Null
         }
+        $nativeArguments = @('--project', ('"' + $projectRoot + '"'), '--launcher', ('"' + $launcher + '"'))
+        if ($updatesPending) { $nativeArguments += '--updates-pending' }
+        Start-Process -FilePath $nativeExecutable -ArgumentList $nativeArguments | Out-Null
     }
-    @{ ready = $true; url = $base; backendUpdatesPending = $updatesPending; sourceFingerprint = $fingerprint } | ConvertTo-Json -Compress
+    $result = @{ ready = $true; url = $base; backendUpdatesPending = $updatesPending; sourceFingerprint = $fingerprint } | ConvertTo-Json -Compress
+    if ($ResultFile) { [System.IO.File]::WriteAllText($ResultFile, $result) }
+    Write-Output $result
 } catch {
     if ($NoOpen -or $CheckOnly) { throw }
     Add-Type -AssemblyName System.Windows.Forms

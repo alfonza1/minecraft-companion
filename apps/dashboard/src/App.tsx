@@ -28,6 +28,7 @@ import { attempt, Badge, Empty, human, Panel, type Common } from "./shared";
 import SharedTasks from "./SharedTasks";
 import Studio from "./Studio";
 import VoiceBridge from "./VoiceBridge";
+import DesktopBar from './DesktopBar';
 const navigation = [
   { id: "overview", name: "Overview", icon: LayoutDashboard },
   { id: "inventory", name: "Inventory", icon: Backpack },
@@ -132,6 +133,7 @@ export default function App() {
         </div>
       </aside>
       <div className="main-shell">
+        <DesktopBar />
         <header className="topbar">
           <div className="breadcrumb">
             Workspace <ChevronRight size={13} />
