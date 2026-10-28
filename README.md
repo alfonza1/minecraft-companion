@@ -2,7 +2,7 @@
 
 Local Minecraft Java teammate and build workspace extending [Mineness](https://github.com/SpectrumTantrum/mineness). React/TypeScript, Mineflayer, Microsoft device authentication, Codex conversation/planning, local Whisper/Piper speech, SQLite and a real blueprint viewer.
 
-**Realm compatibility:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1** natively. An optional pinned local ViaProxy bridge adds a **26.3** connection path. Translation can map newer blocks/items: exact construction, crafting/resource collection and automatic inventory reconciliation are blocked on this path. Microsoft-authenticated Realm login remains unverified until you connect the licensed bot account. See [bridge boundaries](services/protocol-bridge/README.md).
+**Realm compatibility:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1** natively. An optional pinned local ViaProxy bridge adds a **26.3** connection path. Translation can map newer blocks/items: exact construction, crafting/resource collection and automatic inventory reconciliation are blocked on this path. Microsoft-authenticated 26.3 Realm spawn and 45 seconds of passive operation passed after correcting player-certificate encoding; this does not establish exact building or gathering on that version. See [bridge boundaries](services/protocol-bridge/README.md).
 
 ## Launch
 

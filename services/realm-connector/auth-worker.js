@@ -4,6 +4,7 @@ import { secureCacheFactory } from './secure-cache.js';
 import { inspectRealmVersion } from './realm-version.js';
 import { authorizeSession } from './session-join.js';
 import { accountFailure, requireJavaProfile } from './java-profile.js';
+import { serializePlayerCertificates } from './player-certificates.js';
 
 const { Authflow, Titles } = prismarineAuth;
 const { RealmAPI } = prismarineRealms;
@@ -41,9 +42,7 @@ process.on('message', async message => {
       const keys = credentials.certificates?.profileKeys;
       if (message.type === 'session') session = credentials;
       send({ type: 'resolved', ...status,
-        ...(message.type === 'session' ? { address, profile: { id: profile.id, name: profile.name }, certificates: keys ? {
-          publicDER: keys.publicDER.toString('base64'), privateDER: keys.privateDER.toString('base64'), signatureV2: keys.signatureV2.toString('base64'), expiresOn: keys.expiresOn.toISOString(),
-        } : null } : {}) });
+        ...(message.type === 'session' ? { address, profile: { id: profile.id, name: profile.name }, certificates: serializePlayerCertificates(keys) } : {}) });
       if (message.type !== 'session') process.disconnect();
       return;
     }

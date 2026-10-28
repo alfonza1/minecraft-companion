@@ -1,4 +1,5 @@
 import { RealmVersionError } from './realm-version.js';
+import { PlayerCertificateError } from './player-certificates.js';
 
 const PROFILE_URL = 'https://api.minecraftservices.com/minecraft/profile';
 const FAILURES = {
@@ -34,6 +35,6 @@ export async function requireJavaProfile(credentials, request = fetch) {
 
 export function accountFailure(error) {
   if (error instanceof AccountSetupError) return { code: error.code, error: FAILURES[error.code] };
-  if (error instanceof RealmVersionError) return { code: error.code, error: error.message };
+  if (error instanceof RealmVersionError || error instanceof PlayerCertificateError) return { code: error.code, error: error.message };
   return { code: 'ACCOUNT_UNAVAILABLE', error: 'Microsoft/Minecraft sign-in or Realm listing failed. Check account ownership, Xbox permissions, network access and Realm invitation, then reconnect.' };
 }

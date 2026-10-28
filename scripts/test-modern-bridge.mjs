@@ -12,6 +12,9 @@ import { CompanionRuntime } from '../services/companion-runtime/index.js';
 import { Store } from '../services/memory/store.js';
 import { startBridge, getBridgeStatus, bridgeDirectory, bridgeSourcesHash, bridgeRuntimeHash, BRIDGE_PROXY_SHA256 } from '../services/protocol-bridge/index.js';
 import { createBridgeClient } from '../services/protocol-bridge/client.js';
+import { RealmConnector } from '../services/realm-connector/index.js';
+
+const onlineAccount = process.argv.includes('--online-account');
 
 const SERVER_SHA1 = '33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c';
 const cache = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion', 'test-runtime-modern');
@@ -32,9 +35,11 @@ if (process.argv.includes('--check-runtime')) { console.log('Verified private Ja
 if (!getBridgeStatus().installed) throw new Error('Protocol bridge artifacts are missing or stale. Run scripts/Setup-ProtocolBridge.ps1 before starting the official server fixture.');
 
 const directory = await mkdtemp(path.join(os.tmpdir(), 'companion-modern-'));
-const evidence = { at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1, clientVersion: '26.1', proxySha256: BRIDGE_PROXY_SHA256, sourcesHash: bridgeSourcesHash(), runtimeHash: bridgeRuntimeHash(), passed: false, scope: 'Official offline localhost-only survival protocol bridge fixture. No Microsoft authentication, Realm, building or modern item identity correctness is established.', results: [], movementPackets: [] };
+const evidence = { at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1, clientVersion: '26.1', proxySha256: BRIDGE_PROXY_SHA256, sourcesHash: bridgeSourcesHash(), runtimeHash: bridgeRuntimeHash(), passed: false, scope: onlineAccount ? 'Official authenticated localhost-only survival fixture. Uses the saved licensed bot account; no Realm world changes, building or modern item identity correctness established.' : 'Official offline localhost-only survival protocol bridge fixture. No Microsoft authentication, Realm, building or modern item identity correctness is established.', results: [], movementPackets: [] };
 const logs = [], bridges = [], bridgeClosures = [], startupDiagnostics = [];
 let child, runtime, store, exitPromise, exitResult = null, failed = false, joinRequests = 0;
+const accountConnector = onlineAccount ? new RealmConnector(path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion')) : null;
+let fixtureName = 'ModernFixture';
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const controller = new AbortController();
 const watchdog = setTimeout(() => { controller.abort(new Error('Modern bridge integration exceeded 240 seconds.')); child?.kill(); for (const bridge of bridges) void bridge.close(); }, 240_000);
@@ -43,10 +48,23 @@ async function until(predicate, label, timeout = 25_000) { const started = Date.
 async function check(name, work) { const detail = await work(); evidence.results.push({ name, status: 'passed', detail }); console.log(`PASS ${name} ${JSON.stringify(detail ?? {})}`); }
 function command(text) { if (!child || child.exitCode !== null) throw new Error('Modern test server is not running.'); child.stdin.write(text + '\n'); }
 try {
+  if (accountConnector) {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => finish(new Error('Saved bot account is unavailable. Connect it in the dashboard first.')), 15000);
+      const changed = () => {
+        if (accountConnector.auth.device || accountConnector.auth.status === 'error') finish(new Error('Saved bot account is unavailable. Connect it in the dashboard first.'));
+        else if (accountConnector.auth.status === 'connected' && accountConnector.realms.length) finish();
+      };
+      const finish = error => { clearTimeout(timer); accountConnector.off('change', changed); error ? reject(error) : resolve(); };
+      accountConnector.on('change', changed); accountConnector.connectAccount();
+    });
+    fixtureName = accountConnector.auth.username;
+    assert.match(fixtureName, /^[A-Za-z0-9_]{1,16}$/);
+  }
   const probe = net.createServer(); probe.listen(0, '127.0.0.1'); await once(probe, 'listening'); const port = probe.address().port; await new Promise(resolve => probe.close(resolve));
   await writeFile(path.join(directory, 'eula.txt'), 'eula=true\n');
   await writeFile(path.join(directory, 'server.properties'), [
-    'server-ip=127.0.0.1', `server-port=${port}`, 'online-mode=false', 'enforce-secure-profile=false', 'white-list=false', 'enforce-whitelist=false', 'gamemode=survival', 'force-gamemode=true', 'difficulty=peaceful', 'view-distance=2', 'simulation-distance=2', 'spawn-protection=0', 'max-players=2', 'max-world-size=256', 'generate-structures=false', 'level-type=minecraft:flat', 'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:stone","height":3},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}', 'enable-rcon=false', 'enable-query=false', 'enable-jmx-monitoring=false', 'allow-nether=false', 'network-compression-threshold=256', 'max-tick-time=-1', 'pause-when-empty-seconds=0', 'sync-chunk-writes=false', 'motd=Minecraft Companion isolated modern protocol test',
+    'server-ip=127.0.0.1', `server-port=${port}`, `online-mode=${onlineAccount}`, `enforce-secure-profile=${onlineAccount}`, 'white-list=false', 'enforce-whitelist=false', 'gamemode=survival', 'force-gamemode=true', 'difficulty=peaceful', 'view-distance=2', 'simulation-distance=2', 'spawn-protection=0', 'max-players=2', 'max-world-size=256', 'generate-structures=false', 'level-type=minecraft:flat', 'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:stone","height":3},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}', 'enable-rcon=false', 'enable-query=false', 'enable-jmx-monitoring=false', 'allow-nether=false', 'network-compression-threshold=256', 'max-tick-time=-1', 'pause-when-empty-seconds=0', 'sync-chunk-writes=false', 'motd=Minecraft Companion isolated modern protocol test',
   ].join('\n') + '\n');
   console.log(`Starting private official Minecraft 26.3 fixture on 127.0.0.1:${port} with private Java25.`);
   child = spawn(manifest.java, ['-Xms256M', '-Xmx768M', '-XX:ActiveProcessorCount=2', '-jar', manifest.serverJar, 'nogui'], { cwd: directory, windowsHide: true, shell: false, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -58,7 +76,8 @@ try {
   store = new Store(path.join(directory, 'app-state')); store.updateSettings({ realmId: 1, autonomy: 'instructions' });
   runtime = new CompanionRuntime({ store, connector: { close: async () => {} }, createBot: async () => {
     let bridge;
-    try { bridge = await startBridge({ host: '127.0.0.1', port, serverVersion: '26.3', profile: { id: '00112233445566778899aabbccddeeff', name: 'ModernFixture' }, certificates: null, joinServer: async () => { joinRequests++; throw new Error('Offline fixture must never authorize an online account.'); }, signal: controller.signal }); }
+    const session = accountConnector ? await accountConnector.resolveRealm(accountConnector.realms[0].id, true) : null;
+    try { bridge = await startBridge({ host: '127.0.0.1', port, serverVersion: '26.3', profile: session?.profile || { id: '00112233445566778899aabbccddeeff', name: fixtureName }, certificates: session?.certificates || null, joinServer: async (hash, signal) => { joinRequests++; if (!session) throw new Error('Offline fixture must never authorize an online account.'); await session.joinServer(hash, signal); }, signal: controller.signal }); }
     catch (error) { if (error.bridgeDiagnostics) startupDiagnostics.push(error.bridgeDiagnostics); throw error; }
     bridges.push(bridge);
     const bot = createBridgeClient(bridge, '26.3');
@@ -74,7 +93,7 @@ try {
     bot.on('kicked', reason => { const message = `Fixture client kicked: ${JSON.stringify(reason)}`; line(message); console.error(message); });
     bot.on('end', reason => line(`Fixture client ended: ${reason}`));
     bot.companionTransport = { kind: 'bridge', serverVersion: '26.3', clientVersion: bridge.version, projected: true };
-    bot.once('end', () => { bridgeClosures.push(bridge.close()); });
+    bot.once('end', () => { bridgeClosures.push((async () => { await bridge.close(); await session?.close(); })()); });
     return bot;
   } });
   await runtime.control('start');
@@ -96,7 +115,7 @@ try {
       return { spawned: false, rejected: true, legitimatePlayerStillConnected: true };
     } finally { untrusted.end(); }
   });
-  command('give ModernFixture minecraft:oak_log 4');
+  command(`give ${fixtureName} minecraft:oak_log 4`);
   await check('actual modern server inventory packets reach world state', async () => {
     await until(() => runtime.snapshot().world?.inventory.some(item => item.name === 'oak_log' && item.count === 4), 'four seeded logs in observed inventory');
     const world = runtime.snapshot().world;
@@ -106,12 +125,13 @@ try {
     return { inventory: world.inventory.map(item => ({ name: item.name, count: item.count })), inventoryExact: world.inventoryExact, provenance: world.provenance, projectedCraftingAndGatheringBlocked: true };
   });
   await check('actual survival pathfinding through translated protocol', async () => { const before = bot.entity.position.clone(); const result = await runtime.execute('goto', { x: before.x + 4, y: before.y, z: before.z, tolerance: 1 }); assert.ok(bot.entity.position.distanceTo(before) >= 2, JSON.stringify(result)); return { result, distanceMoved: bot.entity.position.distanceTo(before), before, after: bot.entity.position.clone() }; });
-  await check('translated disconnect and safe reconnect', async () => { const previous = bot; previous._client.end('Disposable modern fixture transport loss'); await until(() => runtime.bot !== previous && runtime.connection.status === 'connected', 'new translated bot connection', 50_000); bot = runtime.bot; assert.equal(runtime.state, 'PAUSED'); assert.equal(bot.game.gameMode, 'survival'); assert.ok(bridges.length >= 2); await until(() => runtime.snapshot().world?.inventory.some(item => item.name === 'oak_log' && item.count === 4), 'persisted inventory after reconnect'); assert.equal(joinRequests, 0); return { state: runtime.state, bridgesStarted: bridges.length, observedLogs: 4, onlineJoinCallbacks: joinRequests }; });
+  await check('translated disconnect and safe reconnect', async () => { const previous = bot; previous._client.end('Disposable modern fixture transport loss'); await until(() => runtime.bot !== previous && runtime.connection.status === 'connected', 'new translated bot connection', 50_000); bot = runtime.bot; assert.equal(runtime.state, 'PAUSED'); assert.equal(bot.game.gameMode, 'survival'); assert.ok(bridges.length >= 2); await until(() => runtime.snapshot().world?.inventory.some(item => item.name === 'oak_log' && item.count === 4), 'persisted inventory after reconnect'); if (onlineAccount) assert.ok(joinRequests >= 2); else assert.equal(joinRequests, 0); return { state: runtime.state, bridgesStarted: bridges.length, observedLogs: 4, onlineJoinCallbacks: joinRequests }; });
 } catch (error) { failed = true; evidence.results.push({ name: 'modern protocol integration', status: 'failed', error: error.stack }); console.error(error.stack); }
 finally {
   try { await runtime?.close(); } catch (error) { failed = true; line(`Runtime cleanup: ${error.message}`); }
   for (const bridge of bridges) { try { await bridge.close(); } catch (error) { failed = true; line(`Bridge cleanup: ${error.message}`); } }
   await Promise.allSettled(bridgeClosures);
+  await accountConnector?.close();
   if (child?.pid && !exitResult) {
     if (!child.killed) { try { command('stop'); await Promise.race([exitPromise, sleep(12_000)]); } catch (error) { line(error.message); } }
     if (!exitResult) { child.kill(); await Promise.race([exitPromise, sleep(10_000)]); }
@@ -122,8 +142,8 @@ finally {
   evidence.runtime = runtime ? { state: runtime.state, connection: runtime.connection, logs: runtime.logs } : null;
   evidence.bridgeDiagnostics = [...startupDiagnostics, ...bridges.map(bridge => bridge.diagnostics())]; evidence.serverLogTail = logs.slice(-60);
   evidence.passed = !failed && evidence.results.length === 6 && evidence.serverExited;
-  await mkdir(bridgeDirectory, { recursive: true }); await writeFile(path.join(bridgeDirectory, 'verification.json'), JSON.stringify(evidence, null, 2));
-  await writeFile(path.join(import.meta.dirname, '..', '.git', 'modern-bridge-results.json'), JSON.stringify(evidence, null, 2));
+  await mkdir(bridgeDirectory, { recursive: true }); await writeFile(path.join(bridgeDirectory, onlineAccount ? 'verification-online.json' : 'verification.json'), JSON.stringify(evidence, null, 2));
+  await writeFile(path.join(import.meta.dirname, '..', '.git', onlineAccount ? 'online-bridge-results.json' : 'modern-bridge-results.json'), JSON.stringify(evidence, null, 2));
   const target = path.resolve(directory), temporaryRoot = path.resolve(os.tmpdir()) + path.sep;
   if (target.startsWith(temporaryRoot) && path.basename(target).startsWith('companion-modern-')) await rm(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
 }

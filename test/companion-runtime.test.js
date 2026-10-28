@@ -50,6 +50,29 @@ async function connectingFixture() {
   return value;
 }
 
+test('a Realm kick stops retries and exposes only a stable diagnosis', async () => {
+  const { runtime, bot } = await connectingFixture();
+  try {
+    bot.emit('spawn');
+    bot.emit('kicked', { text: "private provider response: Failed to decode packet 'serverbound/minecraft:chat_session_update'" });
+    bot.emit('end');
+    assert.equal(runtime.state, 'ERROR'); assert.equal(runtime.connection.status, 'error');
+    assert.equal(runtime.reconnectTimer, null);
+    assert.equal(runtime.connection.errorCode, 'PLAYER_CERTIFICATE_REJECTED');
+    assert.equal(runtime.connection.error.includes('private provider response'), false);
+  } finally { await runtime.close(); }
+});
+
+test('a brief reconnect spawn does not reset the bounded retry budget', async () => {
+  const { runtime, bot } = await connectingFixture();
+  try {
+    runtime.connection.reconnectAttempt = 4;
+    bot.emit('spawn');
+    assert.equal(runtime.connection.reconnectAttempt, 4);
+    assert.ok(runtime.stabilityTimer);
+  } finally { await runtime.close(); }
+});
+
 test('death and subsequent spawn preserve pause and do not reactivate inference/reflexes', async () => {
   const { runtime, bot } = await connectingFixture();
   try {

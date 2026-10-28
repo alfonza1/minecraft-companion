@@ -2,7 +2,7 @@
 
 Evidence levels: implemented; automated tests passed; local gameplay passed; Realm gameplay passed. Passing a fixture does not imply Realm gameplay.
 
-- [x] Microsoft device flow, encrypted session cache, profile and Realm list adapters, version gate, observed inventory, bounded reconnect implemented. Optional pinned local bridge connects the 26.1 client view to 26.3. **Licensed Microsoft/Realm join remains unverified; translation disables exact construction and resource jobs.**
+- [x] Microsoft device flow, encrypted session cache, profile and Realm list adapters, version gate, observed inventory, bounded reconnect implemented. Optional pinned local bridge connects the 26.1 client view to 26.3. **Licensed 26.3 Realm spawn and 45 passive seconds passed; translation still disables exact construction and resource jobs.** Player certificates are canonical DER, preserving provider signatures; explicit kicks stop retries, and brief spawns no longer reset the retry budget.
 - [x] Six localhost dashboard pages plus five-step guided setup, controls, SQLite, WebSockets and desktop/mobile browser verification. Setup uses actual readiness checks and explicit audio/account/session actions.
 - [x] Actual local STT/Piper and Codex calls, device selection, browser PTT/VAD, opt-in desktop F8, cancellation. **Physical audio/F8 and streaming speech unverified or unfinished.**
 - [x] Reused movement/gathering/crafting executor with cancellation, mining-area approval and initial reflexes. Official1.21.5 vanilla crafting passed after explicit EULA acceptance. **Advanced survival/progression remains unfinished.**

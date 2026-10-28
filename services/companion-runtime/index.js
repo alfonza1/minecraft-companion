@@ -7,11 +7,13 @@ import { createActions } from '../../src/actions.js';
 import { createToolRegistry } from './tools.js';
 import { observeWorld } from '../world-state/index.js';
 import { gatherApprovedBlocks, requireNaturalTree } from '../skill-executor/index.js';
+import { diagnoseKick } from '../realm-connector/kick-diagnosis.js';
 
 const { pathfinder, Movements, goals } = pathfinderPkg;
 const HOSTILES = new Set(['zombie', 'skeleton', 'creeper', 'spider', 'drowned', 'husk', 'stray', 'witch', 'pillager', 'phantom', 'warden', 'blaze', 'hoglin', 'piglin_brute']);
 export const REFLEX_INTERVAL_MS = 500;
 export const MAX_RECONNECTS = 5;
+export const STABLE_CONNECTION_MS = 30000;
 
 export class CompanionRuntime extends EventEmitter {
   constructor({ store, connector, createBot, timers = globalThis }) {
@@ -80,7 +82,7 @@ export class CompanionRuntime extends EventEmitter {
     const realmId = this.store.settings().realmId;
     if (!Number.isSafeInteger(realmId)) throw new Error('Choose your Realm in Settings first.');
     const generation = ++this.generation;
-    this.connection = { ...this.connection, realmId, status: 'connecting', error: null };
+    this.connection = { ...this.connection, realmId, status: 'connecting', error: null, errorCode: null };
     this.emit('change');
     let bot;
     try { bot = await this.botFactory(realmId); }
@@ -115,7 +117,10 @@ export class CompanionRuntime extends EventEmitter {
       movement.allowSprinting = false; movement.maxDropDown = 1; movement.allowFreeMotion = false;
       movement.scafoldingBlocks = []; movement.liquidCost = 100;
       bot.pathfinder.setMovements(movement); bot.collectBlock.movements = null;
-      this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, serverVersion: bot.companionTransport?.serverVersion || bot.version, transport: bot.companionTransport?.kind || 'native', projected: Boolean(bot.companionTransport?.projected), error: null, reconnectAttempt: 0 };
+      this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, serverVersion: bot.companionTransport?.serverVersion || bot.version, transport: bot.companionTransport?.kind || 'native', projected: Boolean(bot.companionTransport?.projected), error: null, errorCode: null };
+      this.timers.clearTimeout(this.stabilityTimer);
+      this.stabilityTimer = this.timers.setTimeout(() => { if (current() && this.connection.status === 'connected') { this.connection.reconnectAttempt = 0; this.emit('change'); } }, STABLE_CONNECTION_MS);
+      this.stabilityTimer.unref?.();
       this.state = activate ? 'ACTIVE' : 'PAUSED';
       if (!activate) { this.jobController?.abort(new Error('Respawn/reconnection requires explicit resume.')); this.actions.stop('Resume explicitly after respawn or reconnect.'); this.fullAudioStop(); this.modelCancel(); }
       observe(); this.log('info', recovering ? 'Reconnected safely. Resume explicitly to continue.' : `Connected as ${bot.username}.`);
@@ -124,7 +129,14 @@ export class CompanionRuntime extends EventEmitter {
     bot.on('health', observe); bot.on('experience', observe); bot.on('heldItemChanged', observe);
     bot.once('spawn', () => bot.inventory.on('updateSlot', observe));
     bot.on('death', () => { if (this.bot === bot) { this.activationRequested = false; this.state = 'PAUSED'; this.jobController?.abort(); this.actions.stop('Died. Resume after respawn.'); observe(); this.emit('pause'); this.modelCancel(); this.fullAudioStop(); } });
-    bot.on('kicked', () => { this.connection.error = 'The Realm kicked the companion. Check permissions, account session and version.'; this.log('error', this.connection.error); });
+    bot.on('kicked', reason => {
+      if (!current()) return;
+      bot.companionKicked = true;
+      const diagnosis = diagnoseKick(reason);
+      this.connection.error = diagnosis.message; this.connection.errorCode = diagnosis.code;
+      this.activationRequested = false;
+      this.log('error', this.connection.error);
+    });
     bot.on('error', error => {
       if (this.bot !== bot) return;
       // Raw protocol/auth errors can contain tokens or signed chat data.
@@ -151,6 +163,7 @@ export class CompanionRuntime extends EventEmitter {
     if (this.bot !== bot) return;
     this.timers.clearInterval(this.worldTimer);
     this.timers.clearTimeout(this.connectionTimer);
+    this.timers.clearTimeout(this.stabilityTimer);
     this.bot = null; this.world = null; this.tools.clear();
     this.jobController?.abort(new Error('Minecraft disconnected.'));
     this.actions?.stop('Minecraft disconnected.');
@@ -160,6 +173,7 @@ export class CompanionRuntime extends EventEmitter {
     this.state = 'ERROR'; this.connection.status = 'reconnecting';
     this.connection.error ||= 'Connection lost. Gameplay stopped; reconnecting with work paused.';
     this.emit('change');
+    if (bot.companionKicked) { this.connection.status = 'error'; this.emit('change'); return; }
     this.scheduleReconnect();
   }
   scheduleReconnect() {
@@ -176,6 +190,7 @@ export class CompanionRuntime extends EventEmitter {
   async disconnectBot() {
     const bot = this.bot;
     this.timers.clearInterval(this.worldTimer);
+    this.timers.clearTimeout(this.stabilityTimer);
     this.timers.clearTimeout(this.connectionTimer);
     this.bot = null; this.world = null; this.tools.clear(); this.actions = null;
     this.connection.status = 'offline'; this.emit('disconnect'); this.emit('change');

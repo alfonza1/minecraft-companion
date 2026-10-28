@@ -23,6 +23,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
   const [copied, setCopied] = useState(false);
   const latestState = useRef(state); latestState.current = state;
   const mounted = useRef(true);
+  const compatibilityRequest = useRef(0);
   const ownsPlanning = useRef(false);
   const voice = useVoice({ state: state.state, settings: { ...state.settings.voice, handsFree: false }, onError: setError, onTranscript: async text => { setTranscript(text); } });
   const accountReady = state.auth.status === "connected";
@@ -34,13 +35,20 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
 
   useEffect(() => {
     mounted.current = true;
-    void api<SetupStatus>("/setup").then(result => { if (mounted.current) { setStatus(result); setCompatibility(result.compatibility); } }).catch(err => { if (mounted.current) setError(err.message); });
     return () => {
       mounted.current = false;
       const current = latestState.current;
       if (ownsPlanning.current && current.planning && ["ACTIVE", "BUSY"].includes(current.state)) void api("/control", { command: "pause" }).catch(() => {});
     };
   }, []);
+  useEffect(() => {
+    let current = true;
+    const request = ++compatibilityRequest.current;
+    void api<SetupStatus>("/setup").then(result => {
+      if (current && request === compatibilityRequest.current) { setStatus(result); setCompatibility(result.compatibility); }
+    }).catch(err => { if (current) setError(err.message); });
+    return () => { current = false; };
+  }, [step, state.auth.status, state.settings.realmId]);
   useEffect(() => {
     if (enableRequested && active) { setEnableRequested(false); void voice.enable(); }
   }, [enableRequested, active, voice.enable]);
@@ -59,8 +67,16 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
     await run(async () => { const result = await api<SetupStatus>("/setup/check", {}); setStatus(result); setCompatibility(result.compatibility); });
   }
   async function checkRealm() {
-    if (!state.settings.realmId) return;
-    await run(async () => { setCompatibility(null); setCompatibility(await api<Compatibility>("/realms/check", { realmId: state.settings.realmId })); });
+    const realmId = state.settings.realmId;
+    if (!realmId) return;
+    await run(async () => { await inspectSelectedRealm(realmId); });
+  }
+  async function inspectSelectedRealm(realmId: number) {
+    const request = ++compatibilityRequest.current;
+    setCompatibility(null);
+    const result = await api<Compatibility>("/realms/check", { realmId });
+    if (request === compatibilityRequest.current && mounted.current) setCompatibility(result);
+    return result;
   }
   async function startAudio() {
     await run(async () => {
@@ -87,7 +103,13 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
       voice.disable(); setEnableRequested(false);
       await mutate("/settings", { playerName: player, autonomy: "instructions" });
       if (realm) {
-        if (!accountReady || !realmSupported) throw new Error("Connect the account and check the selected Realm before starting.");
+        const realmId = state.settings.realmId;
+        const username = state.auth.username;
+        if (!accountReady || !selectedRealm || !realmId) throw new Error("Connect the account and select a Realm before starting.");
+        const checked = realmSupported ? selectedCompatibility! : await inspectSelectedRealm(realmId);
+        if (!["native", "bridge"].includes(checked.status)) throw new Error(checked.message);
+        const current = latestState.current;
+        if (current.settings.realmId !== realmId || current.auth.username !== username || current.auth.status !== "connected") throw new Error("The selected Realm or account changed. Connect again when your selection is ready.");
         if (state.planning) await mutate("/control", { command: "stop" });
         await mutate("/control", { command: "start" });
       } else if (state.planning && state.state === "PAUSED") await mutate("/control", { command: "resume" });
@@ -105,7 +127,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
       {step === 0 ? <Panel title="Check your local services" eyebrow="01 / LOCAL SERVICES" action={<button className="button" disabled={blocked} onClick={() => attempt(refresh())}><RefreshCw size={14} />{working ? "Checking services…" : "Check local services"}</button>}>
         <p>Your Minecraft installation stays as it is. These checks read local service status without asking Codex a question.</p>
         <div className="setup-checks"><Readiness label="App runtime" ready={status?.node.ready} detail={status?.node.version ? `Node ${status.node.version}` : "Waiting for local health check"} /><Readiness label="Codex account" ready={status?.codex.authenticated ?? undefined} detail={status?.codex.error || status?.codex.version || "Checking local Codex sign-in"} /><Readiness label="Local speech" ready={status?.voice.available} detail={status?.voice.error || status?.voice.tts || "Checking Whisper and speech output"} /></div>
-        {status?.bridge ? <p className="note">Realm protocol translation: {status.bridge.installed ? `installed${status.bridge.version ? ` (${status.bridge.version})` : ""}. ${status.bridge.verified ? "Local bridge validation passed; your Microsoft account and Realm still need testing." : "Live translation and Realm sign-in need validation."}` : "not installed. Native-compatible Realms do not need translation."}</p> : null}
+        {status?.bridge ? <p className="note">Realm protocol translation: {status.bridge.installed ? `installed${status.bridge.version ? ` (${status.bridge.version})` : ""}. ${status.bridge.verified ? "Local bridge validation passed. Your account and live Realm status are shown in the next steps." : "Live translation and Realm sign-in need validation."}` : "not installed. Native-compatible Realms do not need translation."}</p> : null}
         {status?.codex.authenticated === false ? <p className="note">Codex needs your sign-in. Open your normal Codex app and sign in, then check local services again.</p> : null}
         <p className="note">{status?.checkedAt ? `Status checked ${time(status.checkedAt)}.` : status ? "Showing existing service status. Run the check to refresh it." : "Reading existing local status…"} A green local service does not mean a Realm or microphone has been tested.</p>
       </Panel> : null}
@@ -123,7 +145,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
         {!accountReady ? <p className="quiet-empty">Connect the Minecraft account in step 2 to discover invited Realms.</p> : !state.realms.length ? <p className="quiet-empty">No invited Realms have been returned. Check the invitation and Xbox permissions, then refresh.</p> : <label className="field-label">Invited Realms<select value={state.settings.realmId || ""} onChange={event => { setCompatibility(null); attempt(mutate("/settings", { realmId: event.target.value ? Number(event.target.value) : null })); }}><option value="">Select a Realm</option>{state.realms.map(realm => <option key={realm.id} value={realm.id}>{realm.name} · {realm.owner}</option>)}</select></label>}
         <button className="button" disabled={blocked || !accountReady || !selectedRealm} onClick={() => attempt(checkRealm())}>{working ? "Checking Realm…" : "Check Realm compatibility"}</button>
         <p className="note">This resolves and pings the selected Realm. It does not join a Minecraft player or start gameplay. A sleeping Realm may need time to become available.</p>
-        {selectedCompatibility ? <div className={`setup-compatibility ${selectedCompatibility.status}`} role="status"><Badge tone={selectedCompatibility.status === "native" ? "green" : "muted"}>{selectedCompatibility.status === "native" ? "Native protocol supported" : selectedCompatibility.status === "bridge" ? "Translation required" : "Connection needs attention"}</Badge><p>{selectedCompatibility.message}</p><div className="data-row"><span>Realm version</span><strong>{selectedCompatibility.serverVersion || "Unknown"}</strong></div><div className="data-row"><span>Companion client version</span><strong>{selectedCompatibility.clientVersion || "Not established"}</strong></div><p className="note">Checked {time(selectedCompatibility.checkedAt)}. Real account join and gameplay remain unverified until connected.</p>{selectedCompatibility.status === "bridge" ? <p className="note">Protocol translation can substitute newer blocks and items. Exact builds on translated versions are unavailable; validate behavior before relying on it.</p> : null}</div> : <p className="quiet-empty">Realm compatibility has not been checked for this selection.</p>}
+        {selectedCompatibility ? <div className={`setup-compatibility ${selectedCompatibility.status}`} role="status"><Badge tone={selectedCompatibility.status === "native" ? "green" : "muted"}>{selectedCompatibility.status === "native" ? "Native protocol supported" : selectedCompatibility.status === "bridge" ? "Translation required" : "Connection needs attention"}</Badge><p>{selectedCompatibility.message}</p><div className="data-row"><span>Realm version</span><strong>{selectedCompatibility.serverVersion || "Unknown"}</strong></div><div className="data-row"><span>Companion client version</span><strong>{selectedCompatibility.clientVersion || "Not established"}</strong></div><p className="note">Checked {time(selectedCompatibility.checkedAt)}. This checks the version. Live connection status appears in First session.</p>{selectedCompatibility.status === "bridge" ? <p className="note">Protocol translation can substitute newer blocks and items. Exact builds on translated versions are unavailable; validate behavior before relying on it.</p> : null}</div> : <p className="quiet-empty">Realm compatibility has not been checked for this selection.</p>}
         <button className="text-button" onClick={() => changeStep(3)}>Continue with offline planning <ArrowRight size={14} /></button>
       </Panel> : null}
       {step === 3 ? <Panel title="Make sure you can hear each other" eyebrow="04 / YOUR AUDIO" action={<Badge tone={voice.enabled ? "green" : "muted"}>{voice.enabled ? "Microphone enabled" : "Microphone off"}</Badge>}>
@@ -141,8 +163,8 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
       {step === 4 ? <Panel title="Start with a small first session" eyebrow="05 / SURVIVAL, TOGETHER">
         <label className="field-label">Your Minecraft username<input value={player} onChange={event => setPlayer(event.target.value)} maxLength={16} placeholder="Who should the companion follow?" /></label>
         <p>Your first session uses <strong>Follow instructions only</strong>. Construction needs an approved blueprint; mining needs a separately approved area. Nothing here approves clearing or spends rare shared resources.</p>
-        <div className="setup-checks"><Readiness label="Minecraft account" ready={accountReady} detail={accountReady ? state.auth.username || "Connected" : "Microsoft sign-in still needed for Realms"} /><Readiness label="Selected Realm" ready={selectedCompatibility?.status === "native" ? true : undefined} detail={selectedCompatibility?.status === "bridge" ? "Translation path available · newer content may differ" : selectedCompatibility?.message || "Choose and check a Realm before joining"} /><Readiness label="Actual world observation" ready={Boolean(state.world)} detail={state.world ? `Connected as ${state.connection.username}` : "No player has joined through this setup check"} /></div>
-        <div className="setup-launch"><button className="button primary" disabled={blocked || !accountReady || !realmSupported || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(true))}>Connect to selected Realm <ArrowRight size={15} /></button><button className="button" disabled={blocked || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(false))}><Compass size={15} />Start planning offline</button></div>
+        <div className="setup-checks"><Readiness label="Minecraft account" ready={accountReady} detail={accountReady ? state.auth.username || "Connected" : "Microsoft sign-in still needed for Realms"} /><Readiness label="Selected Realm" ready={selectedCompatibility?.status === "native" ? true : undefined} pendingLabel={selectedCompatibility?.status === "bridge" ? "Translation required" : selectedRealm ? "Selected" : "Choose a Realm"} detail={selectedRealm ? `${selectedRealm.name} · ${selectedCompatibility?.message || "Saved. Compatibility will be checked when you connect."}` : "Choose a Realm in step 3."} /><Readiness label="Actual world observation" ready={state.world ? true : state.connection.status === "error" ? false : undefined} pendingLabel="Not connected yet" detail={state.world ? `Connected as ${state.connection.username}` : state.connection.error || "Live health and inventory appear after your companion joins. You can connect below."} /></div>
+        <div className="setup-launch"><button className="button primary" disabled={blocked || !accountReady || !selectedRealm || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(true))}>Connect to selected Realm <ArrowRight size={15} /></button><button className="button" disabled={blocked || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(false))}><Compass size={15} />Start planning offline</button></div>
         <p className="note">Offline planning supports conversation and building design without a Realm. Starting a session alone makes no model requests. In-game movement, survival decisions and construction still need supervised validation on your Realm.</p>
       </Panel> : null}
       <div className="setup-pagination"><button className="button" disabled={step === 0} onClick={() => changeStep(step - 1)}><ArrowLeft size={14} />Back</button><span>Step {step + 1} of {steps.length}</span>{step < steps.length - 1 ? <button className="button" onClick={() => changeStep(step + 1)}>Continue <ArrowRight size={14} /></button> : <button className="button" onClick={() => navigate("overview")}>Back to overview</button>}</div>
@@ -150,6 +172,6 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
   </div>;
 }
 
-function Readiness({ label, ready, detail }: { label: string; ready?: boolean; detail: string }) {
-  return <div className="setup-readiness"><span className={`setup-check-symbol ${ready === true ? "ready" : ""}`}>{ready === true ? <Check size={16} /> : "·"}</span><div><strong>{label}</strong><small>{detail}</small></div><Badge tone={ready === true ? "green" : "muted"}>{ready === true ? "Ready" : ready === false ? "Needs attention" : "Unverified"}</Badge></div>;
+function Readiness({ label, ready, detail, pendingLabel = "Unverified" }: { label: string; ready?: boolean; detail: string; pendingLabel?: string }) {
+  return <div className="setup-readiness"><span className={`setup-check-symbol ${ready === true ? "ready" : ""}`}>{ready === true ? <Check size={16} /> : "·"}</span><div><strong>{label}</strong><small>{detail}</small></div><Badge tone={ready === true ? "green" : "muted"}>{ready === true ? "Ready" : ready === false ? "Needs attention" : pendingLabel}</Badge></div>;
 }
