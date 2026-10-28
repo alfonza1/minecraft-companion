@@ -12,9 +12,23 @@ function ownedItems(phrase, inventory) {
 
 // Anchored everyday commands only. Ambiguous or unrelated speech falls through
 // to conversation; this path performs no model or external service request.
-export function quickPlan(text, { world, playerName, currentTask } = {}) {
+export function quickPlan(text, { world, playerName, currentTask, locations = [] } = {}) {
   if (!world) return null;
   const message = text.trim().toLowerCase().replace(/^[\s]*(?:hey[, ]+|yo[, ]+)?(?:can you |could you |please )?/, '').replace(/[.!?]+$/, '').replace(/ please$/, '').trim();
+  if (/^(?:help me|come help me|come help|i need help|rescue me)$/.test(message)) return { reply: 'Coming to help. I’ll pick up my work afterward.', intent: 'minecraft_action', actions: [{ tool: 'rescue_player', args: {} }] };
+  const routine = message.match(/^(?:get ready|prepare)(?: to| for)? (mine|mining|build|building|travel|a trip)$/);
+  if (routine) return { reply: 'Let me check my supplies.', intent: 'minecraft_action', actions: [{ tool: 'prepare_routine', args: { routine: /min/.test(routine[1]) ? 'mining' : /build/.test(routine[1]) ? 'building' : 'travel' } }] };
+  if (/^(?:restock|restock supplies|top up supplies)$/.test(message)) return { reply: 'I’ll check the approved supply chests.', intent: 'minecraft_action', actions: [{ tool: 'restock_supplies', args: { routine: 'mining' } }] };
+  if (/^(?:recover (?:my|your|the) items|go get (?:my|your) stuff|recover your gear)$/.test(message)) return { reply: 'I’ll check the saved death site and the danger first.', intent: 'minecraft_action', actions: [{ tool: 'recover_items', args: {} }] };
+  const place = message.match(/^(?:go|return|head)(?: back)? (?:to )?(.{1,60})$/);
+  if (place && locations.some(value => value.id === place[1])) return { reply: `Heading to ${place[1]}.`, intent: 'minecraft_action', actions: [{ tool: 'visit_location', args: { name: place[1] } }] };
+  const bring = message.match(/^(?:bring|fetch)(?: me)? (?:(?:a |one )?stack of |(\d+) )([a-z ]+)$/);
+  if (bring && playerName) {
+    const count = Number(bring[1] || 64), phrase = bring[2];
+    let name = phrase === 'wood' || phrase === 'logs' ? 'oak_log' : normalize(phrase).replace(/ /g, '_');
+    if (name === 'torch' || name === 'torches') name = 'torch';
+    if (count > 0 && count <= 64) return { reply: 'I’ll bring what’s missing, then get back to my task.', intent: 'minecraft_action', actions: [{ tool: 'bring_items', args: { item: name, count, player: playerName } }] };
+  }
   if (/^(?:come here|come to me)$/.test(message) && playerName) return { reply: 'Yeah, coming over.', intent: 'minecraft_action', actions: [{ tool:'goto', args:{ player:playerName, tolerance:2 } }] };
   if (/^(?:follow me|follow along)$/.test(message) && playerName) return { reply:'Yeah, I’m with you.', intent:'minecraft_action', actions:[{tool:'follow_player',args:{player:playerName,distance:3}}] };
   if (/^(?:what are you doing|what're you doing)$/.test(message)) return {reply:currentTask ? `I'm working on ${currentTask.name || currentTask.tool}.` : 'Nothing queued up right now.',intent:'minecraft_question',actions:[]};

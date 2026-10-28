@@ -143,11 +143,12 @@ export function registerBuildRoutes(app, context) {
     put({ ...latest, assignments: reconcileAssignments(latest.assignments, observed?.inventory, observed?.observedAt) });
     return { ...result, material, requested: count, remaining: assignmentNeeds(getProject(project.id).assignments.find((a) => a.material === material)) };
   }));
-  app.post('/api/projects/:id/build', endpoint(async ({ params, body }) => {
+  async function startBuild(projectId, body) {
     if (runtime.bot?.companionTransport?.projected) throw new Error('Exact construction is disabled on translated connections. Use a natively supported server version.');
     if (runtime.snapshot().world?.inventoryExact === false) throw new Error('Wait for server inventory confirmation before construction.');
-    ensureEditable(params.id);
-    const project = getProject(params.id);
+    ensureEditable(projectId);
+    const project = getProject(projectId);
+    if (body.expectedRevision !== undefined && (body.expectedRevision !== project.revision || body.expectedHash !== project.approvedHash)) throw new Error('The saved build revision changed. Review and approve it before restarting construction.');
     const origin = validateOrigin(body?.origin);
     if (!runtime.isActive() || runtime.snapshot().state === 'BUSY') throw new Error('Start/resume an idle companion before building.');
     if (project.approvedRevision !== project.revision || !project.blueprint || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the current blueprint before starting.');
@@ -162,7 +163,7 @@ export function registerBuildRoutes(app, context) {
     project.reservations = reservations;
     put(project);
     inFlight.add(project.id);
-    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, signal, save: (p) => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null }), publish }));
+    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, signal, save: (p) => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null }), publish }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
     // The long-running task is owned by the runtime, not the HTTP connection.
     // Frontend aborts cannot masquerade as backend task cancellation.
     void job.catch((error) => {
@@ -173,8 +174,14 @@ export function registerBuildRoutes(app, context) {
       const current = getProject(project.id);
       put({ ...current, reservations: {} });
     });
-    return { started: true, projectId: project.id };
-  }));
+    return { started: true, projectId: project.id, job };
+  }
+  runtime.resumeHandlers ||= new Map();
+  runtime.resumeHandlers.set('resume_build', async args => {
+    if (!args || typeof args.projectId !== 'string' || !Number.isSafeInteger(args.expectedRevision) || typeof args.expectedHash !== 'string') throw new Error('Invalid saved build checkpoint.');
+    const result = await startBuild(args.projectId, args); return result.job;
+  });
+  app.post('/api/projects/:id/build', endpoint(async ({ params, body }) => { const { job, ...result } = await startBuild(params.id, body || {}); return result; }));
   app.post('/api/projects/:id/schematic', endpoint(async (request) => {
     ensureEditable(request.params.id);
     const project = getProject(request.params.id);

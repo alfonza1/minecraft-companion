@@ -6,9 +6,11 @@ const itemName = z.string().regex(/^[a-z][a-z0-9_]*$/).max(80);
 const quantity = z.number().int().min(1).max(2304);
 const SYNC_TIMEOUT_MS = 5000;
 const pendingSyncs = new WeakMap();
+export const HANDOFF_APPROACH_DISTANCE = 0.75;
+export const HANDOFF_STEP_BACK_DISTANCE = 3;
 const EQUIPMENT = { head: /(?:_helmet|^carved_pumpkin)$/, torso: /(?:_chestplate|^elytra)$/, legs: /_leggings$/, feet: /_boots$/ };
 
-async function confirmInventory(bot) {
+export async function confirmInventory(bot) {
   if (!bot.supportFeature('stateIdUsed') || !bot._syncWindow) throw new Error('This client cannot confirm an inventory transfer safely.');
   bot.companionInventoryUnverified = true;
   // Reuse a timed-out request until it settles, rather than accumulating the
@@ -32,7 +34,7 @@ export async function dropInventoryItem(bot, { item, count, player }, signal) {
   if (!before) throw new Error(`I don't have any ${item}.`);
   const target = player ? resolvePlayer(bot, player) : null;
   if (target) {
-    await walkTo(bot, target.entity.position, 2, signal);
+    await walkTo(bot, target.entity.position, HANDOFF_APPROACH_DISTANCE, signal);
     const live = resolvePlayer(bot, target.username).entity;
     if (bot.entity.position.distanceTo(live.position) > 3.5) throw new Error('The player moved out of handoff range.');
     await bot.lookAt(live.position.offset(0, 0.8, 0), true);
@@ -52,6 +54,15 @@ export async function dropInventoryItem(bot, { item, count, player }, signal) {
       // item and no fabricated slot writes; server sync below is authoritative.
       await bot.clickWindow(stack.slot, wholeStack ? 1 : 0, 4);
       remaining -= amount;
+    }
+    if (target) {
+      signal.throwIfAborted();
+      const live = resolvePlayer(bot, target.username).entity;
+      const away = bot.entity.position.minus(live.position); away.y = 0;
+      if (away.norm() < 0.2) away.x = 1;
+      // Inventory Throw clicks scatter around the donor. Stand in pickup range
+      // first, then leave it so the donor cannot immediately reclaim the gift.
+      await walkTo(bot, bot.entity.position.plus(away.normalize().scaled(HANDOFF_STEP_BACK_DISTANCE)), 0.75, signal);
     }
   } finally {
     try { await confirmInventory(bot); confirmed = true; }

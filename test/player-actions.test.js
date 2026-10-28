@@ -35,6 +35,19 @@ test('server rejection never becomes a successful predicted handoff', async () =
   const result=await dropInventoryItem(fixture.bot,{item:'oak_log',count:3},new AbortController().signal);
   assert.equal(result.success,false); assert.equal(result.dropped,0); assert.equal(fixture.actual(),7);
 });
+
+test('player handoff approaches pickup range and steps away before authoritative reconciliation', async () => {
+  const fixture = inventoryBot(), bot = fixture.bot, routes = [];
+  bot.entity = { position: new Vec3(0.5, 5, 0.5) };
+  bot.players = { Alfonza: { entity: { position: new Vec3(4.5, 5, 0.5) } } };
+  bot.pathfinder = { goto: async goal => { routes.push(goal); bot.entity.position = new Vec3(goal.x, goal.y, goal.z); }, setGoal() {} };
+  bot.lookAt = async () => {}; bot.waitForTicks = async () => {};
+  const result = await dropInventoryItem(bot, { item: 'oak_log', count: 3, player: 'Alfonza' }, new AbortController().signal);
+  assert.equal(result.dropped, 3); assert.equal(routes.length, 2);
+  assert.equal(routes[0].rangeSq, 0.75 * 0.75);
+  assert.ok(bot.entity.position.distanceTo(bot.players.Alfonza.entity.position) >= 3);
+  assert.equal(result.recipientPickupVerified, false); assert.equal(bot.companionInventoryUnverified, false);
+});
 test('cancelling a drop stops subsequent clicks and still reconciles the completed transfer', async () => {
   const controller=new AbortController(),fixture=inventoryBot({cancel:()=>controller.abort()});
   await assert.rejects(dropInventoryItem(fixture.bot,{item:'oak_log',count:3},controller.signal),{name:'AbortError'});

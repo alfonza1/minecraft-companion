@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { navigateWithRecovery } from '../../services/skill-executor/navigation.js';
 import { toolResult } from "../bot.js";
-import { resolvePlayer, walkTo } from "../actions.js";
+import { resolvePlayer } from "../actions.js";
 
 export function registerGoto(mcp, bot, actions) {
   mcp.tool("goto", "Walk to a visible player OR x,y,z coordinates, not both. Completes on arrival, failure, stop, or a 45-second deadline.", {
@@ -16,7 +17,7 @@ export function registerGoto(mcp, bot, actions) {
     }
     const target = player ? resolvePlayer(bot, player) : null;
     const destination = target?.entity.position ?? { x, y, z };
-    const remaining = await walkTo(bot, destination, tolerance, signal);
+    const remaining = await navigateWithRecovery(bot, destination, tolerance, signal);
     const position = bot.entity.position.floored();
     return { reached: true, position, remaining, summary: `Arrived near ${target?.username ?? `(${x}, ${y}, ${z})`} at ${position}.` };
   })));

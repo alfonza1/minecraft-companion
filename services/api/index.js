@@ -20,6 +20,8 @@ import { registerPrivateAccountRoutes } from '../realm-connector/private-browser
 import { sourceFingerprint } from '../../scripts/desktop-source.mjs';
 import { normalizeHotkey } from '../../packages/shared-types/hotkeys.js';
 import voiceCatalog from '../voice/voices.json' with { type: 'json' };
+import { TeammateService } from '../skill-executor/teammate.js';
+import { registerTeammateRoutes } from '../skill-executor/teammate-routes.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const runningSourceFingerprint = await sourceFingerprint(root);
@@ -34,12 +36,12 @@ export async function createApp(options = {}) {
   const connector = options.connector || new RealmConnector(store.directory);
   const runtime = options.runtime || new CompanionRuntime({ store, connector });
   const clients = new Set();
-  let orchestrator, voiceModule = options.voiceModule;
+  let orchestrator, teammate, voiceModule = options.voiceModule;
   let codexStatus = { available: null, authenticated: null, version: null, error: null };
   const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
     projects: store.get('projects'), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
     usage: orchestrator?.usage || { requests: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billingCost: null },
-    settings: store.settings(), codex: codexStatus, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
+    settings: store.settings(), teammate: teammate?.snapshot(), codex: codexStatus, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
   });
   let scheduled = false;
   const publish = () => {
@@ -63,6 +65,7 @@ export async function createApp(options = {}) {
     },
   };
   const context = { store, connector, runtime, publish, dataDir: store.directory, readiness };
+  teammate = new TeammateService(context); context.teammate = teammate;
   app.decorate('companion', { ...context, snapshot });
   const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   app.addHook('onRequest', async (request, reply) => {
@@ -116,6 +119,7 @@ export async function createApp(options = {}) {
     return { text: await orchestrator.respond(text) };
   });
   app.post('/api/conversation/cancel', async () => { await orchestrator?.cancelInference(); return { cancelled: true }; });
+  registerTeammateRoutes(app, { ...context, getOrchestrator: () => orchestrator });
   app.post('/api/memories', async request => {
     const value = z.object({ label: z.string().trim().min(1).max(100), value: z.string().trim().min(1).max(3000) }).strict().parse(request.body);
     const record = store.put('memories', { ...value, id: randomUUID(), provenance: 'user-reported', at: new Date().toISOString() }); publish(); return record;
@@ -143,7 +147,7 @@ export async function createApp(options = {}) {
     const { createOrchestrator, getCodexStatus } = await import('../agent-orchestrator/index.js');
     orchestrator = createOrchestrator(context);
     context.orchestrator = orchestrator;
-    runtime.modelCancel = () => orchestrator.cancel(); runtime.audioStop = () => voiceModule.cancelSpeech(); runtime.fullAudioStop = () => voiceModule.stopVoice();
+    runtime.modelCancel = options => orchestrator.cancel(options); runtime.audioStop = () => voiceModule.cancelSpeech(); runtime.fullAudioStop = () => voiceModule.stopVoice();
     runtime.on('conversation', text => orchestrator.respond(text).catch(error => runtime.log('error', error.message)));
     const { registerBuildRoutes } = await import('../build-planner/index.js');
     await registerBuildRoutes(app, context);

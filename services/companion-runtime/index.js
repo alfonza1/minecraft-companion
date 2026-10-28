@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import pathfinderPkg from 'mineflayer-pathfinder';
 import collectBlockPkg from 'mineflayer-collectblock';
 import { Vec3 } from 'vec3';
-import { createActions } from '../../src/actions.js';
+import { createActions, inventoryCounts } from '../../src/actions.js';
 import { createToolRegistry } from './tools.js';
 import { observeWorld } from '../world-state/index.js';
 import { gatherApprovedBlocks, chopNaturalTrees } from '../skill-executor/index.js';
@@ -45,7 +45,7 @@ export class CompanionRuntime extends EventEmitter {
     this.logs.push({ at: new Date().toISOString(), level, message: safe });
     this.logs = this.logs.slice(-100); this.emit('change');
   }
-  snapshot() { return { state: this.state, planning: this.planning, connection: { ...this.connection }, world: this.world, currentTask: this.currentTask, tasks: this.store.get('tasks').slice(-100), logs: this.logs }; }
+  snapshot() { return { state: this.state, planning: this.planning, connection: { ...this.connection }, world: this.world, currentTask: this.currentTask, taskStack: this.taskStack?.snapshot(), tasks: this.store.get('tasks').slice(-100), logs: this.logs }; }
   isActive() { return ['ACTIVE', 'BUSY'].includes(this.state); }
   control(command) {
     const run = this.controlQueue.catch(() => {}).then(() => this.applyControl(command));
@@ -67,7 +67,7 @@ export class CompanionRuntime extends EventEmitter {
     if (command === 'resume') {
       if (this.state !== 'PAUSED' || (!this.planning && !this.bot?.minenessReady)) throw new Error('Resume requires a connected, paused companion or paused planning session.');
       if (this.pending || this.actions?.state().action || this.hasOperations()) throw new Error('Previous gameplay operation is still stopping. Wait before resuming.');
-      this.actions?.resume(); this.state = 'ACTIVE'; this.emit('change'); return;
+      this.actions?.resume(); this.state = 'ACTIVE'; this.emit('resume'); this.emit('change'); return;
     }
     if (command === 'cancel') { await this.cancelTask(); return; }
     if (['pause', 'emergency', 'stop', 'disconnect'].includes(command)) {
@@ -83,7 +83,7 @@ export class CompanionRuntime extends EventEmitter {
       this.jobController?.abort(new Error('Companion paused or stopped.'));
       this.actions?.stop('Companion paused or stopped.');
       this.emit(disconnect ? 'stop' : 'pause'); this.emit('change');
-      await Promise.allSettled([this.modelCancel(), this.fullAudioStop(), this.connector?.cancelAuth?.()]);
+      await Promise.allSettled([this.modelCancel({ preserveTasks: !disconnect }), this.fullAudioStop(), this.connector?.cancelAuth?.()]);
       if (disconnect) await this.disconnectBot();
       return;
     }
@@ -134,7 +134,7 @@ export class CompanionRuntime extends EventEmitter {
       this.stabilityTimer = this.timers.setTimeout(() => { if (current() && this.connection.status === 'connected') { this.connection.reconnectAttempt = 0; this.emit('change'); } }, STABLE_CONNECTION_MS);
       this.stabilityTimer.unref?.();
       this.state = activate ? 'ACTIVE' : 'PAUSED';
-      if (!activate) { this.jobController?.abort(new Error('Respawn/reconnection requires explicit resume.')); this.actions.stop('Resume explicitly after respawn or reconnect.'); this.fullAudioStop(); this.modelCancel(); }
+      if (!activate) { this.jobController?.abort(new Error('Respawn/reconnection requires explicit resume.')); this.actions.stop('Resume explicitly after respawn or reconnect.'); this.fullAudioStop(); this.modelCancel({ preserveTasks: true }); }
       observe(); this.log('info', recovering ? 'Reconnected safely. Resume explicitly to continue.' : `Connected as ${bot.username}.`);
       this.emit('connected');
     });
@@ -144,7 +144,7 @@ export class CompanionRuntime extends EventEmitter {
       if (packet.windowId === bot.inventory?.id) setImmediate(() => { if (this.bot === bot && !bot.companionInventorySyncing) { bot.companionInventoryUnverified = false; observe(); } });
     });
     bot.once('spawn', () => bot.inventory.on('updateSlot', observe));
-    bot.on('death', () => { if (this.bot === bot) { this.activationRequested = false; this.state = 'PAUSED'; this.jobController?.abort(); this.actions.stop('Died. Resume after respawn.'); observe(); this.emit('pause'); this.modelCancel(); this.fullAudioStop(); } });
+    bot.on('death', () => { if (this.bot === bot) { this.emit('companion-death', { bot, world: this.world }); this.activationRequested = false; this.state = 'PAUSED'; this.jobController?.abort(); this.actions.stop('Died. Resume after respawn.'); observe(); this.emit('pause'); this.modelCancel({ preserveTasks: true }); this.fullAudioStop(); } });
     bot.on('kicked', reason => {
       if (!current()) return;
       bot.companionKicked = true;
@@ -183,7 +183,7 @@ export class CompanionRuntime extends EventEmitter {
     this.bot = null; this.world = null; this.tools.clear();
     this.jobController?.abort(new Error('Minecraft disconnected.'));
     this.actions?.stop('Minecraft disconnected.');
-      this.modelCancel(); this.fullAudioStop(); this.emit('disconnect');
+      this.modelCancel({ preserveTasks: true }); this.fullAudioStop(); this.emit('disconnect');
     if ((this.state === 'DISCONNECTED' && !this.activationRequested) || this.closed) { this.connection.status = 'offline'; this.emit('change'); return; }
     this.activationRequested = false;
     this.state = 'ERROR'; this.connection.status = 'reconnecting';
@@ -221,11 +221,19 @@ export class CompanionRuntime extends EventEmitter {
   }
   async cancelTask() {
     this.actionEpoch++;
+    this.emit('task-cancel');
     this.jobController?.abort(new Error('Task cancelled.'));
     this.actions?.stop('Task cancelled. Wait for a new request.');
     await Promise.allSettled([this.modelCancel(), this.audioStop()]);
     if (this.currentTask) this.store.put('tasks', { ...this.currentTask, status: 'interrupted' });
     this.emit('change');
+  }
+  async suspendWork(reason) {
+    this.actionEpoch++;
+    this.jobController?.abort(new Error(reason));
+    this.actions?.stop(reason);
+    await this.pending?.catch(() => {});
+    await this.waitForIdle();
   }
   hasOperations() { return [...this.operations.values()].some(bot => bot === this.bot); }
   async waitForIdle() {
@@ -253,12 +261,12 @@ export class CompanionRuntime extends EventEmitter {
       };
     }
   }
-  async runJob(name, work) {
+  async runJob(name, work, descriptor = null) {
     if (!this.isActive() || !this.bot?.minenessReady) throw new Error('Companion must be active and connected.');
     if (this.pending || this.actions?.state().action || this.hasOperations() || this.state === 'BUSY') throw new Error('Companion is already working or finishing cancellation.');
     this.actions.resume();
     const controller = new AbortController(); this.jobController = controller;
-    const task = { id: randomUUID(), tool: name, name, status: 'running', startedAt: new Date().toISOString() };
+    const task = { id: randomUUID(), tool: name, name, descriptor, baselineInventory: inventoryCounts(this.bot), site: { position: { x: this.bot.entity.position.x, y: this.bot.entity.position.y, z: this.bot.entity.position.z }, dimension: this.bot.game?.dimension || 'unknown', realmId: this.store.settings().realmId }, status: 'running', startedAt: new Date().toISOString() };
     this.currentTask = task; this.store.put('tasks', task); this.state = 'BUSY'; this.emit('change');
     const pending = Promise.resolve().then(() => { controller.signal.throwIfAborted(); return work(controller.signal); });
     this.pending = pending;
@@ -277,6 +285,15 @@ export class CompanionRuntime extends EventEmitter {
     }
   }
   async execute(name, args = {}) {
+    if (this.resumeHandlers?.has(name)) return this.resumeHandlers.get(name)(args);
+    if (this.teammate && Object.hasOwn(this.teammate.schemas, name)) {
+      if (this.bot?.companionTransport?.projected) throw new Error('Teammate resource actions require a native Minecraft connection.');
+      const validated = this.teammate.schemas[name].parse(args);
+      return this.runJob(name, async signal => {
+        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal));
+        signal.throwIfAborted(); return result;
+      }, { tool: name, args: validated });
+    }
     if (this.bot?.companionTransport?.projected && ['gather_blocks', 'chop_tree', 'craft_item', 'drop_item', 'give_items_to_player', 'equip_item'].includes(name)) throw new Error('Resource actions require native Minecraft identities. The translated connection provides a projected client view.');
     if (this.bot?.companionInventoryUnverified && ['gather_blocks', 'chop_tree', 'craft_item'].includes(name)) throw new Error('Wait for server inventory confirmation before collecting or crafting more resources.');
     const tool = this.tools.get(name);
@@ -294,7 +311,7 @@ export class CompanionRuntime extends EventEmitter {
         : await tool.handler(validated);
       signal.throwIfAborted();
       return JSON.parse(result.content[0].text);
-    });
+    }, { tool: name, args: validated });
   }
   async reflex() {
     if (!this.isActive() || !this.bot?.minenessReady) return;
@@ -311,7 +328,7 @@ export class CompanionRuntime extends EventEmitter {
         const target = bot.entity.position.plus(away.normalize().scaled(7));
         bot.pathfinder.setGoal(new goals.GoalNear(target.x, target.y, target.z, 2));
       }
-      if (!this.lastThreatAlert || Date.now() - this.lastThreatAlert > 15_000) { this.lastThreatAlert = Date.now(); this.log('warn', `${threat.name} nearby; retreating. Interrupted work requires a new request.`); }
+      if (!this.lastThreatAlert || Date.now() - this.lastThreatAlert > 15_000) { this.lastThreatAlert = Date.now(); this.log('warn', `${threat.name} nearby; retreating. Saved work waits for explicit resume.`); this.teammate?.notice(`There’s a ${threat.name} too close. I’m backing off.`, 'danger', 'retreat'); }
       return;
     }
     if (this.pending || this.actions?.state().action || this.state !== 'ACTIVE') return;
