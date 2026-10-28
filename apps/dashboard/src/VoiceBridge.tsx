@@ -1,5 +1,5 @@
 import { AudioLines, Mic, Power, Square, Volume2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import type { CompanionState } from "../../../packages/shared-types";
 import { useVoice } from "../../desktop-voice/useVoice";
@@ -23,6 +23,13 @@ export default function VoiceBridge({
     },
   });
   const active = ["ACTIVE", "BUSY"].includes(state.state);
+  const lastNotice = useRef(state.conversation.at(-1)?.id);
+  useEffect(() => {
+    const newest = state.conversation.at(-1);
+    if (!newest || newest.id === lastNotice.current) return;
+    lastNotice.current = newest.id;
+    if (newest.kind && active && voice.enabled && !voice.listening && !voice.speaking) void voice.speak(newest.text).catch(error => setError(error.message));
+  }, [state.conversation, active, voice.enabled, voice.listening, voice.speaking, voice.speak]);
   useEffect(() => {
     window.addEventListener("companion-native-voice", voice.disable);
     return () =>

@@ -7,12 +7,27 @@ Evidence levels: implemented; automated tests passed; local gameplay passed; Rea
 - [x] Actual local Whisper/Piper/Kokoro and Codex calls, nine full-precision Kokoro voice choices plus Piper, actual preview, persistent keyboard/chord/Mouse4/5 PTT, device selection, browser PTT/VAD and opt-in native desktop capture with cancellation. Actual waveform generation for all ten neural voices and browser key/preview tests passed. **Physical audio/global shortcut operation and streaming speech remain unverified or unfinished.**
 - [x] Reused movement/gathering/crafting executor with cancellation, mining-area approval and initial reflexes. Server-confirmed dropping/handoff/equipping, zero-inference common commands, safe sprint settings, unique batch tree collection and correct native axe speeds are implemented. Official26.3 survival dropping, separate-player pickup and eight-log/two-tree collection passed. Official1.21.5 vanilla crafting also passed after explicit EULA acceptance. **Advanced survival/progression remains unfinished.**
 - [x] Validated JSON/Sponge blueprints, real text-based Codex architecture, actual-block 3D preview, provenance and versioned BOM. **Media vision/keyframes/captions unfinished.**
-- [x] Independent shares, manual user provenance, observed AI stock allocated once, reservations and bounded assigned wood batches. **Chests and voice reassignment unfinished.**
+- [x] Independent shares, manual user provenance, observed AI stock allocated once, reservations and bounded assigned wood batches. **Shared project chest reconciliation and voice reassignment unfinished.**
 - [x] Approval-gated full-cube survival construction, observed verification, SQLite checkpoints and real interruption/resume. **Oriented blocks, terrain/scaffolding/resupply/repair unfinished.**
 - [x] Windows bootstrap/launcher, diagnostics, security review and automated/runtime/browser evidence. Publication status is reported separately; a rejected push is not concealed.
 - [x] Dedicated WebView2 desktop window, stable application identity, source-following desktop/Start/taskbar launcher and in-app update control. Actual native open/close/reopen/update checks passed; the taskbar pin target and AppID were read back after pinning through Windows. Native binaries are versioned outside Git and generated build files do not trigger update loops.
 
 These checked increments are subsets of the requested phases, not claims that the entire production specification is finished. See README for remaining requested scope and docs/VERIFICATION.md for evidence boundaries.
+
+## Teammate quality of life
+
+- [x] Temporary and nested action requests save remaining work, perform the new request and resume the original job; general conversation continues independently.
+- [x] Pause/crash checkpoints, task stack UI, discard/resume controls and Stop-wins cancellation checks.
+- [x] Help-me travel/food support, conservative bounded defense with risk gates; real travel/food handoff passed, hostile combat remains unverified.
+- [x] Editable mining/building/travel routines, approved-chest restocking, better usable tool selection and missing-supply reports.
+- [x] Exact requested handoffs from unreserved stock; approved chest lookup and missing natural-log gathering.
+- [x] Named observed places with Realm/dimension boundaries.
+- [x] Deduplicated quiet/useful/social updates and optional existing voice playback; physical audio still requires user verification.
+- [x] Bounded navigation recovery without terrain destruction.
+- [x] Saved death sites and last-observed inventory, risk assessment and actual survival pickup recovery.
+- [ ] New voice feedback sounds/listening-indicator proposal: intentionally excluded at the user’s request.
+
+Official localhost26.3 fixture: **17/17 passed**, with zero model requests. This validates the tested survival paths, not every possible Realm situation. See [teammate controls and limits](TEAMMATE.md).
 
 ## Upstream analysis
 

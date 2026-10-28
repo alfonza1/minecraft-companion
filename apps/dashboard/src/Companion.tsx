@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CompanionState } from "../../../packages/shared-types";
+import Teamwork, { SavedWork } from './Teamwork';
 import {
   attempt,
   Badge,
@@ -120,6 +121,8 @@ export default function Companion({ state, mutate, busy }: Common) {
         </div>
       </Panel>
       <div>
+        <SavedWork state={state} mutate={mutate} />
+        <Teamwork state={state} mutate={mutate} />
         <Panel
           title="How we play"
           action={<Settings2 size={17} className="muted" />}
@@ -142,14 +145,6 @@ export default function Companion({ state, mutate, busy }: Common) {
               defend: "Defend when necessary",
             }}
             onChange={(combat) => attempt(mutate("/settings", { combat }))}
-          />
-          <SettingSelect
-            label="Chatter & alerts"
-            value={state.settings.alertFrequency}
-            options={{ quiet: "Keep it quiet", normal: "Useful updates" }}
-            onChange={(alertFrequency) =>
-              attempt(mutate("/settings", { alertFrequency }))
-            }
           />
           <SettingSelect label="Travel pace" value={state.settings.movementSpeed || 'brisk'}
             options={{ brisk: 'Brisk · sprint when safe and fed', normal: 'Normal walking' }}

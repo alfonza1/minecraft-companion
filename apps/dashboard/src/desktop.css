@@ -46,3 +46,13 @@
   .quick-request > div { flex-basis: calc(100% - 40px); }
   .quick-request .text-button { margin-left: auto; }
 }
+.teammate-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.saved-work{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:12px}
+.saved-work li,.teammate-records>div{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border,#293442)}
+.saved-work strong,.teammate-records strong{display:block;overflow-wrap:anywhere;font-size:13px}
+.saved-work small,.teammate-records small{display:block;margin-top:5px;color:var(--muted,#a0aaba);font-size:11px;line-height:1.6;overflow-wrap:anywhere}
+.saved-work li>div,.teammate-records>div>div{min-width:0}
+.supply-approval{margin-top:20px;border-top:1px solid var(--border,#293442);padding-top:16px}
+.supply-approval summary{cursor:pointer;font-size:13px;font-weight:600;margin-bottom:14px}
+.check-line{display:flex;align-items:flex-start;gap:9px;margin:15px 0;color:#c5d5ce;font-size:12px;line-height:1.6;cursor:pointer}
+.check-line input{width:15px;height:15px;flex:0 0 15px;margin-top:2px;accent-color:#85cba6}
