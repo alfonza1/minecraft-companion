@@ -27,13 +27,7 @@ if (-not $SkipBridge) {
     & (Join-Path $PSScriptRoot 'Setup-ProtocolBridge.ps1')
 }
 if ($DesktopShortcut) {
-    $desktopPath = [Environment]::GetFolderPath('Desktop')
-    $shell = New-Object -ComObject WScript.Shell
-    $shortcut = $shell.CreateShortcut((Join-Path $desktopPath 'Minecraft Companion.lnk'))
-    $shortcut.TargetPath = Join-Path $projectRoot 'Start Minecraft Companion.cmd'
-    $shortcut.WorkingDirectory = $projectRoot
-    $shortcut.Description = 'Launch the local Minecraft Companion dashboard'
-    $shortcut.Save()
+    & (Join-Path $PSScriptRoot 'Install-DesktopLauncher.ps1') -DesktopShortcut
 }
 & node (Join-Path $PSScriptRoot 'health.mjs')
 Write-Host 'Ready. Launch Start Minecraft Companion.cmd, then open http://127.0.0.1:4365'

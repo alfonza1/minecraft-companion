@@ -16,6 +16,8 @@ Open **http://127.0.0.1:4365**. No browser opens automatically. Keep the console
 
 Click **Open guided setup** on Overview or Settings (or **Setup** in navigation). Five steps check local services, display Microsoft device sign-in, select/ping invited Realms, test your own microphone/speakers and start a first session. Opening setup performs no login, microphone capture, gameplay or model request. Audio checks require an explicit click; leaving a wizard-owned offline audio session pauses it.
 
+The optional Windows launcher is installed with `powershell -NoProfile -File scripts/Install-DesktopLauncher.ps1 -DesktopShortcut` (also used by Bootstrap's `-DesktopShortcut`). Its Start-menu/desktop shortcut targets a small local executable which always reads this working copy. Source fingerprints detect uncommitted edits; opening the launcher rebuilds changed dashboard sources and starts the localhost service. Changed backend code restarts automatically only when the companion is disconnected. During a live session it preserves play and reports pending backend updates; Stop and reopen to apply them. Binaries, the dedicated Edge app profile and launcher logs stay under `%LOCALAPPDATA%/MinecraftCompanion/launcher`, outside Git. Windows taskbar pinning and the visible app-window launch still require verification on this workstation; a shortcut's existence is not proof of a taskbar pin.
+
 Use **Start planning offline** in Companion/Build Studio for conversation, voice and text architecture without a Minecraft connection. This explicit control enables requests; starting the session and remaining idle make zero model calls. Pause prevents further inference until explicit resume.
 
 Fresh checkout:
