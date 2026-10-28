@@ -1,11 +1,12 @@
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, writeFile, stat } from 'node:fs/promises';
 import { runProcess } from '../agent-orchestrator/process.js';
 import voices from './voices.json' with { type: 'json' };
 import { DEFAULT_PUSH_TO_TALK, normalizeHotkey, formatHotkey } from '../../packages/shared-types/hotkeys.js';
 import { z } from 'zod';
+import { createPreviewCache } from './preview-cache.js';
 
 const voiceIdSchema=z.enum(voices.map(voice=>voice.id));
 const previewSchema=z.object({voiceId:voiceIdSchema.optional(),speed:z.number().min(0.5).max(2).optional()}).strict();
@@ -22,6 +23,25 @@ let piperReady=false;
 let kokoroReady=false;
 let configuredBinding=DEFAULT_PUSH_TO_TALK;
 let desktop = null;
+const previewCache = createPreviewCache({
+  directory: path.join(dataRoot, 'voice-previews'),
+  async identify(voiceId) {
+    const voice = voiceId === 'auto' ? kokoroReady ? 'kokoro:af_heart' : piperReady ? 'piper:ljspeech' : 'auto' : voiceId;
+    const selected = voiceOptions().find(value => value.id === voice);
+    if (!selected?.available) throw new Error('Choose an installed local voice.');
+    const modelFiles = voice.startsWith('kokoro:') ? ['kokoro/kokoro-v1.0.onnx', 'kokoro/voices-v1.0.bin'] : voice.startsWith('piper:') ? ['piper/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx', 'piper/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json'] : [];
+    const sources = [path.join(root, 'worker.py'), path.join(root, 'voices.json'), ...modelFiles.map(file => path.join(dataRoot, 'voice-models', file))];
+    const signature = await Promise.all(sources.map(async file => { const value = await stat(file); return [file, value.size, value.mtimeMs]; }));
+    return { voice, signature };
+  },
+  render: (text, voice, signal) => synthesize(text, 1, signal, voice),
+});
+export async function prepareVoicePreviews(onProgress = () => {}) {
+  await checkVoice();
+  const installed = voiceOptions().filter(voice => voice.available && voice.provider !== 'auto');
+  if (!installed.length) installed.push(...voiceOptions().filter(voice => voice.available));
+  for (const voice of installed) { const result = await withVoiceJob(signal => previewCache.get(voice.id, signal)); onProgress({ voice: voice.id, cached: result.cached }); }
+}
 export function getVoiceStatus() {
   return {available:ready,status:pending.size ? 'processing' : ready ? 'ready' : 'setup-required',error:lastError,stt:'faster-whisper tiny.en (local CPU int8)',tts:kokoroReady?'Kokoro (local full-precision neural voices)':piperReady?'Piper LJ Speech (local neural voice)':process.platform === 'win32' ? 'Windows SAPI (local fallback; neural voice not installed)' : 'unavailable',recordingsStored:false,desktop:{running:!!desktop,hotkey:formatHotkey(configuredBinding),binding:configuredBinding,mode:'push-to-talk'}};
 }
@@ -111,9 +131,9 @@ export function registerVoiceRoutes(app,{runtime,publish,store}) {
     const settings=previewSchema.parse(request.body??{});
     const voiceId=settings.voiceId??store?.settings?.().voice.ttsVoice??'auto';
     const speed=settings.speed??store?.settings?.().voice.speed??1;
-    const audio=await withVoiceJob(signal=>synthesize("Hey, I'm here. Ready to grab some wood and head out?",speed,signal,voiceId));
+    const {audio,cached}=await withVoiceJob(signal=>previewCache.get(voiceId,signal));
     if(runtime.snapshot().state==='PAUSED')return reply.code(409).send({error:'Voice preview was paused.'});
-    return reply.type('audio/wav').header('Cache-Control','no-store').send(audio);
+    return reply.type('audio/wav').header('Cache-Control','no-store').header('X-Companion-Preview-Cache',cached?'hit':'miss').header('X-Companion-Preview-Speed',String(speed)).send(audio);
   });
   app.addHook('onClose',stopVoice);
 }
