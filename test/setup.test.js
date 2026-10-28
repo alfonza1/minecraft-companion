@@ -10,6 +10,7 @@ import { startBridge, bridgeSourcesHash } from '../services/protocol-bridge/inde
 import { observeWorld } from '../services/world-state/index.js';
 import { authorizeSession } from '../services/realm-connector/session-join.js';
 import { installMovementTickBoundary } from '../services/protocol-bridge/client.js';
+import nativeProtocol from '../services/native-26.3/preload.cjs';
 
 test('setup checks actual readiness without starting inference, microphone or a Minecraft connection', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'companion-setup-'));
@@ -39,8 +40,13 @@ test('Realm compatibility distinguishes native, translated and unknown protocol 
   const native = connector.recordCompatibility(1, { protocol: 754, version: '1.16.5' });
   assert.equal(native.status, 'native'); assert.equal(native.clientVersion, '1.16.5');
   const modern = connector.recordCompatibility(1, { protocol: 777, version: '26.3' });
-  assert.equal(modern.serverVersion, '26.3'); assert.equal(modern.clientVersion, '26.1');
-  assert.ok(['bridge', 'unsupported'].includes(modern.status));
+  assert.equal(modern.serverVersion, '26.3');
+  if (nativeProtocol.installed) {
+    assert.equal(modern.clientVersion, '26.3'); assert.equal(modern.status, 'native');
+    assert.match(modern.message, /No protocol translation/);
+  } else {
+    assert.equal(modern.clientVersion, '26.1'); assert.ok(['bridge', 'unsupported'].includes(modern.status));
+  }
   const unknown = connector.recordCompatibility(2, { protocol: 99999, version: 'future' });
   assert.equal(unknown.status, 'unsupported'); assert.equal(unknown.clientVersion, null);
   const service = connector.recordCompatibility(1, { protocol: 777, version: '26.3', protocolSource: 'realms-service' });
@@ -59,6 +65,20 @@ test('pause during secure preparation cleanup cannot initiate a late native Micr
   await new Promise(resolve => setImmediate(resolve)); assert.equal(closing, true);
   await connector.cancelAuth(); release(); await denied;
   assert.equal(created, 0); assert.equal(connector.pendingConnections.size, 0);
+});
+
+test('native Microsoft login reuses the selected Realm endpoint after closing its preparation worker', async () => {
+  const connector = new RealmConnector(tmpdir()), address = { host: '127.0.0.1', port: 25565 }, bot = {};
+  let closed = false, created = 0;
+  connector.resolveRealm = async (id, session) => {
+    assert.equal(id, 7); assert.equal(session, true);
+    return { protocol: 754, version: '1.16.5', address, close: async () => { closed = true; } };
+  };
+  connector.createNativeBot = (id, version, resolved) => {
+    assert.equal(closed, true); assert.equal(id, 7); assert.equal(version, '1.16.5'); assert.deepEqual(resolved, address);
+    created++; return bot;
+  };
+  assert.equal(await connector.createBot(7), bot); assert.equal(created, 1);
 });
 
 test('bridge rejects untrusted destinations and profiles before starting Java', async () => {

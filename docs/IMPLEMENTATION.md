@@ -2,7 +2,7 @@
 
 Evidence levels: implemented; automated tests passed; local gameplay passed; Realm gameplay passed. Passing a fixture does not imply Realm gameplay.
 
-- [x] Microsoft device flow, encrypted session cache, profile and Realm list adapters, version gate, observed inventory, bounded reconnect implemented. Optional pinned local bridge connects the 26.1 client view to 26.3. **Licensed 26.3 Realm spawn and 45 passive seconds passed; translation still disables exact construction and resource jobs.** Player certificates are canonical DER, preserving provider signatures; explicit kicks stop retries, and brief spawns no longer reset the retry budget.
+- [x] Microsoft device flow, encrypted session cache, profile and Realm list adapters, version gate, observed inventory, bounded reconnect implemented. **Pinned native26.3/protocol777 adapter passed a licensed passive Realm connection and eight official localhost survival checks, including crafting, gathering and checkpointed construction.** A restricted translation fallback remains available. Newly added26.2/26.3 materials still have unvalidated metadata and remain gated for destructive jobs. Player certificates are canonical DER, preserving provider signatures; explicit kicks stop retries, and brief spawns no longer reset the retry budget.
 - [x] Six localhost dashboard pages plus five-step guided setup, controls, SQLite, WebSockets and desktop/mobile browser verification. Setup uses actual readiness checks and explicit audio/account/session actions.
 - [x] Actual local STT/Piper and Codex calls, device selection, browser PTT/VAD, opt-in desktop F8, cancellation. **Physical audio/F8 and streaming speech unverified or unfinished.**
 - [x] Reused movement/gathering/crafting executor with cancellation, mining-area approval and initial reflexes. Official1.21.5 vanilla crafting passed after explicit EULA acceptance. **Advanced survival/progression remains unfinished.**
@@ -29,7 +29,7 @@ Checked published versions and actual installed source on 2026-10-27. The npm lo
 
 | Library | Decision and evidence |
 | --- | --- |
-| mineflayer 4.39.0 / minecraft-protocol 1.68.0 | Node22+; native protocol list ends26.1. Unknown versions fail closed. Optional separately checksummed ViaProxy3.4.14 translates26.3; no exact resource/construction claims through projection. |
+| mineflayer 4.39.0 / minecraft-protocol 1.68.0 | Node22+; released native protocol list ends26.1. A separate pinned/checksummed native26.3 overlay adds protocol777 after local survival and passive Realm validation; details and source revisions in services/native-26.3. Unknown or mismatched protocols fail closed. ViaProxy3.4.14 remains a restricted fallback. |
 | ViaProxy3.4.14 | Official pinned GPL3 release; private Java adapter, loopback-only, no plaintext account cache. Only26.3 translation enabled; installed artifact/source hash and local gameplay evidence are distinct from Realm authentication. |
 | minecraft-data 3.117.0 | Exact release names and recipes; no silent cross-version schematic conversion. |
 | mineflayer-pathfinder 2.4.x | Retained upstream; real local movement/build positioning tested, no implicit terrain destruction. |

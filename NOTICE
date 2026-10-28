@@ -9,3 +9,8 @@ We fork that server for Mineflayer plumbing, `--username` spawn, stdio
 boilerplate and dependency pins. The wait_for_mention loop, coarse tools,
 chat routing, stop listener, and JSONL log are original to
 Mineness.
+
+Minecraft Companion's optional native 26.3 adapter uses MIT-licensed Prismarine
+projects and pinned changes by DallasCarraher. Their npm package licenses remain
+in the assembled installation. Exact repositories, commits and file hashes are
+recorded in services/native-26.3/dependencies.lock.json; see that folder's README.

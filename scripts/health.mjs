@@ -6,6 +6,7 @@ import os from 'node:os';
 import { supportedVersions } from '../services/realm-connector/index.js';
 import { checkVoice } from '../services/voice/index.js';
 import { getBridgeStatus } from '../services/protocol-bridge/index.js';
+import nativeProtocol from '../services/native-26.3/preload.cjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
@@ -23,7 +24,7 @@ const checks = {
   codex: codex(['--version']), codexAuthentication: codex(['login', 'status']).replace(/(?:sk-|ghp_|gho_)\S+/g, '[redacted]'),
   freeMemoryGiB: Math.round(os.freemem() / 1024 ** 3 * 10) / 10,
   installedMemoryGiB: Math.round(os.totalmem() / 1024 ** 3),
-  protocol: { supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), currentReleaseGap: '26.3 requires a local translating bridge. Exact construction and resources require native support.' },
+  protocol: { supportedVersions, latestSupportedVersion: supportedVersions.at(-1), native: nativeProtocol, bridge: getBridgeStatus(), currentReleaseGap: nativeProtocol.installed ? null : 'Run npm run setup:native for the pinned native 26.3 adapter. Translation remains a fallback with restricted resource and building actions.' },
   speech: await checkVoice(), dashboardBuilt: existsSync(join(root, 'apps/dashboard/dist/index.html')),
   dataStorage: 'LOCALAPPDATA/MinecraftCompanion; Windows DPAPI for account cache',
 };

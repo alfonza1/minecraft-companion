@@ -1,4 +1,4 @@
-import { dataFor, itemStacks, recipeIngredients } from '../../packages/minecraft-data/index.js';
+import { dataFor, itemStacks, recipeIngredients, hasValidatedNativeMaterial } from '../../packages/minecraft-data/index.js';
 import { localProductionRecipes } from '../../packages/minecraft-data/production.js';
 import { blockItem } from './blueprint.js';
 
@@ -15,6 +15,7 @@ export function calculateMaterials(blueprint, recipeOverrides = {}, productionCa
   const items = new Map();
   const unresolved = [];
   for (const block of blueprint.blocks) {
+    if (!hasValidatedNativeMaterial(blueprint.version, block.name)) unresolved.push(`${block.name}: native 26.3 identity is available, but new-block crafting, collision and gathering metadata are not fully validated. Placement count describes the design; do not treat its raw-resource plan as verified.`);
     add(placed, block.name, 1);
     const item = blockItem(block, data);
     if (item === null) unresolved.push(`No survival inventory item mapping for ${block.name}.`);

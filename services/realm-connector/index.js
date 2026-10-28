@@ -1,3 +1,4 @@
+import nativeProtocol from '../native-26.3/preload.cjs';
 import { EventEmitter } from 'node:events';
 import { fork } from 'node:child_process';
 import { join } from 'node:path';
@@ -8,12 +9,13 @@ import { secureCacheFactory } from './secure-cache.js';
 import { BRIDGE_PROTOCOLS, BRIDGE_CLIENT_VERSION, getBridgeStatus, startBridge } from '../protocol-bridge/index.js';
 import { createBridgeClient } from '../protocol-bridge/client.js';
 import { freshAccountDirectory, selectedAccountDirectory } from './account-session.js';
+import { NativeRealmClient } from './native-client.js';
 
 export const supportedVersions = mineflayer.testedVersions.filter(version => mcProtocol.supportedVersions.includes(version));
 export const supportedVersionForProtocol = protocol => [...supportedVersions].reverse().find(version => minecraftData.versionsByMinecraftVersion.pc[version]?.version === protocol) ?? null;
 
 export function assertSupportedVersion(version, protocol) {
-  const supported = supportedVersions.includes(version);
+  const supported = supportedVersions.includes(version) && (protocol === undefined || minecraftData.versionsByMinecraftVersion.pc[version]?.version === protocol);
   if (!supported) throw new Error(`Realm uses Minecraft ${version || 'an unknown version'} (protocol ${protocol ?? 'unknown'}). Installed Mineflayer supports ${supportedVersions.join(', ')}. No supported Realm connection is available until protocol support is updated.`);
   return version;
 }
@@ -136,7 +138,7 @@ export class RealmConnector extends EventEmitter {
     const bridge = getBridgeStatus();
     this.compatibility = { realmId, status: native ? 'native' : translated && bridge.installed ? 'bridge' : 'unsupported',
       serverVersion: native || translated || status.version, serverProtocol: status.protocol, protocolSource: status.protocolSource || 'server-status', clientVersion: native || (translated ? BRIDGE_CLIENT_VERSION : null), checkedAt: new Date().toISOString(),
-      message: native ? 'Native protocol supported.' : translated && bridge.installed ? `Uses the local protocol bridge${bridge.verified ? ' validated against a local 26.3 server' : '; local gameplay verification is pending'}. Exact building and assigned gathering are disabled for this projected client view. Live connection status is shown separately.` : 'No installed connection supports this Realm protocol. Run Bootstrap.ps1 or wait for native protocol support.' };
+      message: native ? (native === '26.3' && nativeProtocol.installed ? 'Direct 26.3 connection with the pinned native adapter. No protocol translation. Inventory, crafting, gathering and full-cube construction passed local survival tests.' : 'Native protocol supported.') : translated && bridge.installed ? `Uses the local protocol bridge${bridge.verified ? ' validated against a local 26.3 server' : '; local gameplay verification is pending'}. Exact building and assigned gathering are disabled for this projected client view. Live connection status is shown separately.` : 'No installed connection supports this Realm protocol. Run Bootstrap.ps1 or wait for native protocol support.' };
     if (status.protocolSource === 'realms-service') this.compatibility.message = `Version reported by the authenticated Realms service; status ping unavailable. ${this.compatibility.message}`;
     this.emit('change'); return this.compatibility;
   }
@@ -169,14 +171,19 @@ export class RealmConnector extends EventEmitter {
       }
       await session.close();
       controller.signal.throwIfAborted();
-      return this.createNativeBot(realmId, detected);
+      return this.createNativeBot(realmId, detected, session.address);
     } catch (error) { await bridge?.close(); await session?.close(); throw error; }
     finally { this.pendingConnections.delete(controller); }
   }
-  createNativeBot(realmId, detected) {
+  createNativeBot(realmId, detected, address) {
     return mineflayer.createBot({
+      Client: NativeRealmClient,
       username: 'companion-account', auth: 'microsoft', profilesFolder: secureCacheFactory(this.directory),
-      realms: { realmId }, version: detected, hideErrors: true, logErrors: false,
+      // The supported Realms adapter already resolved this endpoint with the
+      // actual client version. Avoid a second lookup with the library's 0.0.0
+      // default header; Microsoft authentication still runs in Mineflayer.
+      ...(address ? { host: address.host, port: address.port } : { realms: { realmId } }),
+      version: detected, hideErrors: true, logErrors: false,
       onMsaCode: () => { this.auth.status = 'expired'; this.emit('diagnostic', 'Session expired. Use Connect Minecraft Account to sign in again.'); this.emit('change'); throw new Error('Session expired. Sign in again.'); },
     });
   }

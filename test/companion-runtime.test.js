@@ -11,6 +11,7 @@ import { CompanionRuntime } from '../services/companion-runtime/index.js';
 import { observeWorld } from '../services/world-state/index.js';
 import { secureCacheFactory, dpapi } from '../services/realm-connector/secure-cache.js';
 import { assertSupportedVersion, supportedVersions, supportedVersionForProtocol, RealmConnector, deviceCodePrompt } from '../services/realm-connector/index.js';
+import nativeProtocol from '../services/native-26.3/preload.cjs';
 
 function fixture() {
   const collections = new Map();
@@ -212,10 +213,11 @@ test('no reflex or model cancellation request is issued while paused', async () 
   } finally { await runtime.close(); }
 });
 
-test('supported protocol whitelist rejects current unsupported releases instead of guessing', () => {
+test('supported protocol whitelist rejects unknown releases and mismatched protocol numbers', () => {
   assert.equal(assertSupportedVersion('1.21.11', 774), '1.21.11');
   assert.throws(() => assertSupportedVersion('26.3', 999), /No supported Realm connection/);
-  assert.equal(supportedVersions.includes('26.3'), false);
+  assert.throws(() => assertSupportedVersion('99.9', 999), /No supported Realm connection/);
+  assert.equal(supportedVersions.includes('26.3'), nativeProtocol.installed);
   assert.equal(supportedVersionForProtocol(754), '1.16.5');
   assert.equal(supportedVersionForProtocol(99999), null);
 });

@@ -1,6 +1,6 @@
 import { Vec3 } from 'vec3';
 import pathfinder from 'mineflayer-pathfinder';
-import { dataFor } from '../../packages/minecraft-data/index.js';
+import { dataFor, hasValidatedNativeMaterial } from '../../packages/minecraft-data/index.js';
 import { blueprintHash } from '../build-planner/blueprint.js';
 
 const { goals } = pathfinder;
@@ -36,7 +36,7 @@ export function constructionCompatibility(blueprint) {
     const shapeId = data.blockCollisionShapes?.blocks?.[block.name];
     const shape = data.blockCollisionShapes?.shapes?.[shapeId];
     const cube = Array.isArray(shape) && shape.length === 1 && shape[0].every((n, i) => n === (i < 3 ? 0 : 1));
-    return !data.itemsByName[block.name] || !cube || definition.boundingBox !== 'block' || definition.states?.length || definition.material === 'plant' || INTERACTIVE.test(block.name) || ['sand', 'red_sand', 'gravel', 'dragon_egg', 'tnt'].includes(block.name) || block.name.endsWith('_concrete_powder');
+    return !hasValidatedNativeMaterial(blueprint.version, block.name) || !data.itemsByName[block.name] || !cube || definition.boundingBox !== 'block' || definition.states?.length || definition.material === 'plant' || INTERACTIVE.test(block.name) || ['sand', 'red_sand', 'gravel', 'dragon_egg', 'tnt'].includes(block.name) || block.name.endsWith('_concrete_powder');
   }).map((b) => b.name))];
   return { supported: unsupported.length === 0, unsupported, limitation: 'Survival placement currently supports inert, full cubes. Oriented/multiblock/gravity/interactive blocks require a tested placement adapter. No excavation, scaffolding or inventory resupply is automatic.' };
 }

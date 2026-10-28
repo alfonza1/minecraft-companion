@@ -1,3 +1,4 @@
+import '../native-26.3/preload.cjs';
 import prismarineAuth from 'prismarine-auth';
 import prismarineRealms from 'prismarine-realms';
 import { secureCacheFactory } from './secure-cache.js';

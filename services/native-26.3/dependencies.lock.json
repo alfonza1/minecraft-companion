@@ -1,0 +1,364 @@
+{
+  "schema": 1,
+  "version": "26.3",
+  "protocol": 777,
+  "baseVersions": {
+    "minecraft-data": "3.117.0",
+    "minecraft-protocol": "1.68.0",
+    "mineflayer": "4.39.0",
+    "prismarine-chunk": "1.41.0",
+    "prismarine-physics": "1.11.1"
+  },
+  "repositories": {
+    "minecraft-data": {
+      "repo": "minecraft-data",
+      "commit": "924e26d6b3bb8f97a5d1e73d6190b09879c2e1e2"
+    },
+    "minecraft-protocol": {
+      "repo": "node-minecraft-protocol",
+      "commit": "833a08bc29e0fff3bb764cabf64a9f303eb2e6fd"
+    },
+    "mineflayer": {
+      "repo": "mineflayer",
+      "commit": "865e73db4131bb9900c533963c321f40e3ee2166"
+    },
+    "prismarine-chunk": {
+      "repo": "prismarine-chunk",
+      "commit": "7382b4fef1c56290524665e7b9af58b7d1f34791"
+    },
+    "prismarine-physics": {
+      "repo": "prismarine-physics",
+      "commit": "6f9cbf1500ab56b51f24dc3a861aea2e6435d9e3"
+    }
+  },
+  "dataPaths": {
+    "attributes": "pc/26.2",
+    "blockCollisionShapes": "pc/26.3",
+    "blocks": "pc/26.3",
+    "blockLoot": "pc/26.2",
+    "biomes": "pc/26.2",
+    "commands": "pc/26.2",
+    "effects": "pc/26.1",
+    "enchantments": "pc/26.1",
+    "entities": "pc/26.3",
+    "entityLoot": "pc/26.2",
+    "foods": "pc/26.3",
+    "instruments": "pc/26.1",
+    "items": "pc/26.3",
+    "language": "pc/26.2",
+    "loginPacket": "pc/26.2",
+    "mapIcons": "pc/1.20.2",
+    "materials": "pc/26.2",
+    "particles": "pc/26.2",
+    "protocol": "pc/26.3",
+    "recipes": "pc/26.3",
+    "sounds": "pc/26.2",
+    "tints": "pc/26.2",
+    "version": "pc/26.3",
+    "windows": "pc/1.20.3",
+    "proto": "pc/26.3"
+  },
+  "itemStackSizeCorrections": {
+    "white_cushion": 16,
+    "orange_cushion": 16,
+    "magenta_cushion": 16,
+    "light_blue_cushion": 16,
+    "yellow_cushion": 16,
+    "lime_cushion": 16,
+    "pink_cushion": 16,
+    "gray_cushion": 16,
+    "light_gray_cushion": 16,
+    "cyan_cushion": 16,
+    "purple_cushion": 16,
+    "blue_cushion": 16,
+    "brown_cushion": 16,
+    "green_cushion": 16,
+    "red_cushion": 16,
+    "black_cushion": 16,
+    "straw_bed": 16
+  },
+  "files": [
+    {
+      "package": "minecraft-protocol",
+      "source": "src/client/play.js",
+      "target": "minecraft-protocol/src/client/play.js",
+      "sha256": "aa29804e754d3e4915d3ce8f41b8c74dab05afdbd60dea24c59be7eb281154e3"
+    },
+    {
+      "package": "minecraft-protocol",
+      "source": "src/client/tcp_dns.js",
+      "target": "minecraft-protocol/src/client/tcp_dns.js",
+      "sha256": "0eb06de4e45a15589f0803856897e4df42372a1b017818349c5383b5500b8390"
+    },
+    {
+      "package": "minecraft-protocol",
+      "source": "src/createClient.js",
+      "target": "minecraft-protocol/src/createClient.js",
+      "sha256": "12e3c1f7912c33f95965d0e7e7a316f5d8e764069c15e658cdcabd9677f4dbee"
+    },
+    {
+      "package": "minecraft-protocol",
+      "source": "src/datatypes/compiler-minecraft.js",
+      "target": "minecraft-protocol/src/datatypes/compiler-minecraft.js",
+      "sha256": "5cf2694121cdebd6b185e1395e92a240d2687914ddac3c9c88e44898c172a7dd"
+    },
+    {
+      "package": "minecraft-protocol",
+      "source": "src/datatypes/minecraft.js",
+      "target": "minecraft-protocol/src/datatypes/minecraft.js",
+      "sha256": "0eef4b734c8ccaa0620086340006b923b31293bc1b61aef7efca6de3918a7dc5"
+    },
+    {
+      "package": "minecraft-protocol",
+      "source": "src/server/login.js",
+      "target": "minecraft-protocol/src/server/login.js",
+      "sha256": "27189bdd864e2ccd223429a5210752f1ecc02fbd9725bc664f7f530150ec51fa"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/loader.js",
+      "target": "mineflayer/lib/loader.js",
+      "sha256": "56cdf39e6d6b7d9d35ff11e0fe25eba151b91c2df023739688ef93c7f5be1586"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/playerActionIds.js",
+      "target": "mineflayer/lib/playerActionIds.js",
+      "sha256": "bc999f47efc1f026b884cfce902648c26177f76707132d079428a349e16c80f1"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/abilities.js",
+      "target": "mineflayer/lib/plugins/abilities.js",
+      "sha256": "884cc5948422e46936d919d58e5892b3d1cec8211d2926aebcb0857ced0fb257"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/block_actions.js",
+      "target": "mineflayer/lib/plugins/block_actions.js",
+      "sha256": "086221595b703081094b2f50e6d05069c5af666135d974e3a1f75becf24683d4"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/chat.js",
+      "target": "mineflayer/lib/plugins/chat.js",
+      "sha256": "a555da69834fec620ca4ccf61f45023d720022acf8e962d2bc07f663df1f829b"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/creative.js",
+      "target": "mineflayer/lib/plugins/creative.js",
+      "sha256": "2988281447d4dad063298d5a93396a7311a25ae21800f1b357b2a2d24ba08eaa"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/digging.js",
+      "target": "mineflayer/lib/plugins/digging.js",
+      "sha256": "fc2f1478b231e2c8bd6be9ce6fa7f7ae8f87fa838d2a0d44045af2bfb00042eb"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/entities.js",
+      "target": "mineflayer/lib/plugins/entities.js",
+      "sha256": "ac89d8b80dad4cdda0ccc81dd032d76be7d94662e39add3f3da68b07c765cd70"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/inventory.js",
+      "target": "mineflayer/lib/plugins/inventory.js",
+      "sha256": "c9e43315a5e6a92ff7733a9c3ed14b29c3c9b5145fe1166612fc92a2d0f63370"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/physics.js",
+      "target": "mineflayer/lib/plugins/physics.js",
+      "sha256": "c14b7447639cf77009ffdc3a33b3d23c4af787bd947c2dccbfc65012ee90ba8b"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/resource_pack.js",
+      "target": "mineflayer/lib/plugins/resource_pack.js",
+      "sha256": "36becc0baeb6aa7910ca00f6b3236bf443734955fe22dea686748ba1a135cdd4"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/scoreboard.js",
+      "target": "mineflayer/lib/plugins/scoreboard.js",
+      "sha256": "b4cdfd952fbadfcdc8a4462e9caf939da3f0df5eb2f9080fce6ab72fa8915c7d"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/simple_inventory.js",
+      "target": "mineflayer/lib/plugins/simple_inventory.js",
+      "sha256": "fec03a1a5ca6ea045bb4c4e07d997dc2ca079fadeeff856797e8351ee0dabe2a"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/plugins/team.js",
+      "target": "mineflayer/lib/plugins/team.js",
+      "sha256": "1f4d959b6830fcf7d56619e9d0907b58d7707aef47d08ea2994cf40cbc728cf5"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/scoreboard.js",
+      "target": "mineflayer/lib/scoreboard.js",
+      "sha256": "af21009b850c670d1d7d4b0e0833013c2fc362f8bcd8d25dd79a5ec6933b8c86"
+    },
+    {
+      "package": "mineflayer",
+      "source": "lib/version.js",
+      "target": "mineflayer/lib/version.js",
+      "sha256": "f9fde68d55fab247da179dbc83b3627e84653c1b8338e1e4fff7bd2692505990"
+    },
+    {
+      "package": "prismarine-chunk",
+      "source": "src/index.js",
+      "target": "prismarine-chunk/src/index.js",
+      "sha256": "b90626e3f934a18facafd5ad873b256a01f50bfd0360d04f5d1372f08f0e6c50"
+    },
+    {
+      "package": "prismarine-chunk",
+      "source": "src/pc/1.18/ChunkColumn.js",
+      "target": "prismarine-chunk/src/pc/1.18/ChunkColumn.js",
+      "sha256": "02dd4e42a35c69f266593d901ba131202b5b4d5f68a686d038b0bc5e66518e8c"
+    },
+    {
+      "package": "prismarine-chunk",
+      "source": "src/pc/common/BitArrayNoSpan.js",
+      "target": "prismarine-chunk/src/pc/common/BitArrayNoSpan.js",
+      "sha256": "c6d5607cfec6c51eb525d7ea2100aaa7cc54ea1a6413a105efd70d7a938aea5c"
+    },
+    {
+      "package": "prismarine-physics",
+      "source": "lib/features.json",
+      "target": "prismarine-physics/lib/features.json",
+      "sha256": "f44f0d38b6740d93070baf04701584d77810f34c571c95f2162db592d58a489e"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/attributes.json",
+      "target": "data/pc/26.2/attributes.json",
+      "sha256": "a72c4b74777a6aba4287a631aae0294a8d1f69469ddf8c038f177e1893c02051"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/blockCollisionShapes.json",
+      "target": "data/pc/26.3/blockCollisionShapes.json",
+      "sha256": "3dcb8f07c528975a50c27c091351678d22ef64ceb64b08a71c83839924d6047e"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/blocks.json",
+      "target": "data/pc/26.3/blocks.json",
+      "sha256": "776312e51207352734304a293d9300f6c69b4efa40f00ac574c99d1ca7889873"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/blockLoot.json",
+      "target": "data/pc/26.2/blockLoot.json",
+      "sha256": "805fa7155bb5d0bed967cf8009db67b03089b80b737f57073c88ba62143af910"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/biomes.json",
+      "target": "data/pc/26.2/biomes.json",
+      "sha256": "902ddae953092aba4a3f225b1c9daf72723c543a969137a9c4da97136a0e01c6"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/commands.json",
+      "target": "data/pc/26.2/commands.json",
+      "sha256": "0a7a101671a3341ca27b47aeb417e322cafbc5c4042a85594bbc9c23cd92b70b"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/entities.json",
+      "target": "data/pc/26.3/entities.json",
+      "sha256": "33c2d7569e10cb98d86240e8135396702edb92c98e6ccb1c18bf6a481f22e3d5"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/entityLoot.json",
+      "target": "data/pc/26.2/entityLoot.json",
+      "sha256": "725c7c0a3eb32aad88148b2208c7141e4ae7698b7333c8d642949c92949dff75"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/foods.json",
+      "target": "data/pc/26.3/foods.json",
+      "sha256": "77da85a0f07aed8a2b1997d6d7b28d32f36d93f6fec703c1442494665218ed9e"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/items.json",
+      "target": "data/pc/26.3/items.json",
+      "sha256": "f0d0e447dd0311b7322f4548971d6ebf6074b5842fd4c7b4e3d8698e00b5edcb"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/language.json",
+      "target": "data/pc/26.2/language.json",
+      "sha256": "3f64188a0a8807906019a04561d8392990e71e239ab41fbc7843806b0dee06da"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/loginPacket.json",
+      "target": "data/pc/26.2/loginPacket.json",
+      "sha256": "85a01488a5648ae815baa50e921814df4fb4d92bfb864eb28ba907dbed2b05cf"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/materials.json",
+      "target": "data/pc/26.2/materials.json",
+      "sha256": "eb4770f97152ccb72d311026c01bf5a96cbf53902b4827c68054d6df6d4ac891"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/particles.json",
+      "target": "data/pc/26.2/particles.json",
+      "sha256": "5bccfa71eae42c691ccf9529283a5256aaa480d82eab1cbff6a14eba4a96b03d"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/protocol.json",
+      "target": "data/pc/26.3/protocol.json",
+      "sha256": "13a10695aa1ed3604ed674ce8fdc8a759f48118714eab98644e685a3d1960727"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/recipes.json",
+      "target": "data/pc/26.3/recipes.json",
+      "sha256": "173c3b7cfbf1cc9e2a189fe5a3384c22a536d8b90a659850da336739eca38a6d"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/sounds.json",
+      "target": "data/pc/26.2/sounds.json",
+      "sha256": "3084ebf9fff134e9d5ce0c87201ab4d42ae5bf3a2ec24e02591545968eecf22a"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/tints.json",
+      "target": "data/pc/26.2/tints.json",
+      "sha256": "da0bcd249f47d56290c2382a01c564f82e309061c5f1e83d04578bd7d9485eff"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.3/version.json",
+      "target": "data/pc/26.3/version.json",
+      "sha256": "0d08bd2b5bce95b84405b8d39d259a365663789d22e968bdbdad9a2d4b2cc45f"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/1.20.3/windows.json",
+      "target": "data/pc/1.20.3/windows.json",
+      "sha256": "4b3c77daa3f6b6d583b3191cd43a0e2383a682ae46679e61f66ea2017306d25f"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/common/features.json",
+      "target": "data/pc/common/features.json",
+      "sha256": "1bdf99189e7373d055eaf46fde515cdf80b2fe858027c279d869555ff38fe148"
+    }
+  ]
+}

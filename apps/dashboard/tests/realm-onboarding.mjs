@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 import { createApp } from '../../../services/api/index.js';
 import { Store } from '../../../services/memory/store.js';
 import { RealmConnector } from '../../../services/realm-connector/index.js';
+import nativeProtocol from '../../../services/native-26.3/preload.cjs';
 
 // Real API, SQLite and runtime. Realm responses are explicit fixtures; no real
 // account, world, microphone or model is used by this UI regression test.
@@ -18,10 +19,11 @@ const connector = new RealmConnector(directory);
 connector.auth = { status: 'connected', username: 'FixtureBot', device: null };
 connector.realms = [{ id: 1, name: 'Fixture Realm', owner: 'FixturePlayer', state: 'OPEN' }];
 const calls = [], errors = [];
-let available = false, release;
+let available = false, native = false, release;
 connector.probeRealm = async id => {
   assert.equal(id, 1); calls.push('check');
   if (release === undefined) await new Promise(resolve => { release = resolve; });
+  if (native) return connector.recordCompatibility(id, { version: '26.3', protocol: 777, protocolSource: 'realms-service' });
   connector.compatibility = { realmId: 1, status: available ? 'bridge' : 'unsupported', serverVersion: '26.3', clientVersion: '26.1', checkedAt: new Date().toISOString(), message: available ? 'Fixture translation path available' : 'Fixture unsupported version' };
   connector.emit('change'); return connector.compatibility;
 };
@@ -61,6 +63,22 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false);
     await page.screenshot({ path: join(evidence, `${width}.png`), fullPage: true });
+  }
+  assert.deepEqual(errors, []);
+  if (nativeProtocol.installed) {
+    native = true;
+    await steps.getByRole('button', { name: /Your Realm/ }).click();
+    await page.getByRole('button', { name: 'Check Realm compatibility', exact: true }).click();
+    await page.getByText('Native protocol supported', { exact: true }).waitFor();
+    assert.equal(await page.getByText('Translation required', { exact: true }).count(), 0);
+    assert.match(await page.locator('.setup-compatibility').innerText(), /No protocol translation/);
+    const versions = await page.locator('.setup-compatibility .data-row strong').allTextContents();
+    assert.deepEqual(versions, ['26.3', '26.3']);
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: join(evidence, `native-${width}.png`), fullPage: true });
+    }
   }
   assert.deepEqual(errors, []);
   assert.equal(app.companion.snapshot().usage.requests, 0);

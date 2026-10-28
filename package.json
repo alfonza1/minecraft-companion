@@ -15,6 +15,7 @@
     "build": "vite build --config apps/dashboard/vite.config.ts",
     "typecheck": "tsc --noEmit -p apps/dashboard/tsconfig.json",
     "health": "node scripts/health.mjs",
+    "setup:native": "node scripts/setup-native.mjs",
     "bootstrap": "powershell -NoProfile -File scripts/Bootstrap.ps1",
     "test": "node --test test/*.test.js",
     "server": "bash mc-server/start.sh",

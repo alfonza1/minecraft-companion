@@ -2,7 +2,7 @@
 
 Local Minecraft Java teammate and build workspace extending [Mineness](https://github.com/SpectrumTantrum/mineness). React/TypeScript, Mineflayer, Microsoft device authentication, Codex conversation/planning, local Whisper/Piper speech, SQLite and a real blueprint viewer.
 
-**Realm compatibility:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1** natively. An optional pinned local ViaProxy bridge adds a **26.3** connection path. Translation can map newer blocks/items: exact construction, crafting/resource collection and automatic inventory reconciliation are blocked on this path. Microsoft-authenticated 26.3 Realm spawn and 45 seconds of passive operation passed after correcting player-certificate encoding; this does not establish exact building or gathering on that version. See [bridge boundaries](services/protocol-bridge/README.md).
+**Realm compatibility:** the pinned native adapter connects directly to **26.3**, protocol777, using Mineflayer's Microsoft authentication. A licensed Realm connection passed a passive check without translation or kicks. The official local 26.3 survival fixture passed inventory, movement, crafting, gathering, full-cube building/checkpoint recovery and reconnect tests. These are separate from untested Realm gameplay. New 26.2/26.3 materials still need validated gathering/construction metadata. See [native adapter boundaries](services/native-26.3/README.md). The optional [bridge](services/protocol-bridge/README.md) remains a restricted fallback when the native adapter is absent.
 
 ## Launch
 
@@ -28,7 +28,7 @@ Fresh checkout:
 .\scripts\Bootstrap.ps1 -DesktopShortcut
 ```
 
-Bootstrap installs lockfile dependencies, builds the dashboard, prepares private Python speech dependencies/models and installs the optional protocol bridge. Safe missing Node/Git/Python prerequisites use winget. Node 22.12+ required; this PC runs24. Native connections need no Java; the bridge reuses a compatible JDK or installs a private checksummed one outside Minecraft. Use `-SkipBridge` for native-only setup. Minecraft files are preserved. Optional recipe extraction reads exact-version client JARs without modifying them. `.env.example` documents process environment variables; `.env` files are not automatically loaded.
+Bootstrap installs lockfile dependencies and the checksummed native26.3 adapter, builds the dashboard, prepares private Python speech dependencies/models and installs the optional protocol bridge. Safe missing Node/Git/Python prerequisites use winget. Node 22.12+ required; this PC runs24. Native connections need no Java; the bridge reuses a compatible JDK or installs a private checksummed one outside Minecraft. Use `-SkipBridge` for native-only setup. After a standalone `npm ci`, run `npm run setup:native` to restore the adapter. Minecraft files are preserved. Optional recipe extraction reads exact-version client JARs without modifying them. `.env.example` documents process environment variables; `.env` files are not automatically loaded.
 
 ## Account onboarding
 
@@ -96,13 +96,15 @@ node scripts/test-vanilla-game.mjs
 # Optional current-version bridge test, with the same explicit EULA requirement:
 .\scripts\Setup-ModernTest.ps1 -AcceptMinecraftEula
 node scripts/test-modern-bridge.mjs
+# Native current-version survival (no translation, no account):
+node scripts/test-native-game.mjs
 # Guided setup browser checks (no physical microphone or login):
 node apps/dashboard/tests/setup-integration.mjs
 # Explicit live Codex requests, using a disposable app database:
 node scripts/test-companion-live.mjs --codex
 ```
 
-See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. After explicit EULA acceptance, official1.21.5 vanilla crafting also passed with actual inventory transactions. The private test JRE is outside Minecraft and never changes system Java/PATH. None proves26.3 Realm compatibility.
+See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. Official1.21.5 and native26.3 vanilla crafting passed with actual inventory transactions. The private test JRE is outside Minecraft and never changes system Java/PATH. Passive licensed26.3 Realm login is separately verified; Realm crafting/gathering/construction remain untested.
 
 Unfinished requested scope includes advanced cave/branch mining, farming, furnaces/chests/trading, armor optimization, guard coordination, Nether/End progression, strategic initiative, voice project reassignment, media vision/keyframes/captions, oriented construction/scaffolding/terrain/resupply/repair, player inventory companion, streaming speech, provider-selection UI, configurable hotkeys, conversation summarization and full project import. Stored autonomy preferences do not implement those behaviors. This is a functional foundation with explicit limits, not all eight completed phases.
 

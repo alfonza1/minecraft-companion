@@ -16,6 +16,8 @@ $nodeVersionParts = (& node --version).TrimStart('v').Split('.')
 if ([int]$nodeVersionParts[0] -lt 22 -or ([int]$nodeVersionParts[0] -eq 22 -and [int]$nodeVersionParts[1] -lt 12)) { throw 'Node 22.12 or newer is required. Install the current Node LTS, then rerun this script.' }
 & npm.cmd ci --ignore-scripts
 if ($LASTEXITCODE -ne 0) { throw 'Project dependency installation failed.' }
+& node (Join-Path $PSScriptRoot 'setup-native.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Native Minecraft 26.3 setup failed. Rerun Bootstrap.ps1 to retry.' }
 & npm.cmd run build
 if ($LASTEXITCODE -ne 0) { throw 'Dashboard build failed.' }
 if (-not $SkipVoice) {

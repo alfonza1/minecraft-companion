@@ -1,3 +1,4 @@
+import '../native-26.3/preload.cjs';
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
 import multipart from '@fastify/multipart';

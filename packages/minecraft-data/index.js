@@ -1,3 +1,4 @@
+import '../../services/native-26.3/preload.cjs';
 import minecraftData from 'minecraft-data';
 
 const cache = new Map();
@@ -9,6 +10,15 @@ export function dataFor(version) {
     cache.set(version, data);
   }
   return cache.get(version);
+}
+
+// New 26.2/26.3 IDs are verified against Mojang's registry, but this pinned
+// dataset still approximates some new collision shapes and gathering metadata.
+// Observation remains available; destructive work waits for validated adapters.
+export function hasValidatedNativeMaterial(version, name, kind = 'blocks') {
+  if (version !== '26.3') return true;
+  const baseline = dataFor('26.1');
+  return Boolean((kind === 'items' ? baseline.itemsByName : baseline.blocksByName)[name]);
 }
 
 export function itemStacks(quantity, stackSize = 64) {
