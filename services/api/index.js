@@ -22,6 +22,8 @@ import { normalizeHotkey } from '../../packages/shared-types/hotkeys.js';
 import voiceCatalog from '../voice/voices.json' with { type: 'json' };
 import { TeammateService } from '../skill-executor/teammate.js';
 import { registerTeammateRoutes } from '../skill-executor/teammate-routes.js';
+import { createProviderRegistry } from '../agent-orchestrator/providers/index.js';
+import { modelSelection } from '../../packages/shared-types/providers.js';
 import { createModelCatalog } from '../agent-orchestrator/models.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -29,7 +31,7 @@ const runningSourceFingerprint = await sourceFingerprint(root);
 const hotkeySchema = z.unknown().transform((value, context) => { try { return normalizeHotkey(value); } catch (error) { context.addIssue({ code: 'custom', message: error.message }); return z.NEVER; } });
 const voiceSettings = z.object({ enabled: z.boolean().optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional(), pushToTalk: hotkeySchema.optional(), ttsVoice: z.enum(voiceCatalog.map(voice => voice.id)).optional() }).strict();
 const miningZoneSchema = z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800), radius: z.number().int().min(1).max(32) }).strict();
-export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
+export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode']).optional(), providerModels: z.object({ claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
 
 export async function createApp(options = {}) {
   const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024, trustProxy: false });
@@ -38,11 +40,13 @@ export async function createApp(options = {}) {
   const runtime = options.runtime || new CompanionRuntime({ store, connector });
   const modelCatalog = options.modelCatalog || createModelCatalog();
   const clients = new Set();
+  let providerRegistry;
   let orchestrator, teammate, voiceModule = options.voiceModule;
   let codexStatus = { available: null, authenticated: null, version: null, error: null };
   const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
     projects: store.get('projects'), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
     usage: orchestrator?.usage || { requests: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billingCost: null },
+    ai: { ...modelSelection(store.settings()), ...((store.settings().provider || 'codex') === 'codex' ? codexStatus : providerRegistry?.status(store.settings().provider)), modelState: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } },
     settings: store.settings(), teammate: teammate?.snapshot(), codex: { ...codexStatus, model: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } }, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
   });
   let scheduled = false;
@@ -55,8 +59,10 @@ export async function createApp(options = {}) {
       for (const client of clients) { if (client.readyState === 1 && client.bufferedAmount < 1024 * 1024) client.send(event); }
     });
   };
+  providerRegistry = options.providerRegistry || createProviderRegistry({ modelCatalog, publish });
   const readiness = options.readiness || {
     codex: () => codexStatus,
+    ai: () => ({ ...modelSelection(store.settings()), ...((store.settings().provider || 'codex') === 'codex' ? codexStatus : providerRegistry.status(store.settings().provider)) }),
     voice: () => voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
     async refresh() {
       if (!voiceModule) return;
@@ -64,9 +70,10 @@ export async function createApp(options = {}) {
       const results = await Promise.allSettled([getCodexStatus(), voiceModule.checkVoice()]);
       if (results[0].status === 'fulfilled') codexStatus = results[0].value;
       else codexStatus = { available: false, authenticated: false, error: 'Codex readiness check failed.' };
+      if (store.settings().provider !== 'codex') await providerRegistry.get(store.settings().provider, { refresh: true }).catch(() => {});
     },
   };
-  const context = { store, connector, runtime, publish, modelCatalog, dataDir: store.directory, readiness };
+  const context = { store, connector, runtime, publish, modelCatalog, providerRegistry, dataDir: store.directory, readiness };
   teammate = new TeammateService(context); context.teammate = teammate;
   app.decorate('companion', { ...context, snapshot });
   const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -97,6 +104,10 @@ export async function createApp(options = {}) {
   runtime.on('change', publish); connector.on('change', publish);
   connector.on('diagnostic', message => runtime.log('error', message));
   app.get('/api/state', async () => snapshot());
+  const providerName = value => z.enum(['codex','claude','opencode']).parse(value);
+  app.get('/api/ai/:provider/models', async request => { const catalog = await providerRegistry.get(providerName(request.params.provider)); publish(); return catalog; });
+  app.post('/api/ai/:provider/models/refresh', async request => { const catalog = await providerRegistry.get(providerName(request.params.provider), { refresh: true }); publish(); return catalog; });
+  app.post('/api/ai/claude/login', async () => providerRegistry.startClaudeLogin());
   app.get('/api/codex/models', async () => modelCatalog.get());
   app.post('/api/codex/models/refresh', async () => modelCatalog.get({ refresh: true }));
   app.get('/api/desktop/revision', async () => ({ sourceFingerprint: runningSourceFingerprint }));
@@ -157,6 +168,7 @@ export async function createApp(options = {}) {
     await registerBuildRoutes(app, context);
     void voiceModule.checkVoice().then(publish);
     void getCodexStatus().then(status => { codexStatus = status; publish(); });
+    if (modelSelection(store.settings()).provider !== 'codex') void providerRegistry.get(modelSelection(store.settings()).provider).catch(() => {});
   }
   registerSetupRoutes(app, context);
   const dashboard = join(root, 'apps', 'dashboard', 'dist');
@@ -166,7 +178,7 @@ export async function createApp(options = {}) {
   } else app.get('/', async (_, reply) => reply.type('text/plain').send('Minecraft Companion: run npm run build, then restart the launcher.'));
   app.addHook('onClose', async () => {
     for (const client of clients) client.close(1001, 'Companion shutting down'); clients.clear();
-    await runtime.close(); await orchestrator?.close(); await modelCatalog.close(); store.close();
+    await runtime.close(); await orchestrator?.close(); await providerRegistry.close(); await modelCatalog.close(); store.close();
   });
   return app;
 }

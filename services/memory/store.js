@@ -7,7 +7,7 @@ import { DEFAULT_PUSH_TO_TALK } from '../../packages/shared-types/hotkeys.js';
 export const dataDirectory = process.env.COMPANION_DATA_DIR || join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'MinecraftCompanion');
 export const defaults = {
   realmId: null, playerName: '', autonomy: 'instructions', combat: 'retreat', followDistance: 3, miningZone: null,
-  alertFrequency: 'normal', movementSpeed: 'brisk', model: '', lowTokenMode: false, maxRequestsPerHour: 30, maxInputTokens: 100_000,
+  alertFrequency: 'normal', movementSpeed: 'brisk', model: '', provider: 'codex', providerModels: { claude: '', opencode: '' }, lowTokenMode: false, maxRequestsPerHour: 30, maxInputTokens: 100_000,
   voice: { enabled: false, handsFree: false, speed: 1, volume: 0.8, inputDevice: '', outputDevice: '', pushToTalk: DEFAULT_PUSH_TO_TALK, ttsVoice: 'auto' },
 };
 
@@ -30,11 +30,11 @@ export class Store {
   delete(collection, id) { this.db.prepare('DELETE FROM documents WHERE collection=? AND id=?').run(collection, id); }
   settings() {
     const saved = this.get('settings')[0] ?? {};
-    return { ...defaults, ...saved, voice: { ...defaults.voice, ...saved.voice } };
+    return { ...defaults, ...saved, providerModels: { ...defaults.providerModels, ...saved.providerModels }, voice: { ...defaults.voice, ...saved.voice } };
   }
   updateSettings(patch) {
     const current = this.settings();
-    return this.put('settings', { ...current, ...patch, voice: { ...current.voice, ...patch.voice }, id: 'settings' });
+    return this.put('settings', { ...current, ...patch, providerModels: { ...current.providerModels, ...patch.providerModels }, voice: { ...current.voice, ...patch.voice }, id: 'settings' });
   }
   backup() {
     this.db.exec('PRAGMA wal_checkpoint(FULL)');

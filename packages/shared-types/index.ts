@@ -48,7 +48,8 @@ export interface Project {
   [key: string]: any;
 }
 export interface CompanionState {
-  codex?: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null; model?: { active: { model: string | null; purpose: string; startedAt: string } | null; last: { model: string; purpose: string; at: string } | null } };
+  ai?: { provider: 'codex' | 'claude' | 'opencode'; available?: boolean | null; authenticated?: boolean | null; version?: string | null; error?: string | null; modelState?: { active: { provider?: string; model: string | null; purpose: string; startedAt: string } | null; last: { provider?: string; model: string; purpose: string; at: string } | null } };
+  codex?: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null; model?: { active: { provider?: string; model: string | null; purpose: string; startedAt: string } | null; last: { provider?: string; model: string; purpose: string; at: string } | null } };
   state: RuntimeState;
   planning?: boolean;
   connection: {
@@ -114,6 +115,7 @@ export interface CompanionState {
     inputTokens: number;
     outputTokens: number;
     cachedInputTokens: number;
+    unreportedRequests?: number;
     billingCost: null | number;
   };
   settings: {
@@ -126,6 +128,8 @@ export interface CompanionState {
     movementSpeed?: 'normal' | 'brisk';
     alertFrequency: string;
     model: string;
+    provider?: 'codex' | 'claude' | 'opencode';
+    providerModels?: { claude?: string; opencode?: string };
     lowTokenMode?: boolean;
     maxRequestsPerHour: number;
     maxInputTokens: number;
