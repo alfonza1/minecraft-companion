@@ -51,6 +51,8 @@ export function createActions(bot, capMs = ACTION_CAP_MS) {
 
   function haltMotion() {
     following = null;
+    // Login kicks can occur before pathfinder has a physics entity to stop.
+    if (!bot.entity || bot.minenessReady === false) return;
     bot.pathfinder?.stop();
     bot.pathfinder?.setGoal(null);
     bot.stopDigging?.();

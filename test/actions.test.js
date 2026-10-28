@@ -20,6 +20,18 @@ function body() {
   return bot;
 }
 
+// A login rejection has no usable player entity. Pathfinder's stop/reset path
+// assumes physics velocity exists; cancellation must still work before spawn.
+const rejectedLogin = body();
+rejectedLogin.minenessReady = false;
+rejectedLogin.entity = undefined;
+rejectedLogin.pathfinder.stop = () => { throw new Error('Pathfinder touched an unspawned body.'); };
+rejectedLogin.pathfinder.setGoal = rejectedLogin.pathfinder.stop;
+rejectedLogin.deactivateItem = () => { throw new Error('Sent a gameplay packet before spawn.'); };
+const rejectedActions = createActions(rejectedLogin);
+assert.doesNotThrow(() => rejectedActions.stop('Login rejected.'));
+assert.equal(rejectedActions.state().paused, true);
+
 // A literal stop must reject retries and prevent delayed plugin continuations.
 const bot = body();
 const actions = createActions(bot, 100);
