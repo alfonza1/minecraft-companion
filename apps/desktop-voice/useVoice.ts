@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import { DEFAULT_PUSH_TO_TALK, normalizeHotkey, hotkeyFromEvent, formatHotkey, type PushToTalkBinding } from '../../packages/shared-types/hotkeys';
+import { configureAudioOutput } from './audio-output.js';
 
 type Settings={handsFree?:boolean;inputDevice?:string;outputDevice?:string;speed?:number;volume?:number;pushToTalk?:PushToTalkBinding};
 type Options={state:string;settings:Settings;onTranscript:(text:string)=>Promise<string|void>;onError?:(message:string)=>void};
@@ -41,7 +42,8 @@ export function useVoice(options:Options) {
       objectUrl=URL.createObjectURL(blob);const output=new Audio(objectUrl);audio.current=output;
       output.volume=Math.max(0,Math.min(1,config.current.settings.volume??0.8));
       const sink=config.current.settings.outputDevice;
-      if(sink&&'setSinkId'in output)await(output as HTMLAudioElement&{setSinkId:(id:string)=>Promise<void>}).setSinkId(sink);
+      await configureAudioOutput(output,sink);
+      if(current!==generation.current||!ALLOWED.has(config.current.state))return;
       speakingRef.current=true;setSpeaking(true);
       await new Promise<void>((resolve,reject)=>{output.onended=()=>resolve();output.onerror=()=>reject(new Error('Audio playback failed.'));output.onpause=()=>resolve();void output.play().catch(reject);});
     }catch(error){report(error);}finally{if(objectUrl)URL.revokeObjectURL(objectUrl);if(current===generation.current){audio.current=null;speakingRef.current=false;setSpeaking(false);}}

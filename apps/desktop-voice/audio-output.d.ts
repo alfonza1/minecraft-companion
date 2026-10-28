@@ -1,0 +1,1 @@
+export function configureAudioOutput(player: { sinkId?: string; setSinkId?: (id: string) => Promise<void> }, deviceId?: string, options?: { fallbackToDefault?: boolean }): Promise<{ notice: string | null }>;

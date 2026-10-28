@@ -4,6 +4,7 @@ import type { CompanionState } from '../../../packages/shared-types';
 import { DEFAULT_PUSH_TO_TALK, formatHotkey, hotkeyFromEvent, type PushToTalkBinding } from '../../../packages/shared-types/hotkeys';
 import { api } from './api';
 import type { Mutate } from './shared';
+import { configureAudioOutput } from '../../desktop-voice/audio-output.js';
 
 export function PushToTalkSetting({ state, mutate, onStopped }: { state: CompanionState; mutate: Mutate; onStopped: () => void }) {
   const [capturing, setCapturing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -55,7 +56,7 @@ export function PushToTalkSetting({ state, mutate, onStopped }: { state: Compani
 
 type VoiceOption = { id: string; name: string; available: boolean; provider: string; description?: string };
 export function VoiceSelection({ state, mutate }: { state: CompanionState; mutate: Mutate }) {
-  const [voices, setVoices] = useState<VoiceOption[]>([]), [error, setError] = useState(''), [previewing, setPreviewing] = useState(false);
+  const [voices, setVoices] = useState<VoiceOption[]>([]), [error, setError] = useState(''), [notice, setNotice] = useState(''), [previewing, setPreviewing] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null), request = useRef<AbortController | null>(null), objectUrl = useRef<string | null>(null), owned = useRef(false);
   const cancellation = useRef<Promise<unknown>>(Promise.resolve());
   function stop() {
@@ -68,7 +69,7 @@ export function VoiceSelection({ state, mutate }: { state: CompanionState; mutat
   useEffect(() => { let disposed = false; void api<VoiceOption[]>('/voice/options').then(value => { if (!disposed) setVoices(value); }).catch(error => { if (!disposed) setError(error.message); }); return () => { disposed = true; stop(); }; }, []);
   useEffect(() => { if (state.state === 'PAUSED') stop(); }, [state.state]);
   async function preview() {
-    await stop(); setError(''); setPreviewing(true); owned.current = true;
+    await stop(); setError(''); setNotice(''); setPreviewing(true); owned.current = true;
     const controller = new AbortController(); request.current = controller;
     try {
       const response = await fetch('/api/voice/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId: state.settings.voice.ttsVoice || 'auto', speed: state.settings.voice.speed }), signal: controller.signal });
@@ -76,18 +77,21 @@ export function VoiceSelection({ state, mutate }: { state: CompanionState; mutat
       const blob = await response.blob(); if (controller.signal.aborted) return;
       objectUrl.current = URL.createObjectURL(blob); const player = new Audio(objectUrl.current); audio.current = player;
       player.volume = state.settings.voice.volume;
-      if (state.settings.voice.outputDevice && 'setSinkId' in player) await (player as HTMLAudioElement & { setSinkId: (id: string) => Promise<void> }).setSinkId(state.settings.voice.outputDevice);
+      const output = await configureAudioOutput(player, state.settings.voice.outputDevice, { fallbackToDefault: true });
+      if (controller.signal.aborted) return;
+      setNotice(output.notice || '');
       player.onended = stop; player.onerror = () => { setError('Audio playback failed. Check your output device.'); stop(); };
       await player.play();
     } catch (error) { if (!controller.signal.aborted) { setError((error as Error).message); stop(); } }
   }
   return <div className="voice-preference">
-    <label className="field-label">Companion voice<select aria-label="Companion voice" value={state.settings.voice.ttsVoice || 'auto'} disabled={!voices.length} onChange={event => { stop(); void mutate('/settings', { voice: { ttsVoice: event.target.value } }).catch(() => {}); }}>
+    <label className="field-label">Companion voice<select aria-label="Companion voice" value={state.settings.voice.ttsVoice || 'auto'} disabled={!voices.length} onChange={event => { stop(); setNotice(''); setError(''); void mutate('/settings', { voice: { ttsVoice: event.target.value } }).catch(() => {}); }}>
       {voices.length ? voices.map(voice => <option key={voice.id} value={voice.id} disabled={!voice.available}>{voice.name}{voice.available ? '' : ' · not installed'}</option>) : <option value="auto">Loading local voices…</option>}
     </select></label>
-    <p className="note">Free local voices. Kokoro uses the full-precision model for quality; Piper is a lightweight alternative. Preview plays through the app’s selected audio output. No speech API or account is needed.</p>
+    <p className="note">Free local voices. Kokoro uses the full-precision model for quality; Piper is a lightweight alternative. Preview uses the selected output when permitted, otherwise the system default with a notice. No microphone access, speech API or account is needed to preview.</p>
     <button className="button" disabled={!voices.length || state.state === 'PAUSED'} onClick={() => previewing ? stop() : void preview()}>{previewing ? <Square size={14} /> : <Play size={14} />}{previewing ? 'Stop voice preview' : 'Preview voice'}</button>
     {state.state === 'PAUSED' ? <p className="note">Resume to preview a voice.</p> : null}
+    {notice ? <p className="note" role="status">{notice}</p> : null}
     {error ? <p className="inline-error" role="alert">{error}</p> : null}
   </div>;
 }

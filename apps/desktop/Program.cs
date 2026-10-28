@@ -89,7 +89,12 @@ internal sealed class CompanionWindow : Form
                 if (args.IsUserInitiated && Uri.TryCreate(args.Uri, UriKind.Absolute, out var uri) && uri.Scheme == "https" && uri.UserInfo.Length == 0)
                     Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
             };
-            core.PermissionRequested += (_, args) => { if (!IsDashboard(args.Uri) || args.PermissionKind != CoreWebView2PermissionKind.Microphone) args.State = CoreWebView2PermissionState.Deny; };
+            core.PermissionRequested += (_, args) =>
+            {
+                if (!IsDashboard(args.Uri)) args.State = CoreWebView2PermissionState.Deny;
+                else if (args.PermissionKind == CoreWebView2PermissionKind.Autoplay) args.State = CoreWebView2PermissionState.Allow;
+                else if (args.PermissionKind != CoreWebView2PermissionKind.Microphone) args.State = CoreWebView2PermissionState.Deny;
+            };
             core.WebMessageReceived += HandleMessage;
             core.ProcessFailed += (_, _) => { status.Text = "The desktop view stopped. Close and reopen Minecraft Companion.\nYour companion's service is separate from this window."; status.Visible = true; status.BringToFront(); };
             core.NavigationCompleted += (_, args) => { status.Visible = !args.IsSuccess; if (!args.IsSuccess) status.Text = "Could not load your workspace.\nClose and reopen Minecraft Companion to retry."; };

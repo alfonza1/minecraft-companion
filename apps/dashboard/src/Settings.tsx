@@ -308,7 +308,27 @@ function VoiceSettings({
 }) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [audioError, setAudioError] = useState("");
+  const [choosingOutput, setChoosingOutput] = useState(false);
   const voice = state.settings.voice;
+  const outputPicker = navigator.mediaDevices as MediaDevices & { selectAudioOutput?: (options?: { deviceId?: string }) => Promise<MediaDeviceInfo> };
+  useEffect(() => {
+    let disposed = false;
+    const refresh = () => { void navigator.mediaDevices?.enumerateDevices().then(value => { if (!disposed) setDevices(value); }).catch(() => {}); };
+    refresh(); navigator.mediaDevices?.addEventListener('devicechange', refresh);
+    return () => { disposed = true; navigator.mediaDevices?.removeEventListener('devicechange', refresh); };
+  }, []);
+  async function chooseOutput() {
+    if (!outputPicker?.selectAudioOutput) return;
+    setChoosingOutput(true); setAudioError('');
+    try {
+      const selected = await outputPicker.selectAudioOutput({ deviceId: voice.outputDevice || '' });
+      setDevices(value => [...value.filter(device => device.deviceId !== selected.deviceId), selected]);
+      await mutate('/settings', { voice: { outputDevice: selected.deviceId } });
+    } catch (error) {
+      const problem = error as Error;
+      if (problem.name !== 'AbortError') setAudioError(['NotAllowedError', 'SecurityError'].includes(problem.name) ? 'Speaker selection was not allowed. You can use System default without granting microphone access.' : problem.message);
+    } finally { setChoosingOutput(false); }
+  }
   async function inspectDevices() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -357,6 +377,7 @@ function VoiceSettings({
         value={voice.outputDevice || ""}
         options={{
           "": "System default",
+          ...(voice.outputDevice && !devices.some(device => device.kind === 'audiooutput' && device.deviceId === voice.outputDevice) ? { [voice.outputDevice]: 'Saved speakers · choose again in this app' } : {}),
           ...Object.fromEntries(
             devices
               .filter((d) => d.kind === "audiooutput")
@@ -367,6 +388,8 @@ function VoiceSettings({
           attempt(mutate("/settings", { voice: { outputDevice } }))
         }
       />
+      {outputPicker?.selectAudioOutput ? <button className="button full" disabled={choosingOutput} onClick={() => void chooseOutput()}>{choosingOutput ? 'Choosing audio output…' : 'Choose audio output'}</button> : null}
+      <p className="note">Speaker choices are specific to this app or browser. If saved speakers stop working after reopening or switching browsers, choose them again or select System default. Desktop voice has its own speaker selector below.</p>
       <label className="field-label">
         Speech speed <span className="range-label">{voice.speed}×</span>
         <input
