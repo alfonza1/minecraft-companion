@@ -4,7 +4,7 @@ Workstation session: 2026-10-27, Windows11, Node24.18.1, Python3.12.10. No Realm
 
 ## Automated and browser checks
 
-`$env:COMPANION_TEST_LOCAL_SPEECH='1'; npm test` passed **76/76, zero skipped** after guided setup and bridge integration. This includes upstream routing/cancellation, API host/origin and invalid input, exact observed inventory, SQLite recovery/backup, real Windows DPAPI encryption, validated Microsoft prompts, pause/respawn/start races, strict schematic parsing, malicious uploads, exact crafting batching, local vanilla production recipes, reservations/splits, approval hashes, build cancellation, actual OS process cleanup, setup readiness, secure session authorization, projected-inventory exclusions and movement tick framing.
+`$env:COMPANION_TEST_LOCAL_SPEECH='1'; npm test` passed **77/77, zero skipped** after the account-worker startup fix. This includes upstream routing/cancellation, API host/origin and invalid input, exact observed inventory, SQLite recovery/backup, real Windows DPAPI encryption, validated Microsoft prompts, actual account-worker startup, pause/respawn/start races, strict schematic parsing, malicious uploads, exact crafting batching, local vanilla production recipes, reservations/splits, approval hashes, build cancellation, actual OS process cleanup, setup readiness, secure session authorization, projected-inventory exclusions and movement tick framing.
 
 `npm run typecheck` and `npm run build` pass. Three.js is lazy-loaded; its compressed preview chunk is about127kB. The build reports a >500kB uncompressed chunk warning, not a runtime failure.
 
@@ -55,6 +55,10 @@ No Microsoft account has completed the live device flow here. Native support sti
 ## Guided setup and 26.3 protocol bridge
 
 The guided setup is implemented and tested against a real isolated API/SQLite instance at1440px and390px. All five steps rendered without overflow or page errors. Actual controls started offline planning, paused and stopped with zero model requests. An explicit microphone-permission denial fixture verified that mounting never captures audio and leaving a wizard-owned audio session pauses it. Physical microphones, headphones and Microsoft login remain untested. Screenshots/results are under `.git/verification/setup/`.
+
+Account setup initially failed before sending a device prompt: Node24 rejected the synthetic named `Titles` export from CommonJS `prismarine-auth`. The worker now uses the libraries' default CommonJS exports. A regression test launches the real worker and waits for a credential-free readiness handshake; it failed before the import fix and now passes. Startup failures are distinguished from interrupted sign-in without exposing stderr or credentials.
+
+`node apps/dashboard/tests/account-connection.mjs --microsoft-device-flow` passed the actual browser-button -> API -> worker -> Microsoft -> live-dashboard path using an isolated cache/database. It verifies the official URL and actual code shape, with zero model/game requests or page errors. Evidence is `.git/verification/account/`; the screenshot masks the temporary code. This opt-in test requests a real Microsoft device prompt but never completes login or reads the user's saved session. Licensed account authentication and Realm access remain unverified.
 
 Private Temurin25 and the official26.3 server were checksum-verified in a dedicated external cache. The test uses the user's existing explicit local-server EULA consent, an ephemeral loopback-only offline survival world, no OP bot and no real Realm. The pinned ViaProxy3.4.14 JAR is SHA256-verified; the Java adapter compiles from repository source and has separate source/artifact hashes. Microsoft tokens never enter Java, files, arguments or dashboard state; real Mojang session acceptance remains unverified.
 

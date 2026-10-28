@@ -1,8 +1,11 @@
-import { Authflow, Titles } from 'prismarine-auth';
-import { RealmAPI } from 'prismarine-realms';
+import prismarineAuth from 'prismarine-auth';
+import prismarineRealms from 'prismarine-realms';
 import { secureCacheFactory } from './secure-cache.js';
 import mcProtocol from 'minecraft-protocol';
 import { authorizeSession } from './session-join.js';
+
+const { Authflow, Titles } = prismarineAuth;
+const { RealmAPI } = prismarineRealms;
 
 const send = value => process.send?.(value);
 let session = null;
@@ -50,3 +53,4 @@ process.on('message', async message => {
     process.disconnect();
   }
 });
+send({ type: 'ready' });

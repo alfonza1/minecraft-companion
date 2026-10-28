@@ -46,9 +46,11 @@ export class RealmConnector extends EventEmitter {
     this.emit('change');
     const worker = fork(new URL('./auth-worker.js', import.meta.url), [], { windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     this.worker = worker;
+    let ready = false;
     const timeout = setTimeout(() => { this.cancelAuth(); this.auth.status = 'error'; this.emit('change'); }, 15 * 60_000);
     worker.on('message', message => {
       if (this.worker !== worker) return;
+      if (message.type === 'ready') { ready = true; return; }
       if (message.type === 'device') {
         try { this.auth.device = deviceCodePrompt(message); }
         catch { this.auth.status = 'error'; this.auth.device = null; this.emit('diagnostic', 'Microsoft returned an invalid device prompt. Reconnect the account.'); void this.cancelAuth().catch(() => {}); }
@@ -65,7 +67,7 @@ export class RealmConnector extends EventEmitter {
         this.worker = null;
         if (this.auth.status === 'authenticating') {
           this.auth.status = 'error'; this.auth.device = null;
-          this.emit('diagnostic', 'Microsoft sign-in ended before completion. Connect the account again.'); this.emit('change');
+          this.emit('diagnostic', ready ? 'Microsoft sign-in ended before completion. Connect the account again.' : 'The Minecraft account worker could not start. Run Bootstrap.ps1 to repair its dependencies.'); this.emit('change');
         }
       }
     });
