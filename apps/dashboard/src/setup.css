@@ -1,4 +1,6 @@
 .setup-workspace { max-width: 1260px; margin: 0 auto; }
+.private-account-panel { margin-top: 20px; padding-top: 18px; border-top: 1px solid #2d3d40; }
+.private-account-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
 .setup-intro { display: flex; justify-content: space-between; gap: 24px; align-items: center; padding: 8px 0 26px; }
 .setup-intro h2 { font-size: clamp(22px, 2.5vw, 30px); margin: 10px 0; letter-spacing: -.6px; }
 .setup-intro p { max-width: 680px; color: var(--muted, #9cabb2); line-height: 1.7; }

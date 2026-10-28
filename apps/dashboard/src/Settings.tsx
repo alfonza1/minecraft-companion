@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import PrivateAccountActions from './PrivateAccountActions';
 import type { CompanionState } from "../../../packages/shared-types";
 import { api } from "./api";
 import {
@@ -108,6 +109,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               : "Connect Minecraft account"}
           </button>
         )}
+        <PrivateAccountActions state={state} mutate={mutate} busy={busy} />
         <p className="note">
           Sessions are cached outside the repository. Never share a password or
           authentication token in chat.

@@ -15,6 +15,7 @@ import { CompanionRuntime } from '../companion-runtime/index.js';
 import { lockBody } from '../../src/session.js';
 import { registerSetupRoutes } from '../setup/index.js';
 import { getBridgeStatus } from '../protocol-bridge/index.js';
+import { registerPrivateAccountRoutes } from '../realm-connector/private-browser.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const voiceSettings = z.object({ enabled: z.boolean().optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional() }).strict();
@@ -87,6 +88,7 @@ export async function createApp(options = {}) {
   app.get('/api/state', async () => snapshot());
   app.get('/api/health', async () => ({ name: 'Minecraft Companion', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: ['26.3 requires the optional protocol bridge; its projected view cannot support exact construction or resource reconciliation.', 'Full-cube construction on native connections only; oriented blocks, scaffolding and advanced progression require further gameplay validation.'] }));
   app.post('/api/auth/connect', async () => { connector.connectAccount(); return { started: true }; });
+  registerPrivateAccountRoutes(app, context, options.privateBrowser);
   app.post('/api/realms/refresh', async () => { connector.connectAccount(); return { started: true }; });
   app.post('/api/settings', async request => { const settings = store.updateSettings(settingsSchema.parse(request.body)); publish(); return settings; });
   app.post('/api/permissions/mining', async request => {

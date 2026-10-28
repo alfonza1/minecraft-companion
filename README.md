@@ -31,6 +31,7 @@ Bootstrap installs lockfile dependencies, builds the dashboard, prepares private
 ## Account onboarding
 
 1. Setup → **Minecraft account** → **Connect Minecraft account**, using the separate licensed bot account.
+   To choose another Microsoft account, use **Connect in private window**. It requests a fresh device code and opens Microsoft Edge InPrivate (Chrome Incognito is the fallback). Previous encrypted caches are preserved in the application data directory; the selected session persists across restarts. If a code is already displayed, **Open in private window** reopens that same sign-in. **Open account setup privately** opens the official Java profile page when profile setup is required. Private windows open only after your click; browser policy can prevent private mode. If private launching is unavailable, use the official link's context menu to open it privately.
 2. Follow the official Microsoft URL/device code. Enter passwords/MFA only at Microsoft. Never paste passwords, recovery codes or tokens into this app.
    If Minecraft reports **profile required**, finish the bot account's Java username setup on Minecraft.net or in the official launcher, then use **Check Java profile again**. The saved Microsoft session is reused; a missing Java profile is distinct from an unverified license or a temporary profile service failure.
 3. Invite the bot account and accept any pending invitation through Minecraft. Refresh and select an available Realm.

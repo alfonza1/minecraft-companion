@@ -4,6 +4,7 @@ import { useVoice } from "../../desktop-voice/useVoice";
 import { api } from "./api";
 import { attempt, Badge, Panel, SettingSelect, time, type Common } from "./shared";
 import "./setup.css";
+import PrivateAccountActions from './PrivateAccountActions';
 
 type Compatibility = { realmId: number; status: "native" | "bridge" | "unsupported" | "unavailable"; serverVersion?: string; serverProtocol?: number; clientVersion?: string; message: string; checkedAt: string };
 type SetupStatus = { checkedAt: string | null; node: { version: string; ready: boolean }; codex: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null }; voice: { available: boolean; status: string; error: string | null; tts?: string }; compatibility: Compatibility | null; bridge: { installed: boolean; version: string | null; verified: boolean; limitations: string[] } };
@@ -114,6 +115,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
         {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? <a className="button" href="https://www.minecraft.net/en-us/msaprofile/mygames" target="_blank" rel="noreferrer">Open Minecraft account setup <ArrowRight size={14} /></a> : null}
         {state.auth.username ? <div className="setup-identity"><strong>{state.auth.username}</strong><span>{accountReady ? "Minecraft profile verified" : "Previous profile · sign-in needs attention"}</span></div> : null}
         {state.auth.device ? <div className="device-code"><p>Open Microsoft, enter this device code, then return here after signing in.</p><a className="button" target="_blank" rel="noreferrer" href={state.auth.device.verificationUri}>Open Microsoft sign-in <ArrowRight size={14} /></a><div className="code-copy"><strong>{state.auth.device.userCode}</strong><button className="button icon-button" aria-label="Copy Microsoft device code" onClick={() => void navigator.clipboard.writeText(state.auth.device!.userCode).then(() => setCopied(true)).catch(err => setError(err.message))}>{copied ? <Check size={16} /> : <Copy size={16} />}</button></div><small>Expires {time(state.auth.device.expiresAt)}. If it expires, reconnect to request another code.</small></div> : <button className="button primary" disabled={blocked || state.auth.status === "authenticating"} onClick={() => attempt(mutate("/auth/connect", {}))}>{state.auth.status === "authenticating" ? "Waiting for Microsoft…" : state.auth.issue === "JAVA_PROFILE_REQUIRED" ? "Check Java profile again" : accountReady ? "Reconnect Minecraft account" : "Connect Minecraft account"}</button>}
+        <PrivateAccountActions state={state} mutate={mutate} busy={blocked} />
         <p className="note">The session is encrypted for your Windows user outside Git. Microsoft sign-in, MFA and account licensing require you.</p>
       </Panel> : null}
       {step === 2 ? <Panel title="Choose where you'll play" eyebrow="03 / REALM ACCESS" action={<button className="button" disabled={blocked || !accountReady} onClick={() => attempt(mutate("/realms/refresh", {}))}><RefreshCw size={14} />Refresh invited Realms</button>}>

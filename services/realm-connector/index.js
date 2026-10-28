@@ -7,6 +7,7 @@ import minecraftData from 'minecraft-data';
 import { secureCacheFactory } from './secure-cache.js';
 import { BRIDGE_PROTOCOLS, BRIDGE_CLIENT_VERSION, getBridgeStatus, startBridge } from '../protocol-bridge/index.js';
 import { createBridgeClient } from '../protocol-bridge/client.js';
+import { freshAccountDirectory, selectedAccountDirectory } from './account-session.js';
 
 export const supportedVersions = mineflayer.testedVersions.filter(version => mcProtocol.supportedVersions.includes(version));
 export const supportedVersionForProtocol = protocol => [...supportedVersions].reverse().find(version => minecraftData.versionsByMinecraftVersion.pc[version]?.version === protocol) ?? null;
@@ -33,14 +34,16 @@ export function deviceCodePrompt(message) {
 export class RealmConnector extends EventEmitter {
   constructor(directory) {
     super();
-    this.directory = join(directory, 'auth');
+    this.authRoot = join(directory, 'auth');
+    this.directory = selectedAccountDirectory(this.authRoot);
     this.auth = { status: 'disconnected', username: null, device: null };
     this.realms = [];
     this.worker = null; this.preparations = new Set();
     this.sessions = new Set(); this.pendingConnections = new Set(); this.connections = new Set(); this.compatibility = null;
   }
-  connectAccount() {
+  connectAccount({ fresh = false } = {}) {
     if (this.worker) return;
+    if (fresh) { this.directory = freshAccountDirectory(this.authRoot); this.auth.username = null; }
     this.realms = []; this.compatibility = null;
     this.auth = { ...this.auth, status: 'authenticating', device: null, error: null, issue: null };
     this.emit('change');

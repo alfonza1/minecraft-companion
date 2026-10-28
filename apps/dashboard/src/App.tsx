@@ -69,7 +69,7 @@ function Controls({ state, mutate, busy }: Common) {
         className="button icon-button"
         aria-label="Stop and disconnect"
         title="Stop and disconnect"
-        disabled={state.state === "DISCONNECTED"}
+        disabled={state.state === "DISCONNECTED" && state.auth.status !== "authenticating" && state.connection.status !== "connecting"}
         onClick={() => attempt(mutate("/control", { command: "stop" }))}
       >
         <Square size={15} />
