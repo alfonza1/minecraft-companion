@@ -70,3 +70,9 @@
 .setup-issue-banner p,.setup-issue-banner li{overflow-wrap:anywhere}
 .setup-issue-banner ul{margin:8px 0 0;padding-left:18px;font-size:12px;color:#b6c4bc;line-height:1.8}
 .setup-issue-banner .button{flex-shrink:0}
+.low-token-setting{padding:16px 0;margin:0 0 20px;border-top:1px solid #304439;border-bottom:1px solid #304439}
+.low-token-setting .toggle-row{margin-top:0}
+.low-token-setting summary{cursor:pointer;font-size:12px;color:#c5d8cc;font-weight:600;line-height:1.6}
+.low-token-setting ul{padding-left:18px;margin:12px 0;font-size:12px;line-height:1.8;color:#b6c6bd}
+.low-token-setting li{margin-bottom:10px;overflow-wrap:anywhere}
+.low-token-inventory{color:#b5dcc6}

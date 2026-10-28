@@ -126,6 +126,7 @@ export interface CompanionState {
     movementSpeed?: 'normal' | 'brisk';
     alertFrequency: string;
     model: string;
+    lowTokenMode?: boolean;
     maxRequestsPerHour: number;
     maxInputTokens: number;
     voice: {

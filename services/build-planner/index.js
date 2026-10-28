@@ -63,6 +63,7 @@ export function registerBuildRoutes(app, context) {
     return saveRevision(reviseProject(getProject(params.id), body?.blueprint));
   }));
   app.post('/api/projects/:id/design', endpoint(async ({ params, body }) => {
+    if (store.settings().lowTokenMode) throw new Error('Low token mode disables new AI blueprint designs. Turn it off in Settings to design, or import a blueprint or schematic locally.');
     ensureEditable(params.id);
     const project = getProject(params.id);
     const description = body?.description;

@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import PrivateAccountActions from './PrivateAccountActions';
 import CodexModel from './CodexModel';
+import LowTokenMode from './LowTokenMode';
 import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 import type { CompanionState } from "../../../packages/shared-types";
@@ -171,6 +172,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
         <Panel title="Codex & reasoning" eyebrow="THINK WHEN IT MATTERS">
           <div className="codex-identity"><Badge tone={state.codex?.authenticated ? "green" : "muted"}>{state.codex?.authenticated ? "Codex signed in" : state.codex?.authenticated === false ? "Codex sign-in needed" : "Checking Codex"}</Badge><span className="note">{state.codex?.version || state.codex?.error || "Reading local CLI authentication status"}</span></div>
           <CodexModel state={state} mutate={mutate} />
+          <LowTokenMode state={state} mutate={mutate} />
           <div className="two-inputs">
             <label className="field-label">
               Requests per hour

@@ -122,7 +122,7 @@ test('live stock is allocated once across projects and redistributes when user c
 
 function fixture(orchestrator) {
   const collections = new Map();
-  const store = { get: (name) => [...(collections.get(name)?.values() ?? [])], put: (name, record) => { if (!collections.has(name)) collections.set(name, new Map()); collections.get(name).set(record.id, structuredClone(record)); } };
+  const store = { settings: () => ({ lowTokenMode: false }), get: (name) => [...(collections.get(name)?.values() ?? [])], put: (name, record) => { if (!collections.has(name)) collections.set(name, new Map()); collections.get(name).set(record.id, structuredClone(record)); } };
   const runtime = new EventEmitter();
   runtime.snapshot = () => ({ state: 'PAUSED', world: null });
   runtime.isActive = () => false;
