@@ -1,3 +1,5 @@
+import { RealmVersionError } from './realm-version.js';
+
 const PROFILE_URL = 'https://api.minecraftservices.com/minecraft/profile';
 const FAILURES = {
   JAVA_PROFILE_REQUIRED: 'Microsoft sign-in succeeded, but Minecraft reports no Java Edition profile. Finish Java account setup and choose a Java username on Minecraft.net or in the official launcher, then check again.',
@@ -32,5 +34,6 @@ export async function requireJavaProfile(credentials, request = fetch) {
 
 export function accountFailure(error) {
   if (error instanceof AccountSetupError) return { code: error.code, error: FAILURES[error.code] };
+  if (error instanceof RealmVersionError) return { code: error.code, error: error.message };
   return { code: 'ACCOUNT_UNAVAILABLE', error: 'Microsoft/Minecraft sign-in or Realm listing failed. Check account ownership, Xbox permissions, network access and Realm invitation, then reconnect.' };
 }

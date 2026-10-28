@@ -36,7 +36,7 @@ Bootstrap installs lockfile dependencies, builds the dashboard, prepares private
    If Minecraft reports **profile required**, finish the bot account's Java username setup on Minecraft.net or in the official launcher, then use **Check Java profile again**. The saved Microsoft session is reused; a missing Java profile is distinct from an unverified license or a temporary profile service failure.
 3. Invite the bot account and accept any pending invitation through Minecraft. Refresh and select an available Realm.
 4. Set your player username for trusted in-game `@companion` messages.
-5. Check Realm compatibility, then connect in **First session**. The selected Realm is pinged and its protocol validated before login. Native/translated protocols are distinguished. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
+5. Check Realm compatibility, then connect in **First session**. The selected Realm is pinged and its protocol validated before login. If its status endpoint closes, an exact recognized `activeVersion` from the authenticated Realms service can establish compatibility; the UI identifies that source. Unknown versions are never guessed. Native/translated protocols are distinguished. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
 
 Sessions use prismarine-auth's supported CacheFactory with **Windows DPAPI CurrentUser**, outside Git in `%LOCALAPPDATA%\MinecraftCompanion\auth`. Tokens never enter dashboard state. Connection preparation is cancellable. Reconnect uses bounded backoff, returns paused and never silently resumes interrupted work.
 

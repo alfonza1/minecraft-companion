@@ -43,6 +43,9 @@ test('Realm compatibility distinguishes native, translated and unknown protocol 
   assert.ok(['bridge', 'unsupported'].includes(modern.status));
   const unknown = connector.recordCompatibility(2, { protocol: 99999, version: 'future' });
   assert.equal(unknown.status, 'unsupported'); assert.equal(unknown.clientVersion, null);
+  const service = connector.recordCompatibility(1, { protocol: 777, version: '26.3', protocolSource: 'realms-service' });
+  assert.equal(service.protocolSource, 'realms-service');
+  assert.match(service.message, /authenticated Realms service; status ping unavailable/);
 });
 
 test('pause during secure preparation cleanup cannot initiate a late native Microsoft login', async () => {

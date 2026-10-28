@@ -135,8 +135,9 @@ export class RealmConnector extends EventEmitter {
     const translated = BRIDGE_PROTOCOLS.get(status.protocol);
     const bridge = getBridgeStatus();
     this.compatibility = { realmId, status: native ? 'native' : translated && bridge.installed ? 'bridge' : 'unsupported',
-      serverVersion: native || translated || status.version, serverProtocol: status.protocol, clientVersion: native || (translated ? BRIDGE_CLIENT_VERSION : null), checkedAt: new Date().toISOString(),
+      serverVersion: native || translated || status.version, serverProtocol: status.protocol, protocolSource: status.protocolSource || 'server-status', clientVersion: native || (translated ? BRIDGE_CLIENT_VERSION : null), checkedAt: new Date().toISOString(),
       message: native ? 'Native protocol supported.' : translated && bridge.installed ? `Uses the local protocol bridge${bridge.verified ? ' validated against a local 26.3 server' : '; local gameplay verification is pending'}. Exact building and assigned gathering are disabled for this projected client view. Real Realm login remains to be tested.` : 'No installed connection supports this Realm protocol. Run Bootstrap.ps1 or wait for native protocol support.' };
+    if (status.protocolSource === 'realms-service') this.compatibility.message = `Version reported by the authenticated Realms service; status ping unavailable. ${this.compatibility.message}`;
     this.emit('change'); return this.compatibility;
   }
   async probeRealm(realmId) {

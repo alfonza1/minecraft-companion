@@ -1,7 +1,7 @@
 import prismarineAuth from 'prismarine-auth';
 import prismarineRealms from 'prismarine-realms';
 import { secureCacheFactory } from './secure-cache.js';
-import mcProtocol from 'minecraft-protocol';
+import { inspectRealmVersion } from './realm-version.js';
 import { authorizeSession } from './session-join.js';
 import { accountFailure, requireJavaProfile } from './java-profile.js';
 
@@ -30,15 +30,17 @@ process.on('message', async message => {
     const profile = await requireJavaProfile(credentials);
     credentials.profile = profile;
     if (message.type === 'connect') send({ type: 'profile', username: profile.name });
-    const realms = await RealmAPI.from(flow, 'java', { minecraftVersion: '26.3' }).getRealms();
+    const api = RealmAPI.from(flow, 'java', { minecraftVersion: '26.3' });
+    // The library's Realm wrapper drops activeVersion from the service response.
+    const { servers: realms } = await api.rest.get('/worlds');
     if (message.type !== 'connect') {
       const realm = realms.find(item => item.id === message.realmId);
       if (!realm) throw new Error('Realm access unavailable.');
-      const address = await realm.getAddress();
-      const status = await new Promise((resolve, reject) => mcProtocol.ping({ ...address, closeTimeout: 8000 }, (error, result) => error ? reject(error) : resolve(result)));
+      const address = await api.getRealmAddress(realm.id);
+      const status = await inspectRealmVersion(address, realm.activeVersion);
       const keys = credentials.certificates?.profileKeys;
       if (message.type === 'session') session = credentials;
-      send({ type: 'resolved', protocol: status.version?.protocol, version: status.version?.name,
+      send({ type: 'resolved', ...status,
         ...(message.type === 'session' ? { address, profile: { id: profile.id, name: profile.name }, certificates: keys ? {
           publicDER: keys.publicDER.toString('base64'), privateDER: keys.privateDER.toString('base64'), signatureV2: keys.signatureV2.toString('base64'), expiresOn: keys.expiresOn.toISOString(),
         } : null } : {}) });
