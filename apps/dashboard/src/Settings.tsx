@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PrivateAccountActions from './PrivateAccountActions';
+import CodexModel from './CodexModel';
 import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 import type { CompanionState } from "../../../packages/shared-types";
@@ -27,7 +28,6 @@ import {
   type Mutate,
 } from "./shared";
 export default function Settings({ state, mutate, busy, navigate }: Common & { navigate: (page: string) => void }) {
-  const [model, setModel] = useState(state.settings.model);
   const [player, setPlayer] = useState(state.settings.playerName);
   const [copied, setCopied] = useState(false);
   const [diagnostics, setDiagnostics] = useState<any>(null);
@@ -38,271 +38,265 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
         <div><h3>Setting up your companion?</h3><p>Walk through local services, Microsoft sign-in, Realm compatibility and audio checks.</p></div>
         <button className="button" onClick={() => navigate("setup")}>Open guided setup <ArrowRight size={14} /></button>
       </div>
-      <Panel
-        title="Minecraft account"
-        eyebrow="YOUR COMPANION’S IDENTITY"
-        action={
-          <Badge tone={accountReady ? "green" : "muted"}>
-            {accountReady ? "Connected" : human(state.auth.status)}
-          </Badge>
-        }
-      >
-        <div className="account-row">
-          <div className="account-face">
-            <Users size={24} />
-          </div>
-          <div>
-            <h3>{state.auth.username || "A teammate needs an account"}</h3>
-            <p>
-              {accountReady
-                ? "Microsoft account connected"
-                : "Use a separate, licensed Minecraft Java account."}
-            </p>
-          </div>
-        </div>
-        {state.auth.error ? <p className="inline-error" role="alert">{state.auth.error}</p> : null}
-        {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? <a className="button" href="https://www.minecraft.net/en-us/msaprofile/mygames" target="_blank" rel="noreferrer">Open Minecraft account setup <ArrowRight size={14} /></a> : null}
-        {state.auth.device ? (
-          <div className="device-code">
-            <p>
-              Sign in directly with Microsoft. Your password never passes
-              through this app.
-            </p>
-            <a
-              href={state.auth.device.verificationUri}
-              target="_blank"
-              rel="noreferrer"
-              className="button"
-            >
-              Open Microsoft sign-in <ArrowRight size={14} />
-            </a>
-            <div className="code-copy">
-              <strong>{state.auth.device.userCode}</strong>
-              <button
-                className="button icon-button"
-                aria-label="Copy device code"
-                onClick={() => {
-                  void navigator.clipboard
-                    .writeText(state.auth.device!.userCode)
-                    .then(() => {
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2500);
-                    });
-                }}
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-            <small>
-              Expires {time(state.auth.device.expiresAt)} · MFA supported
-            </small>
-          </div>
-        ) : (
-          <button
-            className="button full"
-            disabled={busy || state.auth.status === "authenticating"}
-            onClick={() => attempt(mutate("/auth/connect", {}))}
-          >
-            <Users size={16} />
-            {state.auth.issue === "JAVA_PROFILE_REQUIRED"
-              ? "Check Java profile again"
-              : state.auth.username
-              ? "Reconnect Minecraft account"
-              : "Connect Minecraft account"}
-          </button>
-        )}
-        <PrivateAccountActions state={state} mutate={mutate} busy={busy} />
-        <p className="note">
-          Sessions are cached outside the repository. Never share a password or
-          authentication token in chat.
-        </p>
-        <div className="settings-divider" />
-        <div className="panel-heading">
-          <h3>Your Realm</h3>
-          <button
-            className="text-button"
-            disabled={busy || !accountReady}
-            onClick={() => attempt(mutate("/realms/refresh", {}))}
-          >
-            <RefreshCw size={13} />
-            Refresh
-          </button>
-        </div>
-        {state.realms.length ? (
-          <label className="field-label">
-            Invited Realms
-            <select
-              value={state.settings.realmId || ""}
-              onChange={(e) =>
-                attempt(
-                  mutate("/settings", { realmId: e.target.value ? Number(e.target.value) : null }),
-                )
-              }
-            >
-              <option value="">Select a Realm</option>
-              {state.realms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} · {r.owner}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <p className="quiet-empty">
-            {state.auth.username
-              ? "Invite this account to your Realm, then refresh the list."
-              : "Sign in to discover invited Realms."}
-          </p>
-        )}
-        <label className="field-label">
-          Your Minecraft username
-          <input
-            value={player}
-            onChange={(e) => setPlayer(e.target.value)}
-            placeholder="Who should your companion follow?"
-            maxLength={16}
-            onBlur={() => {
-              if (player !== state.settings.playerName)
-                attempt(mutate("/settings", { playerName: player }));
-            }}
-          />
-        </label>
-        {state.connection.error ? (
-          <p className="inline-error">{state.connection.error}</p>
-        ) : null}
-      </Panel>
-      <Panel
-        title="Voice & audio"
-        eyebrow="HEARD, WHEREVER YOU ARE"
-        action={
-          <Badge tone={state.voice.available ? "green" : "muted"}>
-            {human(state.voice.status)}
-          </Badge>
-        }
-      >
-        <VoiceSettings state={state} mutate={mutate} />
-      </Panel>
-      <Panel title="Codex & reasoning" eyebrow="THINK WHEN IT MATTERS">
-        <div className="account-row"><Badge tone={state.codex?.authenticated ? "green" : "muted"}>{state.codex?.authenticated ? "Codex signed in" : state.codex?.authenticated === false ? "Codex sign-in needed" : "Checking Codex"}</Badge><span className="note">{state.codex?.version || state.codex?.error || "Reading local CLI authentication status"}</span></div>
-        <label className="field-label">
-          Model
-          <input
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            onBlur={() => {
-              if (model !== state.settings.model)
-                attempt(mutate("/settings", { model }));
-            }}
-          />
-        </label>
-        <div className="two-inputs">
-          <label className="field-label">
-            Requests per hour
-            <input
-              type="number"
-              min="0"
-              max="200"
-              value={state.settings.maxRequestsPerHour}
-              onChange={(e) =>
-                attempt(
-                  mutate("/settings", {
-                    maxRequestsPerHour: Number(e.target.value),
-                  }),
-                )
-              }
-            />
-          </label>
-          <label className="field-label">
-            Input token limit
-            <input
-              type="number"
-              min="0"
-              step="1000"
-              value={state.settings.maxInputTokens}
-              onChange={(e) =>
-                attempt(
-                  mutate("/settings", {
-                    maxInputTokens: Number(e.target.value),
-                  }),
-                )
-              }
-            />
-          </label>
-        </div>
-        <div className="usage-box">
-          <div>
-            <span>Requests</span>
-            <strong>{state.usage.requests}</strong>
-          </div>
-          <div>
-            <span>Input tokens</span>
-            <strong>{state.usage.inputTokens.toLocaleString()}</strong>
-          </div>
-          <div>
-            <span>Output tokens</span>
-            <strong>{state.usage.outputTokens.toLocaleString()}</strong>
-          </div>
-        </div>
-        <p className="note">
-          Usage comes from actual model responses. Account limits and billing
-          cost are{" "}
-          {state.usage.billingCost === null
-            ? "not provided by the provider"
-            : `$${state.usage.billingCost}`}
-          . Pausing blocks all new reasoning.
-        </p>
-        <button
-          className="button danger full"
-          onClick={() => attempt(mutate("/control", { command: "emergency" }))}
+      <div className="settings-column">
+        <Panel
+          title="Minecraft account"
+          eyebrow="YOUR COMPANION’S IDENTITY"
+          action={
+            <Badge tone={accountReady ? "green" : "muted"}>
+              {accountReady ? "Connected" : human(state.auth.status)}
+            </Badge>
+          }
         >
-          <ShieldAlert size={15} />
-          Emergency stop
-        </button>
-      </Panel>
-      <Panel
-        title="Diagnostics"
-        eyebrow="A HEALTHY LOCAL WORKSPACE"
-        action={
-          <button
-            className="text-button"
-            onClick={() => attempt(api("/health").then(setDiagnostics))}
-          >
-            <RefreshCw size={13} />
-            Run check
-          </button>
-        }
-      >
-        {diagnostics ? (
-          <pre className="diagnostic-output">
-            {JSON.stringify(diagnostics, null, 2)}
-          </pre>
-        ) : (
-          <p className="quiet-empty">
-            Check local services, supported versions, and readiness before
-            heading out.
-          </p>
-        )}
-        <details className="log-details">
-          <summary>
-            <Terminal size={16} />
-            Runtime logs<span>{state.logs.length}</span>
-          </summary>
-          <div className="diagnostic-logs">
-            {state.logs
-              .slice(-100)
-              .reverse()
-              .map((log, i) => (
-                <div key={i}>
-                  <time>{time(log.at)}</time>
-                  <span className={log.level === "error" ? "danger-text" : ""}>
-                    {log.message}
-                  </span>
-                </div>
-              ))}
+          <div className="account-row">
+            <div className="account-face">
+              <Users size={24} />
+            </div>
+            <div>
+              <h3>{state.auth.username || "A teammate needs an account"}</h3>
+              <p>
+                {accountReady
+                  ? "Microsoft account connected"
+                  : "Use a separate, licensed Minecraft Java account."}
+              </p>
+            </div>
           </div>
-        </details>
-        <DataManagement mutate={mutate} />
-      </Panel>
+          {state.auth.error ? <p className="inline-error" role="alert">{state.auth.error}</p> : null}
+          {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? <a className="button" href="https://www.minecraft.net/en-us/msaprofile/mygames" target="_blank" rel="noreferrer">Open Minecraft account setup <ArrowRight size={14} /></a> : null}
+          {state.auth.device ? (
+            <div className="device-code">
+              <p>
+                Sign in directly with Microsoft. Your password never passes
+                through this app.
+              </p>
+              <a
+                href={state.auth.device.verificationUri}
+                target="_blank"
+                rel="noreferrer"
+                className="button"
+              >
+                Open Microsoft sign-in <ArrowRight size={14} />
+              </a>
+              <div className="code-copy">
+                <strong>{state.auth.device.userCode}</strong>
+                <button
+                  className="button icon-button"
+                  aria-label="Copy device code"
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(state.auth.device!.userCode)
+                      .then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2500);
+                      });
+                  }}
+                >
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+              </div>
+              <small>
+                Expires {time(state.auth.device.expiresAt)} · MFA supported
+              </small>
+            </div>
+          ) : (
+            <button
+              className="button full"
+              disabled={busy || state.auth.status === "authenticating"}
+              onClick={() => attempt(mutate("/auth/connect", {}))}
+            >
+              <Users size={16} />
+              {state.auth.issue === "JAVA_PROFILE_REQUIRED"
+                ? "Check Java profile again"
+                : state.auth.username
+                ? "Reconnect Minecraft account"
+                : "Connect Minecraft account"}
+            </button>
+          )}
+          <PrivateAccountActions state={state} mutate={mutate} busy={busy} />
+          <p className="note">
+            Sessions are cached outside the repository. Never share a password or
+            authentication token in chat.
+          </p>
+          <div className="settings-divider" />
+          <div className="panel-heading">
+            <h3>Your Realm</h3>
+            <button
+              className="text-button"
+              disabled={busy || !accountReady}
+              onClick={() => attempt(mutate("/realms/refresh", {}))}
+            >
+              <RefreshCw size={13} />
+              Refresh
+            </button>
+          </div>
+          {state.realms.length ? (
+            <label className="field-label">
+              Invited Realms
+              <select
+                value={state.settings.realmId || ""}
+                onChange={(e) =>
+                  attempt(
+                    mutate("/settings", { realmId: e.target.value ? Number(e.target.value) : null }),
+                  )
+                }
+              >
+                <option value="">Select a Realm</option>
+                {state.realms.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} · {r.owner}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className="quiet-empty">
+              {state.auth.username
+                ? "Invite this account to your Realm, then refresh the list."
+                : "Sign in to discover invited Realms."}
+            </p>
+          )}
+          <label className="field-label">
+            Your Minecraft username
+            <input
+              value={player}
+              onChange={(e) => setPlayer(e.target.value)}
+              placeholder="Who should your companion follow?"
+              maxLength={16}
+              onBlur={() => {
+                if (player !== state.settings.playerName)
+                  attempt(mutate("/settings", { playerName: player }));
+              }}
+            />
+          </label>
+          {state.connection.error ? (
+            <p className="inline-error">{state.connection.error}</p>
+          ) : null}
+        </Panel>
+        <Panel title="Codex & reasoning" eyebrow="THINK WHEN IT MATTERS">
+          <div className="codex-identity"><Badge tone={state.codex?.authenticated ? "green" : "muted"}>{state.codex?.authenticated ? "Codex signed in" : state.codex?.authenticated === false ? "Codex sign-in needed" : "Checking Codex"}</Badge><span className="note">{state.codex?.version || state.codex?.error || "Reading local CLI authentication status"}</span></div>
+          <CodexModel state={state} mutate={mutate} />
+          <div className="two-inputs">
+            <label className="field-label">
+              Requests per hour
+              <input
+                type="number"
+                min="0"
+                max="200"
+                value={state.settings.maxRequestsPerHour}
+                onChange={(e) =>
+                  attempt(
+                    mutate("/settings", {
+                      maxRequestsPerHour: Number(e.target.value),
+                    }),
+                  )
+                }
+              />
+            </label>
+            <label className="field-label">
+              Input token limit
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={state.settings.maxInputTokens}
+                onChange={(e) =>
+                  attempt(
+                    mutate("/settings", {
+                      maxInputTokens: Number(e.target.value),
+                    }),
+                  )
+                }
+              />
+            </label>
+          </div>
+          <div className="usage-box">
+            <div>
+              <span>Requests</span>
+              <strong>{state.usage.requests}</strong>
+            </div>
+            <div>
+              <span>Input tokens</span>
+              <strong>{state.usage.inputTokens.toLocaleString()}</strong>
+            </div>
+            <div>
+              <span>Output tokens</span>
+              <strong>{state.usage.outputTokens.toLocaleString()}</strong>
+            </div>
+          </div>
+          <p className="note">
+            Usage comes from actual model responses. Account limits and billing
+            cost are{" "}
+            {state.usage.billingCost === null
+              ? "not provided by the provider"
+              : `$${state.usage.billingCost}`}
+            . Pausing blocks all new reasoning.
+          </p>
+          <button
+            className="button danger full"
+            onClick={() => attempt(mutate("/control", { command: "emergency" }))}
+          >
+            <ShieldAlert size={15} />
+            Emergency stop
+          </button>
+        </Panel>
+      </div>
+      <div className="settings-column">
+        <Panel
+          title="Voice & audio"
+          eyebrow="HEARD, WHEREVER YOU ARE"
+          action={
+            <Badge tone={state.voice.available ? "green" : "muted"}>
+              {human(state.voice.status)}
+            </Badge>
+          }
+        >
+          <VoiceSettings state={state} mutate={mutate} />
+        </Panel>
+        <Panel
+          title="Diagnostics"
+          eyebrow="A HEALTHY LOCAL WORKSPACE"
+          action={
+            <button
+              className="text-button"
+              onClick={() => attempt(api("/health").then(setDiagnostics))}
+            >
+              <RefreshCw size={13} />
+              Run check
+            </button>
+          }
+        >
+          {diagnostics ? (
+            <pre className="diagnostic-output">
+              {JSON.stringify(diagnostics, null, 2)}
+            </pre>
+          ) : (
+            <p className="quiet-empty">
+              Check local services, supported versions, and readiness before
+              heading out.
+            </p>
+          )}
+          <details className="log-details">
+            <summary>
+              <Terminal size={16} />
+              Runtime logs<span>{state.logs.length}</span>
+            </summary>
+            <div className="diagnostic-logs">
+              {state.logs
+                .slice(-100)
+                .reverse()
+                .map((log, i) => (
+                  <div key={i}>
+                    <time>{time(log.at)}</time>
+                    <span className={log.level === "error" ? "danger-text" : ""}>
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </details>
+          <DataManagement mutate={mutate} />
+        </Panel>
+      </div>
     </div>
   );
 }

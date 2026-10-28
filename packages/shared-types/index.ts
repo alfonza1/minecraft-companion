@@ -48,7 +48,7 @@ export interface Project {
   [key: string]: any;
 }
 export interface CompanionState {
-  codex?: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null };
+  codex?: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null; model?: { active: { model: string | null; purpose: string; startedAt: string } | null; last: { model: string; purpose: string; at: string } | null } };
   state: RuntimeState;
   planning?: boolean;
   connection: {

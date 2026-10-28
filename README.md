@@ -60,6 +60,8 @@ Free local defaults: faster-whisper tiny.en CPU int8, Silero VAD and full-precis
 
 Codex uses the existing authenticated CLI subscription. If needed, `codex login` restores login. A restricted native CLI process has shell, apps, hooks, plugins, browsing and delegation disabled, an empty working directory and validated structured JSON plans. Game chat/media cannot become shell commands. No paid speech API or OpenAI API key is required.
 
+**Settings → Codex & reasoning → Companion model** lists the installed Codex service’s visible model catalog and saves your selection. Automatic resolves the reported default and passes that exact model ID to new conversation/blueprint requests. The panel distinguishes a request’s current model, the next selection and the last completed request’s reported model. Changing the selection leaves an in-flight request on its original model. Refreshing models performs a bounded metadata query with no model turns or usage tokens. The catalog can be cached and does not guarantee account access; a successful request verifies access. See the [official model discovery documentation](https://learn.chatgpt.com/docs/app-server#list-models-modellist).
+
 Actual request/input/output/cached-token usage is shown when supplied. Dollar costs/account limits are unknown. Configure hourly requests and lifetime input-token budget in Settings. CLI system overhead can contribute about20k input tokens per small request; cached counts are separate. No inference polling loop runs. Current-information browsing is not implemented.
 
 ## Survival controls

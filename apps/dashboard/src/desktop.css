@@ -56,3 +56,12 @@
 .supply-approval summary{cursor:pointer;font-size:13px;font-weight:600;margin-bottom:14px}
 .check-line{display:flex;align-items:flex-start;gap:9px;margin:15px 0;color:#c5d5ce;font-size:12px;line-height:1.6;cursor:pointer}
 .check-line input{width:15px;height:15px;flex:0 0 15px;margin-top:2px;accent-color:#85cba6}
+.settings-column{min-width:0}
+.codex-identity{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px}
+.codex-identity .note{margin:0;overflow-wrap:anywhere}
+.model-current{padding:13px 14px;background:#14211d;border:1px solid #304439;border-radius:6px;margin-bottom:18px;display:grid;gap:5px}
+.model-current span,.model-catalog-meta small{font-size:11px;color:#9eb2a7}
+.model-current strong{font-size:15px;color:#d5e8dc;overflow-wrap:anywhere}
+.model-current code{font-size:11px;color:#8ecaa6;overflow-wrap:anywhere}
+.model-catalog-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}
+.codex-model-setting{margin-bottom:20px}
