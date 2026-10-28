@@ -27,7 +27,7 @@ page.on('request', request => { if (request.method() === 'POST') mutations.push(
 try {
   await page.goto(base);
   await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   await page.getByRole('heading', { name: 'Check your local services', exact: true }).waitFor();
   await page.getByText(/Showing existing service status|Status checked/).waitFor();
@@ -81,7 +81,7 @@ try {
     await page.screenshot({ path: join(evidence, `${step.replaceAll(' ', '-').toLowerCase()}-mobile.png`), fullPage: true });
   }
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   assert.deepEqual(errors, []);
   state = await (await fetch(`${base}/api/state`)).json();

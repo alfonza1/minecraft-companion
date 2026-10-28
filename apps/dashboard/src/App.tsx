@@ -29,6 +29,7 @@ import SharedTasks from "./SharedTasks";
 import Studio from "./Studio";
 import VoiceBridge from "./VoiceBridge";
 import DesktopBar from './DesktopBar';
+import SetupIssues from './SetupIssues';
 const navigation = [
   { id: "overview", name: "Overview", icon: LayoutDashboard },
   { id: "inventory", name: "Inventory", icon: Backpack },
@@ -223,6 +224,7 @@ export default function App() {
           ) : (
             <>
               <div className="content-fade" key={page}>
+                {page === 'overview' || page === 'settings' ? <SetupIssues state={state} navigate={setPage} /> : null}
                 {state.world && state.connection.projected ? <div className="info-note gold"><p><strong>Realm {state.connection.serverVersion} · translated client {state.connection.version}.</strong> Newer blocks and items may appear as substitutes. Exact construction, crafting, resource collection and inventory reconciliation are disabled.</p></div> : null}
                 {state.planning ? (
                   <div className="info-note gold">

@@ -37,7 +37,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   const steps = page.getByRole('navigation', { name: 'Setup steps' });
   await steps.getByRole('button', { name: /First session/ }).click();
   await page.getByText(/Fixture Realm.*Saved/).waitFor();

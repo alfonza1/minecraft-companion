@@ -65,3 +65,8 @@
 .model-current code{font-size:11px;color:#8ecaa6;overflow-wrap:anywhere}
 .model-catalog-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}
 .codex-model-setting{margin-bottom:20px}
+.setup-issue-banner>svg{color:#d2b66f;flex-shrink:0}
+.setup-issue-banner>div{flex:1;min-width:0}
+.setup-issue-banner p,.setup-issue-banner li{overflow-wrap:anywhere}
+.setup-issue-banner ul{margin:8px 0 0;padding-left:18px;font-size:12px;color:#b6c4bc;line-height:1.8}
+.setup-issue-banner .button{flex-shrink:0}

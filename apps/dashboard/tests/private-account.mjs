@@ -25,7 +25,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base);
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /Minecraft account/ }).click();
   const connect = page.getByRole('button', { name: 'Connect in private window', exact: true });
   await connect.waitFor(); await connect.click();

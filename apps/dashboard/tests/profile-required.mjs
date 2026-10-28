@@ -26,9 +26,9 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto(`http://127.0.0.1:${app.server.address().port}`);
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /Minecraft account/ }).click();
-  await page.getByRole('alert').getByText(/Minecraft reports no Java Edition profile/).waitFor();
+  await page.locator('.inline-error[role="alert"]').filter({ hasText: /Minecraft reports no Java Edition profile/ }).waitFor();
   assert.equal(await page.getByRole('link', { name: 'Open Minecraft account setup' }).getAttribute('href'), 'https://www.minecraft.net/en-us/msaprofile/mygames');
   assert.equal(await page.getByRole('button', { name: 'Check Java profile again', exact: true }).isEnabled(), true);
   const evidence = join(process.cwd(), '.git', 'verification', 'account'); await mkdir(evidence, { recursive: true });
@@ -38,7 +38,7 @@ try {
     await page.screenshot({ path: join(evidence, `profile-required-${name}.png`), fullPage: true });
   }
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('alert').getByText(/Minecraft reports no Java Edition profile/).waitFor();
+  await page.locator('.inline-error[role="alert"]').filter({ hasText: /Minecraft reports no Java Edition profile/ }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Check Java profile again', exact: true }).isEnabled(), true);
   assert.deepEqual(errors, []);
   await writeFile(join(evidence, 'profile-required-results.json'), JSON.stringify({ passed: true, at: new Date().toISOString(), scope: 'Explicit 404 UI fixture, real isolated API/store. No account sign-in, external request or profile change.', errors }, null, 2));

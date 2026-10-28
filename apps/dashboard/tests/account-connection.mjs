@@ -23,7 +23,7 @@ try {
   // This live app keeps background requests open. Wait for rendered readiness
   // instead of a global network-idle condition unrelated to account setup.
   await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Open guided setup', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /Minecraft account/ }).click();
   await page.getByRole('button', { name: 'Connect Minecraft account', exact: true }).click();
   const signIn = page.getByRole('link', { name: 'Open Microsoft sign-in' });

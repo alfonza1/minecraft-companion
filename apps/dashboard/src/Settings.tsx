@@ -34,10 +34,6 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
   const accountReady = state.auth.status === "connected";
   return (
     <div className="settings-grid">
-      <div className="planning-invitation" style={{ gridColumn: "1 / -1" }}>
-        <div><h3>Setting up your companion?</h3><p>Walk through local services, Microsoft sign-in, Realm compatibility and audio checks.</p></div>
-        <button className="button" onClick={() => navigate("setup")}>Open guided setup <ArrowRight size={14} /></button>
-      </div>
       <div className="settings-column">
         <Panel
           title="Minecraft account"

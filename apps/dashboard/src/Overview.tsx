@@ -22,14 +22,12 @@ export default function Overview({
 }: Common & { navigate: (page: string) => void }) {
   const world = state.world;
   const realm = state.realms.find((r) => r.id === state.settings.realmId);
-  const ready = state.auth.status === 'connected' && Boolean(realm);
   const [request, setRequest] = useState('');
   const active = ['ACTIVE', 'BUSY'].includes(state.state);
   const activeProject =
     state.projects.find((p) => p.status === "building") || state.projects[0];
   return (
     <>
-      {!world ? <div className="planning-invitation"><div><h3>{ready ? `Ready for ${realm!.name}` : 'Get ready for your first session'}</h3><p>{ready ? `${state.auth.username || 'Your companion'} is signed in. Start the companion above when you want to join your Realm.` : "Check your services, connect the bot's account, choose a Realm and try your audio."}</p></div><button className="button" onClick={() => navigate("setup")}>{ready ? 'Review setup' : 'Open guided setup'} <ArrowRight size={15} /></button></div> : null}
       <form className="quick-request" onSubmit={async event => { event.preventDefault(); if (!request.trim() || !active || busy) return; try { await mutate('/conversation', { text: request.trim() }); setRequest(''); } catch { /* The shared error banner preserves the request for retry. */ } }}>
         <MessageCircle size={20} />
         <div><label htmlFor="overview-request">What are we doing next?</label><input id="overview-request" value={request} onChange={event => setRequest(event.target.value)} placeholder={active ? 'Follow me, grab some wood, or give me the oak logs…' : 'Start your companion to send a request'} disabled={!active || busy} /></div>
