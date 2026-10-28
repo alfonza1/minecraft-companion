@@ -13,6 +13,8 @@ import { Store } from '../memory/store.js';
 import { RealmConnector, supportedVersions } from '../realm-connector/index.js';
 import { CompanionRuntime } from '../companion-runtime/index.js';
 import { lockBody } from '../../src/session.js';
+import { registerSetupRoutes } from '../setup/index.js';
+import { getBridgeStatus } from '../protocol-bridge/index.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const voiceSettings = z.object({ enabled: z.boolean().optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional() }).strict();
@@ -42,7 +44,18 @@ export async function createApp(options = {}) {
       for (const client of clients) { if (client.readyState === 1 && client.bufferedAmount < 1024 * 1024) client.send(event); }
     });
   };
-  const context = { store, connector, runtime, publish, dataDir: store.directory };
+  const readiness = options.readiness || {
+    codex: () => codexStatus,
+    voice: () => voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
+    async refresh() {
+      if (!voiceModule) return;
+      const { getCodexStatus } = await import('../agent-orchestrator/index.js');
+      const results = await Promise.allSettled([getCodexStatus(), voiceModule.checkVoice()]);
+      if (results[0].status === 'fulfilled') codexStatus = results[0].value;
+      else codexStatus = { available: false, authenticated: false, error: 'Codex readiness check failed.' };
+    },
+  };
+  const context = { store, connector, runtime, publish, dataDir: store.directory, readiness };
   app.decorate('companion', { ...context, snapshot });
   const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   app.addHook('onRequest', async (request, reply) => {
@@ -72,7 +85,7 @@ export async function createApp(options = {}) {
   runtime.on('change', publish); connector.on('change', publish);
   connector.on('diagnostic', message => runtime.log('error', message));
   app.get('/api/state', async () => snapshot());
-  app.get('/api/health', async () => ({ name: 'Minecraft Companion', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: ['Current Java 26.3 is newer than the supported 26.1 protocol stack.', 'Full-cube construction only; oriented blocks, automatic scaffolding and advanced progression require further gameplay validation.'] }));
+  app.get('/api/health', async () => ({ name: 'Minecraft Companion', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: ['26.3 requires the optional protocol bridge; its projected view cannot support exact construction or resource reconciliation.', 'Full-cube construction on native connections only; oriented blocks, scaffolding and advanced progression require further gameplay validation.'] }));
   app.post('/api/auth/connect', async () => { connector.connectAccount(); return { started: true }; });
   app.post('/api/realms/refresh', async () => { connector.connectAccount(); return { started: true }; });
   app.post('/api/settings', async request => { const settings = store.updateSettings(settingsSchema.parse(request.body)); publish(); return settings; });
@@ -128,6 +141,7 @@ export async function createApp(options = {}) {
     void voiceModule.checkVoice().then(publish);
     void getCodexStatus().then(status => { codexStatus = status; publish(); });
   }
+  registerSetupRoutes(app, context);
   const dashboard = join(root, 'apps', 'dashboard', 'dist');
   if (existsSync(dashboard)) {
     await app.register(staticFiles, { root: dashboard, prefix: '/' });

@@ -1,0 +1,45 @@
+.setup-workspace { max-width: 1260px; margin: 0 auto; }
+.setup-intro { display: flex; justify-content: space-between; gap: 24px; align-items: center; padding: 8px 0 26px; }
+.setup-intro h2 { font-size: clamp(22px, 2.5vw, 30px); margin: 10px 0; letter-spacing: -.6px; }
+.setup-intro p { max-width: 680px; color: var(--muted, #9cabb2); line-height: 1.7; }
+.setup-intro > svg { color: #86bfa5; flex-shrink: 0; }
+.setup-trail { display: flex; border: 1px solid #2d3d40; border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+.setup-trail button { flex: 1; min-width: 0; display: flex; gap: 10px; justify-content: center; align-items: center; padding: 17px 10px; border: 0; border-right: 1px solid #2d3d40; color: #a7b6bc; background: #141e23; font: inherit; font-size: 12px; cursor: pointer; }
+.setup-trail button:last-child { border-right: 0; }
+.setup-trail button.selected { background: #233a32; color: #b9e7ce; }
+.setup-trail button span { border: 1px solid #466057; width: 23px; height: 23px; display: grid; place-items: center; border-radius: 5px; font-size: 11px; flex-shrink: 0; }
+.setup-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; align-items: start; }
+.setup-main { min-width: 0; }
+.setup-main .panel > p { line-height: 1.75; }
+.setup-main .panel-heading { flex-wrap: wrap; gap: 14px; }
+.setup-main .panel > .button { margin: 12px 0; }
+.setup-checks { margin: 22px 0; border-top: 1px solid #2b3b3f; }
+.setup-readiness { display: flex; align-items: center; gap: 12px; padding: 17px 0; border-bottom: 1px solid #2b3b3f; }
+.setup-readiness > div { flex: 1; min-width: 0; }
+.setup-readiness strong, .setup-readiness small { display: block; }
+.setup-readiness strong { font-size: 13px; }
+.setup-readiness small { font-size: 11px; line-height: 1.65; color: #a0b1b8; margin-top: 5px; overflow-wrap: anywhere; }
+.setup-readiness .badge { flex-shrink: 0; }
+.setup-check-symbol { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #3b4b4e; color: #a8b8bc; border-radius: 6px; flex-shrink: 0; }
+.setup-check-symbol.ready { color: #a5dfbb; border-color: #496b58; background: #263c31; }
+.setup-notes { padding: 24px; border-left: 1px solid #2e3b3e; }
+.setup-notes h3 { font-size: 15px; line-height: 1.6; margin-top: 16px; }
+.setup-notes p { color: #a0b0b8; font-size: 12px; line-height: 1.9; }
+.setup-notes hr { border: 0; border-top: 1px solid #2e3b3e; margin: 28px 0; }
+.setup-privacy { display: flex; gap: 10px; margin-top: 28px; color: #92b7a2; font-size: 10px; line-height: 1.8; }
+.setup-privacy svg { flex-shrink: 0; }
+.setup-pagination { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-top: 18px; }
+.setup-pagination > span { color: #9cacb4; font-size: 11px; }
+.setup-identity { padding: 18px; background: #172a23; border: 1px solid #3b5749; border-radius: 8px; margin: 20px 0; }
+.setup-identity strong, .setup-identity span { display: block; }
+.setup-identity span { color: #a5baad; margin-top: 6px; font-size: 12px; }
+.setup-compatibility { padding: 20px; border: 1px solid #75633c; background: #29271e; border-radius: 8px; margin: 18px 0; }
+.setup-compatibility.native { border-color: #3c6751; background: #1c2b24; }
+.setup-compatibility p { line-height: 1.8; overflow-wrap: anywhere; }
+.setup-compatibility strong { overflow-wrap: anywhere; text-align: right; }
+.setup-transcript { padding: 20px; border: 1px dashed #476259; border-radius: 8px; margin: 20px 0; min-height: 100px; }
+.setup-transcript p { line-height: 1.8; overflow-wrap: anywhere; color: #c3d1d4; }
+.setup-audio-controls, .setup-launch { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.setup-workspace button:focus-visible { outline: 2px solid #a7d7ba; outline-offset: -3px; }
+@media (max-width: 1050px) { .setup-layout { grid-template-columns: minmax(0, 1fr); } .setup-notes { display: none; } }
+@media (max-width: 650px) { .setup-trail { flex-direction: column; } .setup-trail button { justify-content: flex-start; border-right: 0; border-bottom: 1px solid #2d3d40; padding: 11px 14px; } .setup-trail button:last-child { border-bottom: 0; } .setup-readiness { flex-wrap: wrap; } .setup-readiness > div { min-width: 130px; } .setup-pagination { flex-wrap: wrap; } .setup-pagination > span { display: none; } .setup-intro > svg { display: none; } .setup-main .button { white-space: normal; } }

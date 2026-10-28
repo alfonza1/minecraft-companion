@@ -23,19 +23,24 @@ import {
   type Common,
   type Mutate,
 } from "./shared";
-export default function Settings({ state, mutate, busy }: Common) {
+export default function Settings({ state, mutate, busy, navigate }: Common & { navigate: (page: string) => void }) {
   const [model, setModel] = useState(state.settings.model);
   const [player, setPlayer] = useState(state.settings.playerName);
   const [copied, setCopied] = useState(false);
   const [diagnostics, setDiagnostics] = useState<any>(null);
+  const accountReady = state.auth.status === "connected";
   return (
     <div className="settings-grid">
+      <div className="planning-invitation" style={{ gridColumn: "1 / -1" }}>
+        <div><h3>Setting up your companion?</h3><p>Walk through local services, Microsoft sign-in, Realm compatibility and audio checks.</p></div>
+        <button className="button" onClick={() => navigate("setup")}>Open guided setup <ArrowRight size={14} /></button>
+      </div>
       <Panel
         title="Minecraft account"
         eyebrow="YOUR COMPANION’S IDENTITY"
         action={
-          <Badge tone={state.auth.username ? "green" : "muted"}>
-            {state.auth.username ? "Connected" : human(state.auth.status)}
+          <Badge tone={accountReady ? "green" : "muted"}>
+            {accountReady ? "Connected" : human(state.auth.status)}
           </Badge>
         }
       >
@@ -46,7 +51,7 @@ export default function Settings({ state, mutate, busy }: Common) {
           <div>
             <h3>{state.auth.username || "A teammate needs an account"}</h3>
             <p>
-              {state.auth.username
+              {accountReady
                 ? "Microsoft account connected"
                 : "Use a separate, licensed Minecraft Java account."}
             </p>
@@ -108,7 +113,7 @@ export default function Settings({ state, mutate, busy }: Common) {
           <h3>Your Realm</h3>
           <button
             className="text-button"
-            disabled={busy || !state.auth.username}
+            disabled={busy || !accountReady}
             onClick={() => attempt(mutate("/realms/refresh", {}))}
           >
             <RefreshCw size={13} />
@@ -122,7 +127,7 @@ export default function Settings({ state, mutate, busy }: Common) {
               value={state.settings.realmId || ""}
               onChange={(e) =>
                 attempt(
-                  mutate("/settings", { realmId: Number(e.target.value) }),
+                  mutate("/settings", { realmId: e.target.value ? Number(e.target.value) : null }),
                 )
               }
             >

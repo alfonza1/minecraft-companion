@@ -1,0 +1,5 @@
+name: MinecraftCompanionSessionBridge
+author: Minecraft Companion
+version: 1.0.0
+main: companion.bridge.CompanionBridgePlugin
+min-version: 3.4.14

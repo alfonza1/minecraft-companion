@@ -36,7 +36,7 @@ export function registerBuildRoutes(app, context) {
   const put = (project) => {
     store.put('projects', project);
     const world = runtime.snapshot().world;
-    for (const reconciled of reconcileProjectInventory(store.get('projects'), world?.inventory, world?.observedAt)) store.put('projects', reconciled);
+    for (const reconciled of reconcileProjectInventory(store.get('projects'), world?.inventory, world?.inventoryExact === false ? null : world?.observedAt)) store.put('projects', reconciled);
     publish();
     return getProject(project.id);
   };
@@ -111,6 +111,7 @@ export function registerBuildRoutes(app, context) {
     return put({ ...project, assignments: updateUserProgress(project.assignments, body.material, body.quantity) });
   }));
   app.post('/api/projects/:id/gather', endpoint(async ({ params, body }) => {
+    if (runtime.bot?.companionTransport?.projected) throw new Error('Assigned gathering is disabled on translated connections because inventory identities may be mapped.');
     ensureEditable(params.id);
     const project = getProject(params.id);
     if (project.approvedRevision !== project.revision || !project.blueprint || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the project before gathering its assigned resources.');
@@ -142,6 +143,7 @@ export function registerBuildRoutes(app, context) {
     return { ...result, material, requested: count, remaining: assignmentNeeds(getProject(project.id).assignments.find((a) => a.material === material)) };
   }));
   app.post('/api/projects/:id/build', endpoint(async ({ params, body }) => {
+    if (runtime.bot?.companionTransport?.projected) throw new Error('Exact construction is disabled on translated connections. Use a natively supported server version.');
     ensureEditable(params.id);
     const project = getProject(params.id);
     const origin = validateOrigin(body?.origin);
@@ -213,7 +215,7 @@ export function registerBuildRoutes(app, context) {
   let lastObservation;
   runtime.on('change', () => {
     const world = runtime.snapshot().world;
-    const marker = world?.observedAt ?? null;
+    const marker = world?.inventoryExact === false ? null : world?.observedAt ?? null;
     if (marker === lastObservation) return;
     lastObservation = marker;
     for (const project of reconcileProjectInventory(store.get('projects'), world?.inventory, marker)) store.put('projects', project);

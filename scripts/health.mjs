@@ -5,8 +5,10 @@ import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import { supportedVersions } from '../services/realm-connector/index.js';
 import { checkVoice } from '../services/voice/index.js';
+import { getBridgeStatus } from '../services/protocol-bridge/index.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
 const command = (name, args) => {
   try { const result = spawnSync(name, args, { encoding: 'utf8', windowsHide: true, timeout: 10_000, stdio: ['ignore', 'pipe', 'pipe'] }); return result.status === 0 ? (result.stdout || result.stderr).trim() : 'unavailable'; }
   catch { return 'unavailable'; }
@@ -15,13 +17,13 @@ const codexFile = join(process.env.APPDATA || '', 'npm/node_modules/@openai/code
 const codex = existsSync(codexFile) ? args => command(process.execPath, [codexFile, ...args]) : args => command('codex', args);
 const checks = {
   application: 'Minecraft Companion', platform: `${os.platform()} ${os.release()} ${os.arch()}`,
-  node: process.versions.node, nodeCompatible: Number(process.versions.node.split('.')[0]) >= 22,
+  node: process.versions.node, nodeCompatible: nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 12),
   git: command('git', ['--version']), python: command('python', ['--version']),
-  java: command('java', ['--version']), javaRequiredForRealms: false,
+  java: command('java', ['--version']), javaRequiredForBridge: true,
   codex: codex(['--version']), codexAuthentication: codex(['login', 'status']).replace(/(?:sk-|ghp_|gho_)\S+/g, '[redacted]'),
   freeMemoryGiB: Math.round(os.freemem() / 1024 ** 3 * 10) / 10,
   installedMemoryGiB: Math.round(os.totalmem() / 1024 ** 3),
-  protocol: { supportedVersions, latestSupportedVersion: supportedVersions.at(-1), currentReleaseGap: '26.3 is not supported by the installed 26.1 protocol stack.' },
+  protocol: { supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), currentReleaseGap: '26.3 requires a local translating bridge. Exact construction and resources require native support.' },
   speech: await checkVoice(), dashboardBuilt: existsSync(join(root, 'apps/dashboard/dist/index.html')),
   dataStorage: 'LOCALAPPDATA/MinecraftCompanion; Windows DPAPI for account cache',
 };

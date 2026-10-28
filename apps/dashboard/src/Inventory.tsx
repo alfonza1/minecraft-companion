@@ -20,6 +20,7 @@ export default function Inventory({ state }: { state: CompanionState }) {
   );
   return (
     <>
+      {state.world?.inventoryExact === false ? <div className="info-note"><p>Live translated inventory: item names are the {state.connection.version} client view of Realm {state.connection.serverVersion}. Newer items can appear as substitutes. These counts are excluded from exact project resource tracking.</p></div> : null}
       <div className="section-toolbar">
         <div className="search-field">
           <Search size={17} />

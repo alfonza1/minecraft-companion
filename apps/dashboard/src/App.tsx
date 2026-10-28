@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Square,
   Users,
+  Wrench,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -22,6 +23,7 @@ import Companion from "./Companion";
 import Inventory from "./Inventory";
 import Overview from "./Overview";
 import Settings from "./Settings";
+import Setup from "./Setup";
 import { attempt, Badge, Empty, human, Panel, type Common } from "./shared";
 import SharedTasks from "./SharedTasks";
 import Studio from "./Studio";
@@ -33,6 +35,7 @@ const navigation = [
   { id: "tasks", name: "Shared tasks", icon: Users },
   { id: "companion", name: "Companion", icon: MessageCircle },
   { id: "settings", name: "Settings", icon: Settings2 },
+  { id: "setup", name: "Setup", icon: Wrench },
 ];
 function Controls({ state, mutate, busy }: Common) {
   const active = state.state === "ACTIVE" || state.state === "BUSY";
@@ -189,6 +192,7 @@ export default function App() {
                       tasks: "A shared plan. A fair share of the work.",
                       companion: "Make yourselves at home.",
                       settings: "Your account, your voice, your way to play.",
+                      setup: "A guided path from your PC to your first session.",
                     } as Record<string, string>
                   )[page]
                 }
@@ -217,6 +221,7 @@ export default function App() {
           ) : (
             <>
               <div className="content-fade" key={page}>
+                {state.world && state.connection.projected ? <div className="info-note gold"><p><strong>Realm {state.connection.serverVersion} · translated client {state.connection.version}.</strong> Newer blocks and items may appear as substitutes. Exact construction, crafting, resource collection and inventory reconciliation are disabled.</p></div> : null}
                 {state.planning ? (
                   <div className="info-note gold">
                     <Compass size={18} />
@@ -264,11 +269,13 @@ export default function App() {
                   <SharedTasks state={state} mutate={mutate} busy={busy} />
                 ) : page === "companion" ? (
                   <Companion state={state} mutate={mutate} busy={busy} />
+                ) : page === "setup" ? (
+                  <Setup state={state} mutate={mutate} busy={busy} navigate={setPage} />
                 ) : (
-                  <Settings state={state} mutate={mutate} busy={busy} />
+                  <Settings state={state} mutate={mutate} busy={busy} navigate={setPage} />
                 )}
               </div>
-              <VoiceBridge state={state} mutate={mutate} />
+              {page !== "setup" ? <VoiceBridge state={state} mutate={mutate} /> : null}
               <footer>
                 <span>
                   <span className={`status-dot ${connected ? "online" : ""}`} />
@@ -277,7 +284,9 @@ export default function App() {
                     : "Live updates reconnecting"}
                 </span>
                 <span>
-                  {state.connection.version
+                  {state.connection.projected
+                    ? `Realm ${state.connection.serverVersion} · client ${state.connection.version}`
+                    : state.connection.version
                     ? `Minecraft Java ${state.connection.version}`
                     : "Minecraft Java Edition"}
                   <span className="footer-divider">/</span>Survival, together.

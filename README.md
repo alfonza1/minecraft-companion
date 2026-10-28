@@ -2,7 +2,7 @@
 
 Local Minecraft Java teammate and build workspace extending [Mineness](https://github.com/SpectrumTantrum/mineness). React/TypeScript, Mineflayer, Microsoft device authentication, Codex conversation/planning, local Whisper/Piper speech, SQLite and a real blueprint viewer.
 
-**Current Realm blocker:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1**; Minecraft Java's current release is **26.3**. Unsupported Realms are refused. Authentication and selection are implemented but no licensed bot account or Realm gameplay was validated. Protocol support must catch up; changing dashboard settings cannot bypass it. Do not buy an account just to test this version.
+**Realm compatibility:** installed Mineflayer 4.39.0 / minecraft-protocol 1.68.0 support through **26.1** natively. An optional pinned local ViaProxy bridge adds a **26.3** connection path. Translation can map newer blocks/items: exact construction, crafting/resource collection and automatic inventory reconciliation are blocked on this path. Microsoft-authenticated Realm login remains unverified until you connect the licensed bot account. See [bridge boundaries](services/protocol-bridge/README.md).
 
 ## Launch
 
@@ -14,6 +14,8 @@ Dependencies, dashboard and free speech models are installed on this PC. Double-
 
 Open **http://127.0.0.1:4365**. No browser opens automatically. Keep the console open; Ctrl+C shuts down the service. Dashboard Stop disconnects the bot/audio while keeping the dashboard available.
 
+Click **Open guided setup** on Overview or Settings (or **Setup** in navigation). Five steps check local services, display Microsoft device sign-in, select/ping invited Realms, test your own microphone/speakers and start a first session. Opening setup performs no login, microphone capture, gameplay or model request. Audio checks require an explicit click; leaving a wizard-owned offline audio session pauses it.
+
 Use **Start planning offline** in Companion/Build Studio for conversation, voice and text architecture without a Minecraft connection. This explicit control enables requests; starting the session and remaining idle make zero model calls. Pause prevents further inference until explicit resume.
 
 Fresh checkout:
@@ -24,15 +26,15 @@ Fresh checkout:
 .\scripts\Bootstrap.ps1 -DesktopShortcut
 ```
 
-Bootstrap installs lockfile dependencies, builds the dashboard and prepares private Python speech dependencies/models. Safe missing Node/Git/Python prerequisites use winget. Node 22.12+ required; this PC runs24. No new Java is needed for Realms. Minecraft files are preserved. Optional recipe extraction reads exact-version client JARs without modifying them. `.env.example` documents process environment variables; `.env` files are not automatically loaded.
+Bootstrap installs lockfile dependencies, builds the dashboard, prepares private Python speech dependencies/models and installs the optional protocol bridge. Safe missing Node/Git/Python prerequisites use winget. Node 22.12+ required; this PC runs24. Native connections need no Java; the bridge reuses a compatible JDK or installs a private checksummed one outside Minecraft. Use `-SkipBridge` for native-only setup. Minecraft files are preserved. Optional recipe extraction reads exact-version client JARs without modifying them. `.env.example` documents process environment variables; `.env` files are not automatically loaded.
 
 ## Account onboarding
 
-1. Settings → **Connect Minecraft Account**, using the separate licensed bot account.
+1. Setup → **Minecraft account** → **Connect Minecraft account**, using the separate licensed bot account.
 2. Follow the official Microsoft URL/device code. Enter passwords/MFA only at Microsoft. Never paste passwords, recovery codes or tokens into this app.
 3. Invite the bot account and accept any pending invitation through Minecraft. Refresh and select an available Realm.
 4. Set your player username for trusted in-game `@companion` messages.
-5. Start Companion. The selected Realm is pinged and its protocol validated before login. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
+5. Check Realm compatibility, then connect in **First session**. The selected Realm is pinged and its protocol validated before login. Native/translated protocols are distinguished. Expired sessions, kicks and unavailable/unsupported Realms appear as errors.
 
 Sessions use prismarine-auth's supported CacheFactory with **Windows DPAPI CurrentUser**, outside Git in `%LOCALAPPDATA%\MinecraftCompanion\auth`. Tokens never enter dashboard state. Connection preparation is cancellable. Reconnect uses bounded backoff, returns paused and never silently resumes interrupted work.
 
@@ -87,6 +89,11 @@ node scripts/test-companion-game.mjs
 # Optional official-server tests, after accepting the linked Minecraft EULA:
 .\scripts\Setup-VanillaTest.ps1 -AcceptMinecraftEula
 node scripts/test-vanilla-game.mjs
+# Optional current-version bridge test, with the same explicit EULA requirement:
+.\scripts\Setup-ModernTest.ps1 -AcceptMinecraftEula
+node scripts/test-modern-bridge.mjs
+# Guided setup browser checks (no physical microphone or login):
+node apps/dashboard/tests/setup-integration.mjs
 # Explicit live Codex requests, using a disposable app database:
 node scripts/test-companion-live.mjs --codex
 ```

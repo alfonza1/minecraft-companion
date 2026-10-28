@@ -28,6 +28,15 @@ function fixture() {
   return { runtime, store, bot, counters };
 }
 
+test('translated connections reject resource execution before any world or inventory mutation', async () => {
+  const { runtime, bot } = fixture();
+  bot.companionTransport = { projected: true };
+  try {
+    for (const name of ['gather_blocks', 'chop_tree', 'craft_item']) await assert.rejects(runtime.execute(name, {}), /native Minecraft identities/);
+    assert.equal(runtime.currentTask, null);
+  } finally { await runtime.close(); }
+});
+
 async function connectingFixture() {
   const value = fixture();
   const { runtime, bot } = value;

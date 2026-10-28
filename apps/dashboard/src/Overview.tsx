@@ -23,6 +23,7 @@ export default function Overview({
     state.projects.find((p) => p.status === "building") || state.projects[0];
   return (
     <>
+      {!world ? <div className="planning-invitation"><div><h3>Get ready for your first session</h3><p>Check your services, connect the bot's account, choose a Realm and try your audio.</p></div><button className="button primary" onClick={() => navigate("setup")}>Open guided setup <ArrowRight size={15} /></button></div> : null}
       <div className="overview-grid">
         <Panel
           className="companion-card"
@@ -74,17 +75,17 @@ export default function Overview({
                   ? "Give your companion a job or just start a conversation."
                   : "Connect a separate licensed Java account, pick your Realm, and head out together.")}
             </p>
-            {!state.auth.username ? (
+            {state.auth.status !== "connected" ? (
               <button
                 className="text-button"
-                onClick={() => navigate("settings")}
+                onClick={() => navigate("setup")}
               >
                 Set up your companion <ArrowRight size={15} />
               </button>
             ) : !state.settings.realmId ? (
               <button
                 className="text-button"
-                onClick={() => navigate("settings")}
+                onClick={() => navigate("setup")}
               >
                 Choose a Realm <ArrowRight size={15} />
               </button>
@@ -159,7 +160,7 @@ export default function Overview({
             </div>
             <button
               className="text-button"
-              onClick={() => navigate("settings")}
+              onClick={() => navigate("setup")}
             >
               {realm ? "Manage connection" : "Connect your account"}{" "}
               <ArrowRight size={14} />

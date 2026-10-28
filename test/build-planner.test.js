@@ -190,3 +190,18 @@ test('assigned gathering reconciles real stock before requesting a bounded wood 
   const unsafe = await app.inject({ method: 'POST', url: `/api/projects/${project.id}/gather`, payload: { material: 'stone' } });
   assert.equal(unsafe.statusCode, 400);
 });
+
+test('translated inventory cannot satisfy exact assignments or start approved survival construction', async t => {
+  const { app, runtime, store } = fixture(); t.after(() => app.close());
+  const project = (await app.inject({ method: 'POST', url: '/api/projects', payload: { name: 'Exact cabin', version, blueprint: design() } })).json();
+  await app.inject({ method: 'POST', url: `/api/projects/${project.id}/approve`, payload: {} });
+  runtime.bot = { companionTransport: { projected: true } }; runtime.isActive = () => true;
+  runtime.snapshot = () => ({ state: 'ACTIVE', world: { inventory: [{ name: 'oak_log', count: 64 }], observedAt: 'now', inventoryExact: false } });
+  runtime.emit('change');
+  assert.equal(store.get('projects')[0].assignments[0].aiProgress, 0);
+  assert.equal(store.get('projects')[0].assignments[0].aiProvenance, 'unknown');
+  for (const action of ['build', 'gather']) {
+    const response = await app.inject({ method: 'POST', url: `/api/projects/${project.id}/${action}`, payload: { material: 'oak_log', origin: { x: 0, y: 64, z: 0 } } });
+    assert.equal(response.statusCode, 400); assert.match(response.json().error, /translated/);
+  }
+});

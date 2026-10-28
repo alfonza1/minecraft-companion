@@ -13,7 +13,8 @@ export function observeWorld(bot) {
     equipment[name] = itemSnapshot(bot.inventory.slots[slot], bot.registry);
   }
   equipment.hand = itemSnapshot(bot.heldItem, bot.registry);
-  return { observedAt: new Date().toISOString(), provenance: 'observed', position: vector(bot.entity.position),
+  const projected = Boolean(bot.companionTransport?.projected);
+  return { observedAt: new Date().toISOString(), provenance: projected ? 'observed-client-projection' : 'observed', inventoryExact: !projected, serverVersion: bot.companionTransport?.serverVersion || bot.version, clientVersion: bot.version, position: vector(bot.entity.position),
     dimension: bot.game?.dimension || 'unknown', health: bot.health ?? null, food: bot.food ?? null,
     oxygen: bot.oxygenLevel ?? null, experience: bot.experience || null, equipment,
     inventory: bot.inventory.items().map(item => itemSnapshot(item, bot.registry)),

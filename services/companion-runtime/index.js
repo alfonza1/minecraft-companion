@@ -115,7 +115,7 @@ export class CompanionRuntime extends EventEmitter {
       movement.allowSprinting = false; movement.maxDropDown = 1; movement.allowFreeMotion = false;
       movement.scafoldingBlocks = []; movement.liquidCost = 100;
       bot.pathfinder.setMovements(movement); bot.collectBlock.movements = null;
-      this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, error: null, reconnectAttempt: 0 };
+      this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, serverVersion: bot.companionTransport?.serverVersion || bot.version, transport: bot.companionTransport?.kind || 'native', projected: Boolean(bot.companionTransport?.projected), error: null, reconnectAttempt: 0 };
       this.state = activate ? 'ACTIVE' : 'PAUSED';
       if (!activate) { this.jobController?.abort(new Error('Respawn/reconnection requires explicit resume.')); this.actions.stop('Resume explicitly after respawn or reconnect.'); this.fullAudioStop(); this.modelCancel(); }
       observe(); this.log('info', recovering ? 'Reconnected safely. Resume explicitly to continue.' : `Connected as ${bot.username}.`);
@@ -186,6 +186,7 @@ export class CompanionRuntime extends EventEmitter {
         try { bot.quit('Companion stopped'); } catch { this.timers.clearTimeout(timeout); resolve(); }
       });
     }
+    await this.connector?.closeConnection?.();
   }
   async cancelTask() {
     this.jobController?.abort(new Error('Task cancelled.'));
@@ -237,6 +238,7 @@ export class CompanionRuntime extends EventEmitter {
     }
   }
   async execute(name, args = {}) {
+    if (this.bot?.companionTransport?.projected && ['gather_blocks', 'chop_tree', 'craft_item'].includes(name)) throw new Error('Resource actions require native Minecraft identities. The translated connection provides a projected client view.');
     const tool = this.tools.get(name);
     if (!tool) throw new Error(`Unsupported survival skill: ${name}.`);
     const validated = tool.schema.parse(args);

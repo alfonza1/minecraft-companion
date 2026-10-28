@@ -58,6 +58,9 @@ export interface CompanionState {
     version: string | null;
     error: string | null;
     reconnectAttempt: number;
+    serverVersion?: string;
+    transport?: 'native' | 'bridge';
+    projected?: boolean;
   };
   auth: {
     status: string;
@@ -71,6 +74,8 @@ export interface CompanionState {
   realms: Realm[];
   world: null | {
     observedAt: string;
+    inventoryExact?: boolean;
+    provenance?: string;
     position: { x: number; y: number; z: number };
     dimension: string;
     health: number;

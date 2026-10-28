@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$SkipVoice, [switch]$DesktopShortcut)
+param([switch]$SkipVoice, [switch]$SkipBridge, [switch]$DesktopShortcut)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 Set-Location -LiteralPath $projectRoot
@@ -12,8 +12,8 @@ function Confirm-Command([string]$Name, [string]$PackageId) {
 }
 Confirm-Command 'node' 'OpenJS.NodeJS.LTS'
 Confirm-Command 'git' 'Git.Git'
-$nodeMajor = [int]((& node --version).TrimStart('v').Split('.')[0])
-if ($nodeMajor -lt 22) { throw 'Node 22.12 or newer is required. Install the current Node LTS, then rerun this script.' }
+$nodeVersionParts = (& node --version).TrimStart('v').Split('.')
+if ([int]$nodeVersionParts[0] -lt 22 -or ([int]$nodeVersionParts[0] -eq 22 -and [int]$nodeVersionParts[1] -lt 12)) { throw 'Node 22.12 or newer is required. Install the current Node LTS, then rerun this script.' }
 & npm.cmd ci --ignore-scripts
 if ($LASTEXITCODE -ne 0) { throw 'Project dependency installation failed.' }
 & npm.cmd run build
@@ -22,6 +22,9 @@ if (-not $SkipVoice) {
     Confirm-Command 'python' 'Python.Python.3.12'
     & (Join-Path $projectRoot 'services/voice/setup.ps1')
     if ($LASTEXITCODE -ne 0) { throw 'Speech setup failed. Rerun Bootstrap.ps1 to retry.' }
+}
+if (-not $SkipBridge) {
+    & (Join-Path $PSScriptRoot 'Setup-ProtocolBridge.ps1')
 }
 if ($DesktopShortcut) {
     $desktopPath = [Environment]::GetFolderPath('Desktop')
