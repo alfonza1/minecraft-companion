@@ -30,4 +30,8 @@ try {
     }
   }
 } finally { $archive.Dispose() }
-@{ version = $Version; source = @{ kind = 'installed-vanilla-client'; filename = "$Version.jar"; sha256 = (Get-FileHash -LiteralPath $jarPath -Algorithm SHA256).Hash.ToLowerInvariant() }; recipes = $recipes.ToArray(); tags = $tags } | ConvertTo-Json -Depth 30 -Compress
+$hasher = [System.Security.Cryptography.SHA256]::Create()
+$jarStream = [System.IO.File]::OpenRead($jarPath)
+try { $sourceHash = [BitConverter]::ToString($hasher.ComputeHash($jarStream)).Replace('-', '').ToLowerInvariant() }
+finally { $jarStream.Dispose(); $hasher.Dispose() }
+@{ version = $Version; source = @{ kind = 'installed-vanilla-client'; filename = "$Version.jar"; sha256 = $sourceHash }; recipes = $recipes.ToArray(); tags = $tags } | ConvertTo-Json -Depth 30 -Compress
