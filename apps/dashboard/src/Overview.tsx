@@ -255,7 +255,7 @@ export default function Overview({
             <strong>{state.usage.requests.toLocaleString()}</strong>
           </div>
           <div className="data-row">
-            <span>Tokens used</span>
+            <span>{state.usage.unreportedRequests ? 'Reported tokens · incomplete' : 'Tokens used'}</span>
             <strong>
               {(
                 state.usage.inputTokens + state.usage.outputTokens

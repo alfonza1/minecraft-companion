@@ -1,3 +1,4 @@
+import { MODEL_PROVIDERS } from '../../../packages/shared-types/providers';
 import {
   Box,
   Check,
@@ -331,9 +332,9 @@ export default function Studio({ state, mutate, busy }: Common) {
                 }
               >
                 <Construction size={15} />
-                Design blueprint with Codex
+                Design blueprint with {MODEL_PROVIDERS[state.settings.provider || 'codex']}
               </button>
-              {state.settings.lowTokenMode ? <p className="note">Low token mode disables new AI designs. Turn it off in Settings → Codex & reasoning to generate one. Blueprint imports, previews, material calculations and approved construction still work.</p> : null}
+              {state.settings.lowTokenMode ? <p className="note">Low token mode disables new AI designs. Turn it off in Settings → AI models & reasoning to generate one. Blueprint imports, previews, material calculations and approved construction still work.</p> : null}
               <p className="note">
                 Design sends the notes above to Codex. Saved media stays local;
                 image and video reconstruction is not implemented. Partial

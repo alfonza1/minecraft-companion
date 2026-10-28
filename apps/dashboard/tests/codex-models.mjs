@@ -27,7 +27,7 @@ try {
   assert.equal(store.settings().model, alternative.id);
   await page.reload(); await settings();
   await page.waitForFunction(id => document.querySelector('select[aria-label="Companion model"]')?.value === id && !document.querySelector('select[aria-label="Companion model"]')?.disabled, alternative.id);
-  const account = page.getByRole('heading', { name: 'Minecraft account', exact: true }).locator('xpath=ancestor::section[1]'), codex = page.getByRole('heading', { name: 'Codex & reasoning', exact: true }).locator('xpath=ancestor::section[1]');
+  const account = page.getByRole('heading', { name: 'Minecraft account', exact: true }).locator('xpath=ancestor::section[1]'), codex = page.getByRole('heading', { name: 'AI models & reasoning', exact: true }).locator('xpath=ancestor::section[1]');
   const first = await account.boundingBox(), second = await codex.boundingBox();
   assert.ok(Math.abs(first.x - second.x) < 2); assert.ok(second.y - first.y - first.height >= 0 && second.y - first.y - first.height < 36, 'Codex must directly follow account settings without audio-panel whitespace.');
   unavailable = true; await page.getByRole('button', { name: 'Refresh models', exact: true }).click();

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PrivateAccountActions from './PrivateAccountActions';
-import CodexModel from './CodexModel';
+import ModelSettings from './ModelSettings';
 import LowTokenMode from './LowTokenMode';
 import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
@@ -169,9 +169,8 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
             <p className="inline-error">{state.connection.error}</p>
           ) : null}
         </Panel>
-        <Panel title="Codex & reasoning" eyebrow="THINK WHEN IT MATTERS">
-          <div className="codex-identity"><Badge tone={state.codex?.authenticated ? "green" : "muted"}>{state.codex?.authenticated ? "Codex signed in" : state.codex?.authenticated === false ? "Codex sign-in needed" : "Checking Codex"}</Badge><span className="note">{state.codex?.version || state.codex?.error || "Reading local CLI authentication status"}</span></div>
-          <CodexModel state={state} mutate={mutate} />
+        <Panel title="AI models & reasoning" eyebrow="THINK WHEN IT MATTERS">
+          <ModelSettings state={state} mutate={mutate} />
           <LowTokenMode state={state} mutate={mutate} />
           <div className="two-inputs">
             <label className="field-label">
@@ -213,16 +212,16 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               <strong>{state.usage.requests}</strong>
             </div>
             <div>
-              <span>Input tokens</span>
+              <span>{state.usage.unreportedRequests ? 'Reported input tokens' : 'Input tokens'}</span>
               <strong>{state.usage.inputTokens.toLocaleString()}</strong>
             </div>
             <div>
-              <span>Output tokens</span>
+              <span>{state.usage.unreportedRequests ? 'Reported output tokens' : 'Output tokens'}</span>
               <strong>{state.usage.outputTokens.toLocaleString()}</strong>
             </div>
           </div>
           <p className="note">
-            Usage comes from actual model responses. Account limits and billing
+            Request counts include attempts; tokens come from reported responses. Account limits and billing
             cost are{" "}
             {state.usage.billingCost === null
               ? "not provided by the provider"
