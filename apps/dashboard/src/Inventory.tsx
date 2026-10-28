@@ -20,7 +20,7 @@ export default function Inventory({ state }: { state: CompanionState }) {
   );
   return (
     <>
-      {state.world?.inventoryExact === false ? <div className="info-note"><p>Live translated inventory: item names are the {state.connection.version} client view of Realm {state.connection.serverVersion}. Newer items can appear as substitutes. These counts are excluded from exact project resource tracking.</p></div> : null}
+      {state.world?.inventoryExact === false ? <div className="info-note"><p>{state.connection.projected ? `Live translated inventory: item names are the ${state.connection.version} client view of Realm ${state.connection.serverVersion}. Newer items can appear as substitutes.` : 'Waiting for server inventory confirmation. Transfer amounts are unverified until the Realm confirms them.'} These counts are excluded from exact project resource tracking.</p></div> : null}
       <div className="section-toolbar">
         <div className="search-field">
           <Search size={17} />

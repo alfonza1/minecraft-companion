@@ -17,6 +17,8 @@ test('real API returns disconnected observations and no invented inventory or us
   const state = (await app.inject('/api/state')).json();
   assert.equal(state.state, 'DISCONNECTED'); assert.equal(state.world, null); assert.deepEqual(state.projects, []); assert.equal(state.usage.requests, 0);
   assert.equal(JSON.stringify(state).includes('accessToken'), false);
+  const health = (await app.inject('/api/health')).json();
+  if (health.supportedVersions.includes('26.3')) assert.equal(health.limitations.some(text => text.includes('requires the optional protocol bridge')), false);
 });
 test('API enforces localhost host and browser origin for HTTP and WebSocket upgrade paths', async t => {
   const app = await fixture(t);
@@ -30,6 +32,7 @@ test('API enforces localhost host and browser origin for HTTP and WebSocket upgr
 test('API validates settings, persists memory, protects paused controls and serves local Minecraft textures', async t => {
   const app = await fixture(t);
   const bad = await app.inject({ method: 'POST', url: '/api/settings', payload: { password: 'not-accepted' } }); assert.equal(bad.statusCode, 400);
+  const invalidPace = await app.inject({ method: 'POST', url: '/api/settings', payload: { movementSpeed: 'teleport' } }); assert.equal(invalidPace.statusCode, 400);
   const saved = await app.inject({ method: 'POST', url: '/api/settings', payload: { playerName: 'PlayerOne', voice: { speed: 1.1 } } }); assert.equal(saved.statusCode, 200);
   assert.equal(saved.json().voice.speed, 1.1);
   const memory = await app.inject({ method: 'POST', url: '/api/memories', payload: { label: 'Base', value: '100, 64, -12' } }); assert.equal(memory.statusCode, 200);

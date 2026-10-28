@@ -1,5 +1,7 @@
 import { collect } from '../../src/tools/play.js';
 import { hasValidatedNativeMaterial } from '../../packages/minecraft-data/index.js';
+import { inventoryCounts } from '../../src/actions.js';
+import { uniqueTreeLogs } from './tree-targets.js';
 
 const NATURAL_SOIL = new Set(['grass_block', 'dirt', 'coarse_dirt', 'podzol', 'rooted_dirt', 'mycelium']);
 export function requireNaturalTree(bot, species) {
@@ -32,4 +34,29 @@ export function selectMiningTargets(bot, blockName, count, zone) {
 export function gatherApprovedBlocks(bot, actions, args, zone) {
   const targets = selectMiningTargets(bot, args.block, args.count, zone);
   return actions.run('gather_blocks', signal => collect(bot, targets, signal));
+}
+
+export function chopNaturalTrees(bot, actions, { count, species }) {
+  return actions.run('chop_tree', async signal => {
+    const before = inventoryCounts(bot);
+    let mined = 0, trees = 0, blocked = null;
+    while (mined < count) {
+      signal.throwIfAborted();
+      let root;
+      try { root = requireNaturalTree(bot, species); }
+      catch (error) { if (!mined) throw error; blocked = error.message; break; }
+      const stackSize = bot.registry.itemsByName[root.name].stackSize;
+      const capacity = bot.inventory.emptySlotCount() * stackSize + bot.inventory.items()
+        .filter(item => item.name === root.name).reduce((sum, item) => sum + stackSize - item.count, 0);
+      if (!capacity) { blocked = 'My inventory is full. Hand off or deposit some items first.'; break; }
+      const result = await collect(bot, uniqueTreeLogs(bot, root, Math.min(count - mined, capacity)), signal);
+      mined += result.mined; trees++;
+      if (!result.mined || !result.success) { blocked = result.summary; break; }
+    }
+    const inventory = inventoryCounts(bot);
+    const gained = Object.fromEntries(Object.entries(inventory).map(([name, quantity]) => [name, quantity - (before[name] ?? 0)]).filter(([, quantity]) => quantity > 0));
+    const collected = Object.entries(gained).filter(([name]) => name.endsWith('_log')).reduce((sum, [, quantity]) => sum + quantity, 0);
+    return { success: collected >= count, partial: collected > 0 && collected < count, mined, collected, requested: count, trees, gained, inventory, blocked,
+      summary: `Collected ${Object.entries(gained).map(([name, quantity]) => `${quantity} ${name}`).join(', ') || 'no drops'} from ${trees} trees.${blocked ? ` ${blocked}` : ''}` };
+  });
 }

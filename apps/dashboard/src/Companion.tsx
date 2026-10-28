@@ -151,6 +151,9 @@ export default function Companion({ state, mutate, busy }: Common) {
               attempt(mutate("/settings", { alertFrequency }))
             }
           />
+          <SettingSelect label="Travel pace" value={state.settings.movementSpeed || 'brisk'}
+            options={{ brisk: 'Brisk · sprint when safe and fed', normal: 'Normal walking' }}
+            onChange={(movementSpeed) => attempt(mutate('/settings', { movementSpeed }))} />
           <label className="field-label">
             Follow distance{" "}
             <span className="range-label">

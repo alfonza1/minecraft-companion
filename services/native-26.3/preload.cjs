@@ -23,7 +23,7 @@ function load() {
   // Validate every downloaded overlay before executing any of it. Failed installs
   // retain the released stack and its translation safety restrictions.
   for (const file of lock.files) {
-    if (digest(fs.readFileSync(path.join(directory, file.target))) !== file.sha256) throw new Error('Native dependency integrity check failed.');
+    if (digest(fs.readFileSync(path.join(directory, file.target))) !== (file.installedSha256 || file.sha256)) throw new Error('Native dependency integrity check failed.');
   }
   const rawData = requireProject('minecraft-data/data.js');
   const dataRoot = path.dirname(requireProject.resolve('minecraft-data'));
@@ -36,6 +36,18 @@ function load() {
   for (const item of row.items) {
     if (lock.itemStackSizeCorrections[item.name]) item.stackSize = lock.itemStackSizeCorrections[item.name];
   }
+  // The inherited material-speed table uses 26.2 item IDs. Native packet IDs
+  // are correct, but using those old IDs makes every real axe look barehanded.
+  const sourceItems = JSON.parse(fs.readFileSync(path.join(directory, 'data/pc', lock.materialsItemVersion, 'items.json')));
+  const sourceNames = new Map(sourceItems.map(item => [item.id, item.name]));
+  const nativeIds = new Map(row.items.map(item => [item.name, item.id]));
+  row.materials = Object.fromEntries(Object.entries(row.materials).map(([material, tools]) => [material,
+    Object.fromEntries(Object.entries(tools).map(([id, speed]) => {
+      const nativeId = nativeIds.get(sourceNames.get(Number(id)));
+      if (!Number.isInteger(nativeId)) throw new Error('Unknown native material tool mapping.');
+      return [nativeId, speed];
+    })),
+  ]));
   rawData.pc[lock.version] = row;
   const features = requireProject('minecraft-data/minecraft-data/data/pc/common/features.json');
   const additions = JSON.parse(fs.readFileSync(path.join(directory, 'data/pc/common/features.json')));

@@ -172,7 +172,9 @@
       "package": "mineflayer",
       "source": "lib/plugins/physics.js",
       "target": "mineflayer/lib/plugins/physics.js",
-      "sha256": "c14b7447639cf77009ffdc3a33b3d23c4af787bd947c2dccbfc65012ee90ba8b"
+      "sha256": "c14b7447639cf77009ffdc3a33b3d23c4af787bd947c2dccbfc65012ee90ba8b",
+      "patch": "queue-teleport-replies",
+      "installedSha256": "9f81fac806d1881baede9fb8ef0cc4cc28c757bf8f07d3ec63066733d1959c67"
     },
     {
       "package": "mineflayer",
@@ -359,6 +361,13 @@
       "source": "data/pc/common/features.json",
       "target": "data/pc/common/features.json",
       "sha256": "1bdf99189e7373d055eaf46fde515cdf80b2fe858027c279d869555ff38fe148"
+    },
+    {
+      "package": "minecraft-data",
+      "source": "data/pc/26.2/items.json",
+      "target": "data/pc/26.2/items.json",
+      "sha256": "a0b334b6e8f9583f8d2ae07fb65c201022ee06b1e8a43beb556140e9d8ef2743"
     }
-  ]
+  ],
+  "materialsItemVersion": "26.2"
 }

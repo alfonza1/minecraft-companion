@@ -114,6 +114,7 @@ export interface CompanionState {
     autonomy: string;
     combat: string;
     followDistance: number;
+    movementSpeed?: 'normal' | 'brisk';
     alertFrequency: string;
     model: string;
     maxRequestsPerHour: number;

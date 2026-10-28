@@ -204,4 +204,9 @@ test('translated inventory cannot satisfy exact assignments or start approved su
     const response = await app.inject({ method: 'POST', url: `/api/projects/${project.id}/${action}`, payload: { material: 'oak_log', origin: { x: 0, y: 64, z: 0 } } });
     assert.equal(response.statusCode, 400); assert.match(response.json().error, /translated/);
   }
+  runtime.bot.companionTransport.projected = false;
+  for (const action of ['build', 'gather']) {
+    const response = await app.inject({ method: 'POST', url: `/api/projects/${project.id}/${action}`, payload: { material: 'oak_log', origin: { x: 0, y: 64, z: 0 } } });
+    assert.equal(response.statusCode, 400); assert.match(response.json().error, /server inventory confirmation/);
+  }
 });

@@ -37,6 +37,17 @@ test('translated connections reject resource execution before any world or inven
     assert.equal(runtime.currentTask, null);
   } finally { await runtime.close(); }
 });
+test('unconfirmed inventory cannot authorize subsequent resource actions', async () => {
+  const { runtime, bot } = fixture();
+  bot.companionInventoryUnverified = true;
+  try {
+    assert.equal(observeWorld(bot).inventoryExact, false);
+    for (const name of ['gather_blocks', 'chop_tree', 'craft_item']) await assert.rejects(runtime.execute(name, {}), /server inventory confirmation/);
+    assert.equal(runtime.currentTask, null);
+    bot.companionInventoryUnverified = false;
+    assert.equal(observeWorld(bot).inventoryExact, true);
+  } finally { await runtime.close(); }
+});
 
 async function connectingFixture() {
   const value = fixture();

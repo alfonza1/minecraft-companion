@@ -33,8 +33,8 @@ assert.equal(JSON.parse((await readFile(manifest.eulaReceipt, 'utf8')).replace(/
 if (process.argv.includes('--check-runtime')) { console.log('Verified private Java 25, official Minecraft 26.3 server SHA1, dedicated paths and EULA receipt.'); process.exit(0); }
 assert.equal(nativeProtocol.installed, true, 'Run npm run setup:native first.');
 const directory = await mkdtemp(path.join(os.tmpdir(),'companion-native-'));
-const logs=[],results=[], errors=[]; let child,runtime,store,exitPromise,exited=false,failed=false;
-const EXPECTED_CHECKS = 8;
+const logs=[],results=[], errors=[]; let child,runtime,store,recipient,exitPromise,exited=false,failed=false;
+const EXPECTED_CHECKS = 11;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate, label, timeout = 30000) {
   const started = Date.now();
@@ -92,9 +92,37 @@ try {
   for(const block of blueprint.blocks)assert.equal(bot.blockAt(new Vec3(origin.x+block.x,origin.y+block.y,origin.z+block.z)).name,block.name);
   return{verified:persisted.checkpoint.verified.length,status:result.status};
  });
+ await check('native partial item drop has authoritative inventory and a physical dropped entity',async()=>{
+  const result=await runtime.execute('drop_item',{item:'stone',count:2});assert.equal(result.success,true);assert.equal(result.dropped,2);
+  assert.equal(bot.inventory.items().filter(item=>item.name==='stone').reduce((sum,item)=>sum+item.count,0),result.availableBefore-2);
+  await until(()=>Object.values(bot.entities).some(entity=>entity.getDroppedItem?.()?.name==='stone'),'physical stone drop');
+  assert.equal(runtime.world.inventoryExact,true);return{dropped:result.dropped,serverConfirmed:true,physicalDropObserved:true};
+ });
+ recipient=mineflayer.createBot({host:'127.0.0.1',port,username:'NativeRecipient',version:'26.3',auth:'offline',Client:NativeRealmClient,hideErrors:true,logErrors:false});
+ recipient.on('error',error=>errors.push(error.message));await once(recipient,'spawn');
+ command('tp NativeRecipient 8.5 -59 0.5');
+ await until(()=>bot.players.NativeRecipient?.entity?.position.distanceTo(new Vec3(8.5,-59,0.5))<0.1,'visible recipient');
+ await check('native handoff reaches another real survival player',async()=>{
+  const result=await runtime.execute('give_items_to_player',{player:'NativeRecipient',item:'oak_log',count:1});assert.equal(result.dropped,1);
+  await until(()=>recipient.inventory.items().some(item=>item.name==='oak_log'&&item.count===1),'recipient actual pickup',10000);
+  assert.equal(result.recipientPickupVerified,false);return{dropped:1,recipientObservedLogs:1,scope:'Recipient inventory is visible only to this separate local fixture client; production never claims to inspect the user inventory.'};
+ });
+ command('give NativeFixture minecraft:iron_axe 1');
+ for(const x of [14,19]){for(let y=-59;y<=-56;y++)command(`setblock ${x} ${y} 0 minecraft:oak_log`);command(`setblock ${x} -55 0 minecraft:oak_leaves[persistent=true]`);}
+ await until(()=>bot.inventory.items().some(item=>item.name==='iron_axe')&&bot.blockAt(new Vec3(19,-56,0))?.name==='oak_log','natural tree fixtures');
+ await check('native batch tree collection uses an axe and visits unique logs',async()=>{
+  const before=bot.inventory.items().filter(item=>item.name==='oak_log').reduce((sum,item)=>sum+item.count,0),started=Date.now();
+  const handTime=bot.blockAt(new Vec3(14,-59,0)).digTime(null,false,false,false,[],{});
+  const result=await runtime.execute('chop_tree',{count:8,species:'oak'});
+  const elapsedMs=Date.now()-started,after=bot.inventory.items().filter(item=>item.name==='oak_log').reduce((sum,item)=>sum+item.count,0);
+  assert.equal(result.mined,8,JSON.stringify(result));assert.ok(after-before>=8,JSON.stringify(result));assert.equal(bot.heldItem?.name,'iron_axe');
+  for(const x of [14,19])for(let y=-59;y<=-56;y++)assert.equal(bot.blockAt(new Vec3(x,y,0)).name,'air');
+  return{mined:result.mined,collected:after-before,trees:result.trees,elapsedMs,tool:bot.heldItem.name,handTimePerLogMs:handTime};
+ });
  await check('native disconnect and reconnect',async()=>{const old=bot;old._client.end('Native fixture transport loss');await until(()=>runtime.bot!==old&&runtime.connection.status==='connected','reconnect',50000);bot=runtime.bot;assert.equal(runtime.state,'PAUSED');await until(()=>runtime.world?.inventory.some(i=>i.name==='oak_planks'&&i.count>=4),'inventory retained');return{state:runtime.state,version:bot.version}});
 }catch(e){failed=true;console.error(e.stack);results.push({failure:e.stack});}
 finally {
+  if (recipient && !recipient._client.ended) recipient.end('Local handoff fixture complete');
   try { await runtime?.close(); }
   catch (error) { failed = true; errors.push(`Runtime cleanup: ${error.message}`); }
   if (child?.pid && !exited) {

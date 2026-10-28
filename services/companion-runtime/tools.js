@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerPlay } from '../../src/tools/play.js';
 import { registerGoto } from '../../src/tools/goto.js';
 import { registerLookAround } from '../../src/tools/look_around.js';
+import { registerItemSkills } from '../skill-executor/items.js';
 
 export function createToolRegistry(bot, actions) {
   const tools = new Map();
@@ -13,5 +14,6 @@ export function createToolRegistry(bot, actions) {
   // Construction is available solely through approved, obstruction-safe builds.
   tools.delete('place_blocks');
   tools.delete('give_items_to_player'); // upstream predicts slots; Realm records must come from server events.
+  registerItemSkills(adapter, bot, actions);
   return tools;
 }

@@ -6,7 +6,7 @@ import { Vec3 } from 'vec3';
 import { createActions } from '../../src/actions.js';
 import { createToolRegistry } from './tools.js';
 import { observeWorld } from '../world-state/index.js';
-import { gatherApprovedBlocks, requireNaturalTree } from '../skill-executor/index.js';
+import { gatherApprovedBlocks, chopNaturalTrees } from '../skill-executor/index.js';
 import { diagnoseKick } from '../realm-connector/kick-diagnosis.js';
 
 const { pathfinder, Movements, goals } = pathfinderPkg;
@@ -14,12 +14,22 @@ const HOSTILES = new Set(['zombie', 'skeleton', 'creeper', 'spider', 'drowned', 
 export const REFLEX_INTERVAL_MS = 500;
 export const MAX_RECONNECTS = 5;
 export const STABLE_CONNECTION_MS = 30000;
+export const BODY_IDLE_TIMEOUT_MS = 3000;
+export const SPRINT_MIN_HEALTH = 14;
+export const SPRINT_MIN_FOOD = 14;
+export const SPRINT_THREAT_RADIUS = 12;
+export function canSprint(bot, settings) {
+  return Boolean(bot.entity) && (settings.movementSpeed ?? 'brisk') === 'brisk' && bot.health >= SPRINT_MIN_HEALTH && bot.food >= SPRINT_MIN_FOOD &&
+    !bot.entity?.isInWater && !bot.entity?.isInLava &&
+    !Object.values(bot.entities || {}).some(entity => HOSTILES.has(entity.name) && entity.position?.distanceTo(bot.entity.position) < SPRINT_THREAT_RADIUS);
+}
 
 export class CompanionRuntime extends EventEmitter {
   constructor({ store, connector, createBot, timers = globalThis }) {
     super();
     this.store = store; this.connector = connector; this.botFactory = createBot || (id => connector.createBot(id)); this.timers = timers;
     this.state = 'DISCONNECTED'; this.planning = false; this.activationRequested = false;
+    this.actionEpoch = 0;
     this.connection = { status: 'offline', username: null, realmId: null, version: null, error: null, reconnectAttempt: 0 };
     this.bot = null; this.actions = null; this.tools = new Map(); this.world = null; this.currentTask = null;
     this.pending = null; this.operations = new Map(); this.controlQueue = Promise.resolve(); this.jobController = null; this.reconnectTimer = null; this.generation = 0;
@@ -61,6 +71,7 @@ export class CompanionRuntime extends EventEmitter {
     }
     if (command === 'cancel') { await this.cancelTask(); return; }
     if (['pause', 'emergency', 'stop', 'disconnect'].includes(command)) {
+      this.actionEpoch++;
       const disconnect = ['stop', 'disconnect', 'emergency'].includes(command);
       this.activationRequested = false;
       // Gate synchronously, before awaiting model/process cancellation.
@@ -101,6 +112,7 @@ export class CompanionRuntime extends EventEmitter {
     const current = () => this.bot === bot && generation === this.generation;
     const observe = () => {
       if (this.bot !== bot) return;
+      if (bot.companionInventorySyncing) return;
       this.world = observeWorld(bot);
       if (this.world) this.store.put('observations', { id: 'last-world', ...this.world });
       this.emit('change');
@@ -114,7 +126,7 @@ export class CompanionRuntime extends EventEmitter {
       bot.physics.playerHalfWidth = 0.30001; bot.physics.playerHeight = 1.80001;
       const movement = new Movements(bot);
       movement.canDig = false; movement.allow1by1towers = false; movement.allowParkour = false;
-      movement.allowSprinting = false; movement.maxDropDown = 1; movement.allowFreeMotion = false;
+      movement.allowSprinting = canSprint(bot, this.store.settings()); movement.maxDropDown = 1; movement.allowFreeMotion = false;
       movement.scafoldingBlocks = []; movement.liquidCost = 100;
       bot.pathfinder.setMovements(movement); bot.collectBlock.movements = null;
       this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, serverVersion: bot.companionTransport?.serverVersion || bot.version, transport: bot.companionTransport?.kind || 'native', projected: Boolean(bot.companionTransport?.projected), error: null, errorCode: null };
@@ -127,6 +139,10 @@ export class CompanionRuntime extends EventEmitter {
       this.emit('connected');
     });
     bot.on('health', observe); bot.on('experience', observe); bot.on('heldItemChanged', observe);
+    bot.on('companionInventoryConfirmed', observe);
+    bot._client?.on?.('window_items', packet => {
+      if (packet.windowId === bot.inventory?.id) setImmediate(() => { if (this.bot === bot && !bot.companionInventorySyncing) { bot.companionInventoryUnverified = false; observe(); } });
+    });
     bot.once('spawn', () => bot.inventory.on('updateSlot', observe));
     bot.on('death', () => { if (this.bot === bot) { this.activationRequested = false; this.state = 'PAUSED'; this.jobController?.abort(); this.actions.stop('Died. Resume after respawn.'); observe(); this.emit('pause'); this.modelCancel(); this.fullAudioStop(); } });
     bot.on('kicked', reason => {
@@ -204,6 +220,7 @@ export class CompanionRuntime extends EventEmitter {
     await this.connector?.closeConnection?.();
   }
   async cancelTask() {
+    this.actionEpoch++;
     this.jobController?.abort(new Error('Task cancelled.'));
     this.actions?.stop('Task cancelled. Wait for a new request.');
     await Promise.allSettled([this.modelCancel(), this.audioStop()]);
@@ -211,8 +228,15 @@ export class CompanionRuntime extends EventEmitter {
     this.emit('change');
   }
   hasOperations() { return [...this.operations.values()].some(bot => bot === this.bot); }
+  async waitForIdle() {
+    const deadline = Date.now() + BODY_IDLE_TIMEOUT_MS;
+    while (this.pending || this.actions?.state().action || this.hasOperations()) {
+      if (Date.now() >= deadline) throw new Error('The previous action is still stopping. Wait a moment before the handoff.');
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+  }
   trackOperations(bot) {
-    for (const [object, method] of [[bot.pathfinder, 'goto'], ...['dig', 'equip', 'placeBlock', 'craft', 'consume', 'lookAt', 'toss', 'activateBlock'].map(method => [bot, method])]) {
+    for (const [object, method] of [[bot.pathfinder, 'goto'], ...['dig', 'equip', 'unequip', 'placeBlock', 'craft', 'consume', 'lookAt', 'toss', 'clickWindow', 'activateBlock'].map(method => [bot, method])]) {
       if (typeof object?.[method] !== 'function') continue;
       const original = object[method].bind(object);
       object[method] = (...args) => {
@@ -253,7 +277,8 @@ export class CompanionRuntime extends EventEmitter {
     }
   }
   async execute(name, args = {}) {
-    if (this.bot?.companionTransport?.projected && ['gather_blocks', 'chop_tree', 'craft_item'].includes(name)) throw new Error('Resource actions require native Minecraft identities. The translated connection provides a projected client view.');
+    if (this.bot?.companionTransport?.projected && ['gather_blocks', 'chop_tree', 'craft_item', 'drop_item', 'give_items_to_player', 'equip_item'].includes(name)) throw new Error('Resource actions require native Minecraft identities. The translated connection provides a projected client view.');
+    if (this.bot?.companionInventoryUnverified && ['gather_blocks', 'chop_tree', 'craft_item'].includes(name)) throw new Error('Wait for server inventory confirmation before collecting or crafting more resources.');
     const tool = this.tools.get(name);
     if (!tool) throw new Error(`Unsupported survival skill: ${name}.`);
     const validated = tool.schema.parse(args);
@@ -262,8 +287,9 @@ export class CompanionRuntime extends EventEmitter {
       const result = await tool.handler(validated); return JSON.parse(result.content[0].text);
     }
     return this.runJob(name, async signal => {
-      if (name === 'chop_tree') requireNaturalTree(this.bot, validated.species);
-      const result = name === 'gather_blocks'
+      const result = name === 'chop_tree'
+        ? { content: [{ text: JSON.stringify(await chopNaturalTrees(this.bot, this.actions, validated)) }] }
+        : name === 'gather_blocks'
         ? { content: [{ text: JSON.stringify(await gatherApprovedBlocks(this.bot, this.actions, validated, this.store.settings().miningZone)) }] }
         : await tool.handler(validated);
       signal.throwIfAborted();
@@ -273,6 +299,7 @@ export class CompanionRuntime extends EventEmitter {
   async reflex() {
     if (!this.isActive() || !this.bot?.minenessReady) return;
     const bot = this.bot;
+    if (bot.pathfinder?.movements) bot.pathfinder.movements.allowSprinting = canSprint(bot, this.store.settings());
     const threat = bot.nearestEntity(entity => HOSTILES.has(entity.name) && entity.position.distanceTo(bot.entity.position) < 6);
     if (threat && (bot.health <= 8 || threat.name === 'creeper' || threat.name === 'warden')) {
       this.jobController?.abort(new Error('Retreating from immediate danger.'));

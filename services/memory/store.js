@@ -6,7 +6,7 @@ import { homedir } from 'node:os';
 export const dataDirectory = process.env.COMPANION_DATA_DIR || join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'MinecraftCompanion');
 export const defaults = {
   realmId: null, playerName: '', autonomy: 'instructions', combat: 'retreat', followDistance: 3, miningZone: null,
-  alertFrequency: 'normal', model: '', maxRequestsPerHour: 30, maxInputTokens: 100_000,
+  alertFrequency: 'normal', movementSpeed: 'brisk', model: '', maxRequestsPerHour: 30, maxInputTokens: 100_000,
   voice: { enabled: false, handsFree: false, speed: 1, volume: 0.8, inputDevice: '', outputDevice: '' },
 };
 

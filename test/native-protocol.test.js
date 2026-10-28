@@ -10,6 +10,7 @@ import { calculateMaterials } from '../services/build-planner/materials.js';
 import { constructionCompatibility } from '../services/build-executor/index.js';
 import { NativeRealmClient } from '../services/realm-connector/native-client.js';
 import { EventEmitter } from 'node:events';
+import blockLoader from 'prismarine-block';
 
 const exec = promisify(execFile);
 test('native Stop rejects a socket delivered after Microsoft authentication finishes', () => {
@@ -64,4 +65,12 @@ test('native blueprints use 26.3 recipes while unvalidated new block metadata st
   const experimental = validateBlueprint({ ...blueprint, dimensions: { x: 1, y: 1, z: 1 }, blocks: [{ x: 0, y: 0, z: 0, name: 'sulfur' }] });
   assert.equal(constructionCompatibility(experimental).supported, false);
   assert.ok(calculateMaterials(experimental, {}, { recipes: new Map(), source: null }).unresolved.some(message => message.includes('not fully validated')));
+});
+
+test('native material speeds map inherited item identities to real 26.3 axes', () => {
+  if (!nativeProtocol.installed) return;
+  const data=dataFor('26.3'),Block=blockLoader('26.3'),log=Block.fromStateId(data.blocksByName.oak_log.defaultState,0);
+  assert.equal(log.digTime(null,false,false,false,[],{}),3000);
+  assert.equal(log.digTime(data.itemsByName.iron_axe.id,false,false,false,[],{}),500);
+  assert.ok(log.digTime(data.itemsByName.diamond_axe.id,false,false,false,[],{})<500);
 });

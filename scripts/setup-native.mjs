@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import applyNativePatch from '../services/native-26.3/patches.cjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const require = createRequire(import.meta.url);
@@ -35,7 +36,7 @@ for (const [name, version] of Object.entries(lock.baseVersions)) {
 async function installationIsCurrent() {
   try {
     if (JSON.parse(await readFile(path.join(target, 'ready.json'))).lockHash !== lockHash) return false;
-    for (const file of lock.files) if (digest(await readFile(path.join(target, safeRelative(file.target)))) !== file.sha256) return false;
+    for (const file of lock.files) if (digest(await readFile(path.join(target, safeRelative(file.target)))) !== (file.installedSha256 || file.sha256)) return false;
     return true;
   } catch { return false; }
 }
@@ -68,9 +69,11 @@ try {
       if (!response.ok) throw new Error(`Native dependency download failed (${response.status}): ${file.target}`);
       const bytes = Buffer.from(await response.arrayBuffer());
       if (bytes.length > MAX_DOWNLOAD_BYTES || digest(bytes) !== file.sha256) throw new Error(`Native dependency checksum mismatch: ${file.target}`);
+      const installedBytes = applyNativePatch(file, bytes);
+      if (digest(installedBytes) !== (file.installedSha256 || file.sha256)) throw new Error(`Native patch checksum mismatch: ${file.target}`);
       const destination = path.join(staging, file.target);
       await mkdir(path.dirname(destination), { recursive: true });
-      await writeFile(destination, bytes);
+      await writeFile(destination, installedBytes);
     }));
     const failure = downloads.find(result => result.status === 'rejected');
     if (failure) throw failure.reason;

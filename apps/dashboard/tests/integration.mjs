@@ -69,6 +69,12 @@ try {
     .getByRole("navigation")
     .getByRole("button", { name: "Companion", exact: true })
     .click();
+  const travelPace = page.getByRole('combobox', { name: 'Travel pace', exact: true });
+  await travelPace.selectOption('normal');
+  await page.waitForFunction(async () => (await (await fetch('/api/state')).json()).settings.movementSpeed === 'normal');
+  await travelPace.selectOption('brisk');
+  await page.waitForFunction(async () => (await (await fetch('/api/state')).json()).settings.movementSpeed === 'brisk');
+  evidenceLines.push('Travel pace normal/brisk changes are persisted through the actual settings API.');
   await page.getByRole("textbox", { name: "Memory label" }).fill("QA base");
   await page
     .getByRole("textbox", { name: "Memory details" })
@@ -106,8 +112,8 @@ try {
     provenance: "schematic",
     uncertainties: [],
     blocks: [
-      { x: 0, y: 0, z: 0, name: "cobblestone", section: "foundation" },
-      { x: 1, y: 0, z: 0, name: "cobblestone", section: "foundation" },
+      { x: 0, y: 0, z: 0, name: "oak_log", section: "foundation" },
+      { x: 1, y: 0, z: 0, name: "oak_log", section: "foundation" },
     ],
   };
   await page.locator("input[type=file]").setInputFiles({
@@ -135,9 +141,9 @@ try {
     .getByRole("button", { name: "Shared tasks", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply split", exact: true }).click();
-  await page.getByText("Cobblestone", { exact: true }).waitFor();
+  await page.getByText("Oak Log", { exact: true }).waitFor();
   const count = page.getByRole("spinbutton", {
-    name: "Your collected Cobblestone",
+    name: "Your collected Oak Log",
   });
   await count.fill("1");
   await page

@@ -112,6 +112,7 @@ export function registerBuildRoutes(app, context) {
   }));
   app.post('/api/projects/:id/gather', endpoint(async ({ params, body }) => {
     if (runtime.bot?.companionTransport?.projected) throw new Error('Assigned gathering is disabled on translated connections because inventory identities may be mapped.');
+    if (runtime.snapshot().world?.inventoryExact === false) throw new Error('Wait for server inventory confirmation before assigned gathering.');
     ensureEditable(params.id);
     const project = getProject(params.id);
     if (project.approvedRevision !== project.revision || !project.blueprint || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the project before gathering its assigned resources.');
@@ -144,6 +145,7 @@ export function registerBuildRoutes(app, context) {
   }));
   app.post('/api/projects/:id/build', endpoint(async ({ params, body }) => {
     if (runtime.bot?.companionTransport?.projected) throw new Error('Exact construction is disabled on translated connections. Use a natively supported server version.');
+    if (runtime.snapshot().world?.inventoryExact === false) throw new Error('Wait for server inventory confirmation before construction.');
     ensureEditable(params.id);
     const project = getProject(params.id);
     const origin = validateOrigin(body?.origin);

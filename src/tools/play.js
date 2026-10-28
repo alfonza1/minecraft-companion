@@ -4,6 +4,8 @@ import pathfinderPkg from "mineflayer-pathfinder";
 import { setTimeout as delay } from "node:timers/promises";
 import { inventoryCounts, resolvePlayer, walkTo } from "../actions.js";
 import { toolResult } from "../bot.js";
+import { waitForMiningFooting, equipFastestTool } from '../mining.js';
+import { uniqueTreeLogs } from '../../services/skill-executor/tree-targets.js';
 
 const { goals } = pathfinderPkg;
 const itemName = z.string().trim().regex(/^[a-z][a-z0-9_]*$/, "Use a Minecraft item name such as oak_log.");
@@ -17,6 +19,7 @@ export async function collect(bot, blocks, signal) {
   const before = inventoryCounts(bot);
   let mined = 0;
   const movement = bot.pathfinder.movements;
+  blocks = [...new Map(blocks.map(block => [block.position.toString(), block])).values()];
   const allowed = new Set(blocks.map((b) => b.position.toString()));
   const protectOtherBlocks = (b) => allowed.has(b.position.toString()) || b.name.endsWith("_leaves") ? 0 : 100;
   const couldDig = movement.canDig;
@@ -29,7 +32,8 @@ export async function collect(bot, blocks, signal) {
       if (bot.blockAt(block.position)?.type !== block.type) continue;
       if (!bot.canDigBlock(block)) await walkTo(bot, block.position, 3, signal);
       signal.throwIfAborted();
-      await bot.tool.equipForBlock(block, { requireHarvest: true, getFromChest: false });
+      await waitForMiningFooting(bot, signal);
+      await equipFastestTool(bot, block, signal);
       signal.throwIfAborted();
       if (!bot.pathfinder.movements.safeToBreak(block)) throw new Error(`Cannot safely mine ${block.name} at ${block.position}.`);
       await bot.dig(block);
@@ -37,7 +41,7 @@ export async function collect(bot, blocks, signal) {
       if (bot.blockAt(block.position)?.type !== block.type) mined++;
     }
     // Clear the selected logs before walking underneath them for their drops.
-    await delay(600, undefined, { signal });
+    await delay(100, undefined, { signal });
     for (const drop of Object.values(bot.entities).filter(e => e.name === "item" && blocks.some(b => e.position.distanceTo(b.position) < 3))) {
       if (!drop.isValid) continue;
       signal.throwIfAborted();
@@ -45,7 +49,7 @@ export async function collect(bot, blocks, signal) {
       // block away can leave the drop just outside the pickup hitbox.
       try { await bot.pathfinder.goto(new goals.GoalFollow(drop, 0)); }
       finally { bot.pathfinder.setGoal(null); }
-      await delay(400, undefined, { signal });
+      for (let tick = 0; tick < 8 && drop.isValid; tick++) await delay(50, undefined, { signal });
     }
   } finally {
     movement.canDig = couldDig;
@@ -59,7 +63,7 @@ export async function collect(bot, blocks, signal) {
 
 export function registerPlay(mcp, bot, actions) {
   mcp.tool("chop_tree", "Chop logs from the nearest tree and collect the drops. Handles walking, tool selection, digging, and pickup. Announce your plan with say first, then call this directly. count is the maximum logs, not trees. Reports actual inventory; stops after 45 seconds.", {
-    count: count.default(4), species: itemName.optional().describe("Optional wood species, for example oak or birch."),
+    count: count.default(8), species: itemName.optional().describe("Optional wood species, for example oak or birch."),
   }, async ({ count, species }) => toolResult(await actions.run("chop_tree", async (signal) => {
     const logs = bot.findBlocks({ maxDistance: 32, count: 128,
       matching: (b) => b.name.endsWith("_log") && (!species || b.name === `${species.replace(/_log$/, "")}_log`)
@@ -70,7 +74,7 @@ export function registerPlay(mcp, bot, actions) {
       return below?.boundingBox === 'block' && !below.name.endsWith('_log') && !below.name.endsWith('_leaves');
     }) ?? logs[0];
     if (!tree) throw new Error("No tree logs within 32 blocks. Walk toward a forest and try again.");
-    return collect(bot, bot.collectBlock.findFromVein(tree, count, 12), signal);
+    return collect(bot, uniqueTreeLogs(bot, tree, count), signal);
   })));
 
   mcp.tool("gather_blocks", "Mine and collect up to count nearby blocks of one exact type, using the best tool in your inventory. For trees, prefer chop_tree. Missing tools or inaccessible blocks return a failure and any partial gains. 45-second limit.", {
