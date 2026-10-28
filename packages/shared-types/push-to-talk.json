@@ -1,0 +1,273 @@
+{
+  "default": {
+    "key": "F8",
+    "modifiers": []
+  },
+  "modifiers": {
+    "Ctrl": 17,
+    "Alt": 18,
+    "Shift": 16
+  },
+  "keys": {
+    "F1": {
+      "label": "F1",
+      "virtualKey": 112
+    },
+    "F2": {
+      "label": "F2",
+      "virtualKey": 113
+    },
+    "F3": {
+      "label": "F3",
+      "virtualKey": 114
+    },
+    "F4": {
+      "label": "F4",
+      "virtualKey": 115
+    },
+    "F5": {
+      "label": "F5",
+      "virtualKey": 116
+    },
+    "F6": {
+      "label": "F6",
+      "virtualKey": 117
+    },
+    "F7": {
+      "label": "F7",
+      "virtualKey": 118
+    },
+    "F8": {
+      "label": "F8",
+      "virtualKey": 119
+    },
+    "F9": {
+      "label": "F9",
+      "virtualKey": 120
+    },
+    "F10": {
+      "label": "F10",
+      "virtualKey": 121
+    },
+    "F11": {
+      "label": "F11",
+      "virtualKey": 122
+    },
+    "F12": {
+      "label": "F12",
+      "virtualKey": 123
+    },
+    "F13": {
+      "label": "F13",
+      "virtualKey": 124
+    },
+    "F14": {
+      "label": "F14",
+      "virtualKey": 125
+    },
+    "F15": {
+      "label": "F15",
+      "virtualKey": 126
+    },
+    "F16": {
+      "label": "F16",
+      "virtualKey": 127
+    },
+    "F17": {
+      "label": "F17",
+      "virtualKey": 128
+    },
+    "F18": {
+      "label": "F18",
+      "virtualKey": 129
+    },
+    "F19": {
+      "label": "F19",
+      "virtualKey": 130
+    },
+    "F20": {
+      "label": "F20",
+      "virtualKey": 131
+    },
+    "F21": {
+      "label": "F21",
+      "virtualKey": 132
+    },
+    "F22": {
+      "label": "F22",
+      "virtualKey": 133
+    },
+    "F23": {
+      "label": "F23",
+      "virtualKey": 134
+    },
+    "F24": {
+      "label": "F24",
+      "virtualKey": 135
+    },
+    "KeyA": {
+      "label": "A",
+      "virtualKey": 65
+    },
+    "KeyB": {
+      "label": "B",
+      "virtualKey": 66
+    },
+    "KeyC": {
+      "label": "C",
+      "virtualKey": 67
+    },
+    "KeyD": {
+      "label": "D",
+      "virtualKey": 68
+    },
+    "KeyE": {
+      "label": "E",
+      "virtualKey": 69
+    },
+    "KeyF": {
+      "label": "F",
+      "virtualKey": 70
+    },
+    "KeyG": {
+      "label": "G",
+      "virtualKey": 71
+    },
+    "KeyH": {
+      "label": "H",
+      "virtualKey": 72
+    },
+    "KeyI": {
+      "label": "I",
+      "virtualKey": 73
+    },
+    "KeyJ": {
+      "label": "J",
+      "virtualKey": 74
+    },
+    "KeyK": {
+      "label": "K",
+      "virtualKey": 75
+    },
+    "KeyL": {
+      "label": "L",
+      "virtualKey": 76
+    },
+    "KeyM": {
+      "label": "M",
+      "virtualKey": 77
+    },
+    "KeyN": {
+      "label": "N",
+      "virtualKey": 78
+    },
+    "KeyO": {
+      "label": "O",
+      "virtualKey": 79
+    },
+    "KeyP": {
+      "label": "P",
+      "virtualKey": 80
+    },
+    "KeyQ": {
+      "label": "Q",
+      "virtualKey": 81
+    },
+    "KeyR": {
+      "label": "R",
+      "virtualKey": 82
+    },
+    "KeyS": {
+      "label": "S",
+      "virtualKey": 83
+    },
+    "KeyT": {
+      "label": "T",
+      "virtualKey": 84
+    },
+    "KeyU": {
+      "label": "U",
+      "virtualKey": 85
+    },
+    "KeyV": {
+      "label": "V",
+      "virtualKey": 86
+    },
+    "KeyW": {
+      "label": "W",
+      "virtualKey": 87
+    },
+    "KeyX": {
+      "label": "X",
+      "virtualKey": 88
+    },
+    "KeyY": {
+      "label": "Y",
+      "virtualKey": 89
+    },
+    "KeyZ": {
+      "label": "Z",
+      "virtualKey": 90
+    },
+    "Digit0": {
+      "label": "0",
+      "virtualKey": 48
+    },
+    "Digit1": {
+      "label": "1",
+      "virtualKey": 49
+    },
+    "Digit2": {
+      "label": "2",
+      "virtualKey": 50
+    },
+    "Digit3": {
+      "label": "3",
+      "virtualKey": 51
+    },
+    "Digit4": {
+      "label": "4",
+      "virtualKey": 52
+    },
+    "Digit5": {
+      "label": "5",
+      "virtualKey": 53
+    },
+    "Digit6": {
+      "label": "6",
+      "virtualKey": 54
+    },
+    "Digit7": {
+      "label": "7",
+      "virtualKey": 55
+    },
+    "Digit8": {
+      "label": "8",
+      "virtualKey": 56
+    },
+    "Digit9": {
+      "label": "9",
+      "virtualKey": 57
+    },
+    "Space": {
+      "label": "Space",
+      "virtualKey": 32
+    },
+    "Tab": {
+      "label": "Tab",
+      "virtualKey": 9
+    },
+    "CapsLock": {
+      "label": "Caps Lock",
+      "virtualKey": 20
+    },
+    "Mouse4": {
+      "label": "Mouse 4",
+      "virtualKey": 5
+    },
+    "Mouse5": {
+      "label": "Mouse 5",
+      "virtualKey": 6
+    }
+  }
+}

@@ -1,0 +1,13 @@
+[
+  { "id": "auto", "name": "Recommended local voice", "provider": "auto", "description": "Kokoro Heart when installed; Piper as the lightweight fallback." },
+  { "id": "kokoro:af_heart", "name": "Heart · American feminine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:af_bella", "name": "Bella · American feminine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:af_nicole", "name": "Nicole · American feminine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:af_sarah", "name": "Sarah · American feminine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:am_michael", "name": "Michael · American masculine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:am_fenrir", "name": "Fenrir · American masculine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:am_puck", "name": "Puck · American masculine", "provider": "kokoro", "language": "en-us", "license": "Apache-2.0" },
+  { "id": "kokoro:bf_emma", "name": "Emma · British feminine", "provider": "kokoro", "language": "en-gb", "license": "Apache-2.0" },
+  { "id": "kokoro:bm_george", "name": "George · British masculine", "provider": "kokoro", "language": "en-gb", "license": "Apache-2.0" },
+  { "id": "piper:ljspeech", "name": "LJ Speech · lightweight Piper", "provider": "piper", "language": "en-us", "license": "MIT" }
+]

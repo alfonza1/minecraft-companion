@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PrivateAccountActions from './PrivateAccountActions';
+import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
+import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 import type { CompanionState } from "../../../packages/shared-types";
 import { api } from "./api";
 import {
@@ -355,7 +357,7 @@ function VoiceSettings({
           ),
         }}
         onChange={(inputDevice) =>
-          attempt(mutate("/settings", { voice: { ...voice, inputDevice } }))
+          attempt(mutate("/settings", { voice: { inputDevice } }))
         }
       />
       <SettingSelect
@@ -370,7 +372,7 @@ function VoiceSettings({
           ),
         }}
         onChange={(outputDevice) =>
-          attempt(mutate("/settings", { voice: { ...voice, outputDevice } }))
+          attempt(mutate("/settings", { voice: { outputDevice } }))
         }
       />
       <label className="field-label">
@@ -384,7 +386,7 @@ function VoiceSettings({
           onChange={(e) =>
             attempt(
               mutate("/settings", {
-                voice: { ...voice, speed: Number(e.target.value) },
+                voice: { speed: Number(e.target.value) },
               }),
             )
           }
@@ -402,7 +404,7 @@ function VoiceSettings({
           onChange={(e) =>
             attempt(
               mutate("/settings", {
-                voice: { ...voice, volume: Number(e.target.value) },
+                voice: { volume: Number(e.target.value) },
               }),
             )
           }
@@ -419,13 +421,14 @@ function VoiceSettings({
           onChange={(e) =>
             attempt(
               mutate("/settings", {
-                voice: { ...voice, handsFree: e.target.checked },
+                voice: { handsFree: e.target.checked },
               }),
             )
           }
         />
       </label>
-      <NativeVoice state={state} />
+      <VoiceSelection state={state} mutate={mutate} />
+      <NativeVoice state={state} mutate={mutate} />
       <p className="note">
         Device changes apply the next time you enable voice. Headphones help
         prevent your companion from hearing itself. Audio capture starts only
@@ -435,7 +438,8 @@ function VoiceSettings({
   );
 }
 
-function NativeVoice({ state }: { state: CompanionState }) {
+function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate }) {
+  const hotkey = formatHotkey(state.settings.voice.pushToTalk);
   const [running, setRunning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -449,6 +453,7 @@ function NativeVoice({ state }: { state: CompanionState }) {
   >([]);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
+  useEffect(() => { if (state.voice.desktop) setRunning(state.voice.desktop.running); }, [state.voice.desktop?.running]);
   useEffect(() => {
     const browserEnabled = () => setRunning(false);
     window.addEventListener("companion-browser-voice", browserEnabled);
@@ -482,10 +487,11 @@ function NativeVoice({ state }: { state: CompanionState }) {
       <div>
         <h3>Talk while Minecraft is focused</h3>
         <p>
-          The desktop audio bridge listens only while you hold F8. Enabling it
+          The desktop audio bridge listens only while you hold {hotkey}. Enabling it
           gives this app microphone access outside the browser.
         </p>
       </div>
+      <PushToTalkSetting state={state} mutate={mutate} onStopped={() => setRunning(false)} />
       <button
         className="text-button"
         onClick={() =>
@@ -534,9 +540,9 @@ function NativeVoice({ state }: { state: CompanionState }) {
         onClick={() => attempt(toggle())}
       >
         <Mic size={14} />
-        {running ? "Disable desktop F8 voice" : "Enable desktop F8 voice"}
+        {running ? 'Disable desktop voice' : 'Enable desktop voice'}
       </button>
-      {running ? <Badge tone="green">F8 push to talk enabled</Badge> : null}
+      {running ? <Badge tone="green">{hotkey} push to talk enabled</Badge> : null}
       {error ? <p className="inline-error">{error}</p> : null}
     </div>
   );

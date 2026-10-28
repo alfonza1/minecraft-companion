@@ -44,24 +44,51 @@ def main():
     parser.add_argument('--input')
     parser.add_argument('--output')
     parser.add_argument('--speed', type=float, default=1)
+    parser.add_argument('--voice', default='auto')
     args = parser.parse_args()
     if args.mode == 'status':
         import faster_whisper
-        print(json.dumps({'ready': (model_directory() / 'models--Systran--faster-whisper-tiny.en').exists(), 'piper': (model_directory() / 'piper' / PIPER_MODEL).is_file(), 'stt': 'faster-whisper tiny.en CPU int8', 'vad': 'Silero'}))
+        import importlib.util
+        kokoro = importlib.util.find_spec('kokoro_onnx') is not None and all((model_directory() / 'kokoro' / name).is_file() for name in ['kokoro-v1.0.onnx', 'voices-v1.0.bin'])
+        print(json.dumps({'ready': (model_directory() / 'models--Systran--faster-whisper-tiny.en').exists(), 'piper': (model_directory() / 'piper' / PIPER_MODEL).is_file(), 'kokoro': kokoro, 'stt': 'faster-whisper tiny.en CPU int8', 'vad': 'Silero'}))
     elif args.mode == 'devices':
         import sounddevice as sd
         print(json.dumps([dict(d, id=i) for i, d in enumerate(sd.query_devices())]))
     elif args.mode == 'synthesize':
-        from piper import PiperVoice, SynthesisConfig
         if not 0.5 <= args.speed <= 2:
             raise ValueError('Speech speed out of range.')
         text = Path(args.input).read_text(encoding='utf-8')
         if not text.strip() or len(text) > 4000:
             raise ValueError('Speech text exceeds limit.')
-        voice = PiperVoice.load(str(model_directory() / 'piper' / PIPER_MODEL), use_cuda=False)
-        with wave.open(args.output, 'wb') as output:
-            voice.synthesize_wav(text, output, syn_config=SynthesisConfig(length_scale=1 / args.speed))
-        print(json.dumps({'provider': 'piper', 'voice': 'LJ Speech'}))
+        voices = json.loads(Path(__file__).with_name('voices.json').read_text(encoding='utf-8'))
+        selected = args.voice
+        if selected == 'auto':
+            selected = 'kokoro:af_heart' if (model_directory() / 'kokoro/kokoro-v1.0.onnx').is_file() else 'piper:ljspeech'
+        entry = next((voice for voice in voices if voice['id'] == selected), None)
+        if entry is None:
+            raise ValueError('Unknown local voice.')
+        if entry['provider'] == 'kokoro':
+            import numpy as np
+            import onnxruntime as rt
+            from kokoro_onnx import Kokoro
+            config = rt.SessionOptions()
+            config.intra_op_num_threads = 2
+            config.inter_op_num_threads = 1
+            session = rt.InferenceSession(str(model_directory() / 'kokoro/kokoro-v1.0.onnx'), sess_options=config, providers=['CPUExecutionProvider'])
+            voice = Kokoro.from_session(session, str(model_directory() / 'kokoro/voices-v1.0.bin'))
+            samples, rate = voice.create(text, voice=selected.split(':')[1], speed=args.speed, lang=entry['language'])
+            with wave.open(args.output, 'wb') as output:
+                output.setnchannels(1)
+                output.setsampwidth(2)
+                output.setframerate(rate)
+                output.writeframes((np.clip(samples, -1, 1) * 32767).astype('<i2').tobytes())
+            voice.voices.close()
+        else:
+            from piper import PiperVoice, SynthesisConfig
+            voice = PiperVoice.load(str(model_directory() / 'piper' / PIPER_MODEL), use_cuda=False)
+            with wave.open(args.output, 'wb') as output:
+                voice.synthesize_wav(text, output, syn_config=SynthesisConfig(length_scale=1 / args.speed))
+        print(json.dumps({'provider': entry['provider'], 'voice': selected}))
     else:
         from faster_whisper import WhisperModel
         model = WhisperModel('tiny.en', device='cpu', compute_type='int8', cpu_threads=2, num_workers=1,

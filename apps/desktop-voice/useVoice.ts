@@ -1,6 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
+import { DEFAULT_PUSH_TO_TALK, normalizeHotkey, hotkeyFromEvent, formatHotkey, type PushToTalkBinding } from '../../packages/shared-types/hotkeys';
 
-type Settings={handsFree?:boolean;inputDevice?:string;outputDevice?:string;speed?:number;volume?:number};
+type Settings={handsFree?:boolean;inputDevice?:string;outputDevice?:string;speed?:number;volume?:number;pushToTalk?:PushToTalkBinding};
 type Options={state:string;settings:Settings;onTranscript:(text:string)=>Promise<string|void>;onError?:(message:string)=>void};
 const ALLOWED=new Set(['ACTIVE','BUSY']);
 const SILENCE_MS=800, MIN_SPEECH_MS=250, MAX_UTTERANCE_MS=30_000, VAD_THRESHOLD=0.022;
@@ -99,6 +100,23 @@ export function useVoice(options:Options) {
   },[disable,startTalking,stopTalking]);
   useEffect(()=>{if(!ALLOWED.has(options.state))disable();},[options.state,disable]);
   useEffect(()=>disable,[disable]);
+  const bindingKey=JSON.stringify(options.settings.pushToTalk??DEFAULT_PUSH_TO_TALK);
+  useEffect(()=>{
+    if(!enabled)return;
+    const binding=normalizeHotkey(JSON.parse(bindingKey));let held=false;
+    const matches=(event:Parameters<typeof hotkeyFromEvent>[0])=>{const candidate=hotkeyFromEvent(event);return candidate&&formatHotkey(candidate)===formatHotkey(binding);};
+    const down=(event:KeyboardEvent)=>{
+      if(event.repeat||event.isComposing||held)return;
+      if(event.target instanceof Element&&event.target.closest('input,textarea,select,[contenteditable="true"]')&&!/^F\d+$/.test(binding.key))return;
+      try{if(matches(event)){event.preventDefault();held=true;startTalking();}}catch{/* Reserved system shortcuts are never used for capture. */}
+    };
+    const up=(event:KeyboardEvent)=>{if(held&&(event.code===binding.key||/^(Control|Alt|Shift)/.test(event.code))){event.preventDefault();held=false;stopTalking();}};
+    const pointerDown=(event:PointerEvent)=>{if(![3,4].includes(event.button)||held)return;const key=event.button===3?'Mouse4':'Mouse5';if(matches({code:key,ctrlKey:event.ctrlKey,altKey:event.altKey,shiftKey:event.shiftKey,metaKey:event.metaKey})){event.preventDefault();held=true;startTalking();}};
+    const pointerUp=(event:PointerEvent)=>{if(held&&[3,4].includes(event.button)){event.preventDefault();held=false;stopTalking();}};
+    const blur=()=>{held=false;stopTalking();};
+    window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('pointerdown',pointerDown);window.addEventListener('pointerup',pointerUp);window.addEventListener('blur',blur);
+    return()=>{window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('pointerdown',pointerDown);window.removeEventListener('pointerup',pointerUp);window.removeEventListener('blur',blur);if(held)stopTalking();};
+  },[enabled,bindingKey,startTalking,stopTalking]);
   useEffect(()=>{const blur=()=>stopTalking();window.addEventListener('blur',blur);return()=>window.removeEventListener('blur',blur);},[stopTalking]);
   return{enabled,listening,speaking,devices,enable,disable,startTalking,stopTalking,speak,interrupt};
 }

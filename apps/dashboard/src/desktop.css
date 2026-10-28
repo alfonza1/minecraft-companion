@@ -22,6 +22,10 @@
 .quick-request input { border: none; background: transparent; padding: 3px 0; font-size: 13px; }
 .quick-request input:disabled { opacity: 0.65; }
 .quick-request input:focus-visible { outline-offset: 2px; }
+.voice-preference { padding: 17px 0; border-top: 1px solid var(--border); margin-top: 15px; }
+.voice-preference kbd { display: inline-block; font-family: 'Cascadia Code', monospace; color: #c1e7d0; background: #16251e; padding: 6px 10px; border: 1px solid #45624e; border-bottom-width: 3px; border-radius: 5px; margin: 6px 0; }
+.preference-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; }
+.voice-preference .note { margin: 10px 0; }
 @media (min-width: 1000px) {
   .sidebar { width: 212px; padding-top: 28px; }
   .main-shell { margin-left: 212px; width: calc(100% - 212px); }

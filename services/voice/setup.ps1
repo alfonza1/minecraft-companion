@@ -9,3 +9,5 @@ if (-not (Test-Path -LiteralPath $voicePython)) {
 if ($LASTEXITCODE -ne 0) { throw 'Local speech dependency installation failed.' }
 & $voicePython (Join-Path $PSScriptRoot 'worker.py') prepare
 if ($LASTEXITCODE -ne 0) { throw 'Free MIT-licensed tiny.en speech model download failed. Check network access and retry.' }
+& $voicePython (Join-Path $PSScriptRoot 'prepare-kokoro.py')
+if ($LASTEXITCODE -ne 0) { throw 'Free Kokoro voice model download failed. Piper remains available; rerun speech setup to retry.' }

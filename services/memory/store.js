@@ -2,12 +2,13 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, copyFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { DEFAULT_PUSH_TO_TALK } from '../../packages/shared-types/hotkeys.js';
 
 export const dataDirectory = process.env.COMPANION_DATA_DIR || join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'MinecraftCompanion');
 export const defaults = {
   realmId: null, playerName: '', autonomy: 'instructions', combat: 'retreat', followDistance: 3, miningZone: null,
   alertFrequency: 'normal', movementSpeed: 'brisk', model: '', maxRequestsPerHour: 30, maxInputTokens: 100_000,
-  voice: { enabled: false, handsFree: false, speed: 1, volume: 0.8, inputDevice: '', outputDevice: '' },
+  voice: { enabled: false, handsFree: false, speed: 1, volume: 0.8, inputDevice: '', outputDevice: '', pushToTalk: DEFAULT_PUSH_TO_TALK, ttsVoice: 'auto' },
 };
 
 export class Store {

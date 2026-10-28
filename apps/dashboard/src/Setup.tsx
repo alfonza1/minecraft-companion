@@ -82,7 +82,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
     await run(async () => {
       const native = await api("/voice/status");
       if (!mounted.current) return;
-      if (native.desktop?.running) throw new Error("Disable desktop F8 voice in Settings before testing browser audio.");
+      if (native.desktop?.running) throw new Error("Disable desktop voice in Settings before testing browser audio.");
       if (state.state === "PAUSED") throw new Error("Your companion is paused. Use Resume companion above only when you want to enable audio again.");
       if (!active) {
         if (state.world || state.connection.status === "connecting") throw new Error("Stop the Realm connection before starting an offline audio check.");
@@ -158,7 +158,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
         <div className="setup-transcript" aria-live="polite"><span className="eyebrow">LOCAL TEST TRANSCRIPT</span><p>{transcript || "Hold the microphone test button, say a sentence, then release. Your actual transcript appears here."}</p></div>
         <label className="toggle-row"><span>I heard the speaker test<small>Your confirmation · not an automated speaker check</small></span><input type="checkbox" checked={heard} onChange={event => setHeard(event.target.checked)} /></label>
         <p className="note">{heard ? "Speaker playback confirmed by you for this setup session." : "Speaker playback has not been confirmed."} {transcript ? "A microphone recording was transcribed locally." : "Physical microphone input is unverified."} Audio is not saved.</p>
-        <p className="note">To speak while Minecraft is focused, enable the desktop F8 bridge in Settings after starting a session. Its microphone and speakers are selected separately. Physical F8 operation remains unverified until you try it.</p><button className="text-button" onClick={() => navigate("settings")}>Open desktop audio settings <ArrowRight size={14} /></button>
+        <p className="note">To speak while Minecraft is focused, choose a push-to-talk key and enable desktop voice in Settings after starting a session. Its microphone and speakers are selected separately. Try your shortcut and microphone before relying on voice commands.</p><button className="text-button" onClick={() => navigate("settings")}>Open desktop audio settings <ArrowRight size={14} /></button>
       </Panel> : null}
       {step === 4 ? <Panel title="Start with a small first session" eyebrow="05 / SURVIVAL, TOGETHER">
         <label className="field-label">Your Minecraft username<input value={player} onChange={event => setPlayer(event.target.value)} maxLength={16} placeholder="Who should the companion follow?" /></label>

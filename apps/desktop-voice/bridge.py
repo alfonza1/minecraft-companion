@@ -1,6 +1,6 @@
-"""Opt-in Windows F8 push-to-talk, independent of Minecraft/browser focus.
+"""Opt-in Windows push-to-talk, independent of Minecraft/browser focus.
 
-No key hook installation: GetAsyncKeyState observes only the selected F8 key.
+No key hook installation: GetAsyncKeyState observes the selected key/modifiers.
 Audio stays in RAM; local API deletes temporary transcription files.
 """
 import argparse
@@ -13,6 +13,7 @@ import urllib.request
 import urllib.parse
 import uuid
 import wave
+from hotkeys import CATALOG, normalize_binding, binding_pressed
 
 import numpy as np
 import sounddevice as sd
@@ -35,16 +36,19 @@ def main():
     parser.add_argument('--api-url', default=BASE)
     parser.add_argument('--input-device', type=int)
     parser.add_argument('--output-device', type=int)
+    parser.add_argument('--hotkey', default=json.dumps(CATALOG['default']))
     args = parser.parse_args()
     parsed = urllib.parse.urlparse(args.api_url)
     if parsed.scheme != 'http' or parsed.hostname != '127.0.0.1' or parsed.username or parsed.password or parsed.path not in ['', '/'] or parsed.query or parsed.fragment or not parsed.port:
         raise ValueError('Desktop bridge API must be an explicit loopback HTTP origin.')
     BASE = args.api_url.rstrip('/')
     if not hasattr(ctypes, 'windll'):
-        raise RuntimeError('Native F8 bridge currently supports Windows only.')
+        raise RuntimeError('Native push-to-talk currently supports Windows only.')
+    binding = normalize_binding(json.loads(args.hotkey))
     generation = [0]
     frames = []
     held = False
+    armed = False
 
     def cancel_remote():
         for endpoint in ['/api/voice/cancel', '/api/conversation/cancel']:
@@ -88,12 +92,14 @@ def main():
         if held and len(frames) * 512 < MAX_SAMPLES:
             frames.append(indata.copy())
 
-    print(json.dumps({'type': 'ready', 'hotkey': 'F8', 'mode': 'push-to-talk'}), flush=True)
     try:
         with sd.InputStream(samplerate=RATE, channels=1, dtype='int16', blocksize=512, device=args.input_device, callback=capture):
+            print(json.dumps({'type': 'ready', 'binding': binding, 'mode': 'push-to-talk'}), flush=True)
             while True:
-                pressed = bool(ctypes.windll.user32.GetAsyncKeyState(0x77) & 0x8000)
-                if pressed and not held:
+                pressed = binding_pressed(binding, lambda key: bool(ctypes.windll.user32.GetAsyncKeyState(key) & 0x8000))
+                if not pressed:
+                    armed = True
+                if pressed and not held and armed:
                     generation[0] += 1
                     sd.stop()
                     threading.Thread(target=cancel_remote, daemon=True).start()

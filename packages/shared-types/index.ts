@@ -126,8 +126,10 @@ export interface CompanionState {
       volume: number;
       inputDevice: string;
       outputDevice: string;
+      pushToTalk?: { key: string; modifiers: ('Ctrl' | 'Alt' | 'Shift')[] };
+      ttsVoice?: string;
     };
   };
-  voice: { available: boolean; status: string; error: string | null };
+  voice: { available: boolean; status: string; error: string | null; desktop?: { running: boolean; hotkey: string; mode: string } };
   logs: { at: string; level: string; message: string }[];
 }

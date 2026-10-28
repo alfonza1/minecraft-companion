@@ -4,6 +4,7 @@ import { api } from "./api";
 import type { CompanionState } from "../../../packages/shared-types";
 import { useVoice } from "../../desktop-voice/useVoice";
 import { attempt, type Mutate } from "./shared";
+import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 export default function VoiceBridge({
   state,
   mutate,
@@ -60,7 +61,7 @@ export default function VoiceBridge({
                 : voice.enabled
                   ? state.settings.voice.handsFree
                     ? "Hands-free · Speak naturally"
-                    : "Push to talk · Hold the microphone button"
+                    : `Push to talk · Hold ${formatHotkey(state.settings.voice.pushToTalk)} or the microphone button`
                   : "Microphone stays off until you enable it.")}
           </small>
         </div>

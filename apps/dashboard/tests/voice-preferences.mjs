@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { chromium } from 'playwright';
+import { createApp } from '../../../services/api/index.js';
+import { Store } from '../../../services/memory/store.js';
+import { registerVoiceRoutes, checkVoice } from '../../../services/voice/index.js';
+import * as voiceModule from '../../../services/voice/index.js';
+
+const directory=await mkdtemp(join(tmpdir(),'companion-voice-ui-')),store=new Store(directory);
+const app=await createApp({store,skipExtensions:true,voiceModule});
+registerVoiceRoutes(app,{store,runtime:app.companion.runtime,publish:app.companion.publish});
+await checkVoice();await app.listen({host:'127.0.0.1',port:0});
+const browser=await chromium.launch({headless:true,args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1100},reducedMotion:'reduce'}),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{
+    window.receivedVoiceHeaders=[]; const original=URL.createObjectURL.bind(URL);
+    URL.createObjectURL=blob=>{if(blob instanceof Blob)void blob.slice(0,4).text().then(header=>window.receivedVoiceHeaders.push(header));return original(blob);};
+  });
+  await page.goto(`http://127.0.0.1:${app.server.address().port}`);
+  await page.getByRole('navigation').getByRole('button',{name:'Settings',exact:true}).click();
+  await page.getByRole('button',{name:'Change key',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'Waiting for your shortcut'}).waitFor();
+  await page.keyboard.press('Control+Shift+V');
+  await page.locator('kbd').filter({hasText:'Ctrl + Shift + V'}).waitFor();
+  assert.deepEqual(store.settings().voice.pushToTalk,{key:'KeyV',modifiers:['Ctrl','Shift']});
+  await page.getByRole('button',{name:'Change key',exact:true}).click();await page.getByRole('status').filter({hasText:'Waiting for your shortcut'}).waitFor();await page.keyboard.press('Escape');
+  assert.deepEqual(store.settings().voice.pushToTalk,{key:'KeyV',modifiers:['Ctrl','Shift']});
+  await page.getByRole('combobox',{name:'Companion voice',exact:true}).selectOption('kokoro:am_michael');
+  await page.waitForFunction(async()=> (await (await fetch('/api/state')).json()).settings.voice.ttsVoice==='kokoro:am_michael');
+  const responsePromise=page.waitForResponse(response=>response.url().endsWith('/api/voice/preview'));
+  await page.getByRole('button',{name:'Preview voice',exact:true}).click();
+  const response=await responsePromise;assert.equal(response.status(),200);assert.match(response.headers()['content-type'],/audio\/wav/);
+  await page.waitForFunction(()=>window.receivedVoiceHeaders.includes('RIFF'));
+  const stop=page.getByRole('button',{name:'Stop voice preview',exact:true});if(await stop.isVisible())await stop.click();
+  await page.getByRole('button',{name:'Reset to F8',exact:true}).click();await page.locator('kbd').filter({hasText:'F8'}).waitFor();
+  await page.reload();await page.getByRole('navigation').getByRole('button',{name:'Settings',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('[aria-label="Companion voice"]').value==='kokoro:am_michael');
+  assert.equal(await page.getByRole('combobox',{name:'Companion voice',exact:true}).inputValue(),'kokoro:am_michael');
+  let transcriptions=0;
+  await page.route('**/api/voice/transcribe',async route=>{transcriptions++;await route.fulfill({contentType:'application/json',body:JSON.stringify({text:''})});});
+  await app.companion.runtime.control('plan');
+  await page.getByRole('button',{name:'Enable voice',exact:true}).click();
+  await page.getByRole('button',{name:'Hold to talk',exact:true}).waitFor();
+  await page.keyboard.down('F8');await page.locator('.voice-dock.listening').waitFor();await page.waitForTimeout(320);await page.keyboard.up('F8');
+  await page.waitForFunction(()=>!document.querySelector('.voice-dock').classList.contains('listening'));
+  await page.waitForTimeout(150);assert.equal(transcriptions,1);
+  await page.keyboard.down('F9');await page.waitForTimeout(320);await page.keyboard.up('F9');assert.equal(transcriptions,1);
+  await page.evaluate(async()=>{await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voice:{pushToTalk:{key:'KeyV',modifiers:['Ctrl','Shift']}}})});});
+  await page.locator('kbd').filter({hasText:'Ctrl + Shift + V'}).waitFor();
+  await page.keyboard.down('Control');await page.keyboard.down('Shift');await page.keyboard.down('V');await page.locator('.voice-dock.listening').waitFor();await page.waitForTimeout(320);await page.keyboard.up('V');await page.keyboard.up('Shift');await page.keyboard.up('Control');
+  await page.waitForTimeout(150);assert.equal(transcriptions,2);
+  await page.getByRole('button',{name:'Reset to F8',exact:true}).click();
+  await page.getByRole('button',{name:'Enable voice',exact:true}).waitFor();
+  await page.locator('kbd').filter({hasText:'F8'}).waitFor();
+  await app.companion.runtime.control('pause');
+  await page.getByRole('button',{name:'Enable voice',exact:true}).waitFor();
+  const evidence=join(process.cwd(),'.git/verification/voice-preferences');await mkdir(evidence,{recursive:true});
+  for(const width of [1440,390]){await page.setViewportSize({width,height:1100});assert.equal(await page.locator('body').evaluate(element=>element.scrollWidth>innerWidth),false);await page.screenshot({path:join(evidence,`settings-${width}.png`),fullPage:true});}
+  assert.deepEqual(errors,[]);assert.equal(app.companion.snapshot().usage.requests,0);
+  await writeFile(join(evidence,'results.json'),JSON.stringify({passed:true,at:new Date().toISOString(),errors,scope:'Actual isolated API/SQLite, keyboard capture/reset/cancel, saved voice after reload, actual Kokoro PCM preview, and F8/chord hold/release with Chromium synthetic microphone plus explicitly stubbed empty transcription. Pause disables capture. No physical microphone or headphones tested. Zero model requests.'},null,2));
+  console.log('Actual UI key/chord capture, persistence/reset, voice selection and local Kokoro preview passed at desktop/mobile sizes.');
+} finally {await browser.close();await app.close();}
