@@ -172,6 +172,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
         </Panel>
         <Panel title="AI models & reasoning" eyebrow="THINK WHEN IT MATTERS">
           <ModelSettings state={state} mutate={mutate} />
+          <label className="toggle-row"><span>Faster conversation replies<small>Uses low Codex reasoning for conversation. Architecture keeps its normal reasoning. Unrelated coding-skill instructions are excluded.</small></span><input type="checkbox" checked={state.settings.fastResponses!==false} onChange={event=>attempt(mutate('/settings',{fastResponses:event.target.checked}))} /></label>
           <LowTokenMode state={state} mutate={mutate} />
           <label className="toggle-row"><span>Limit input tokens<small>Optional local cap. Off by default; provider limits still apply.</small></span><input type="checkbox" checked={state.settings.inputTokenLimitEnabled===true} onChange={event=>attempt(mutate('/settings',{inputTokenLimitEnabled:event.target.checked}))} /></label>
           <div className="two-inputs">

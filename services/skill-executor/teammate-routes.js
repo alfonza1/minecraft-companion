@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Vec3 } from 'vec3';
 import { locationSchema, routineSchema, teammateSettingsSchema, TEAMMATE_ACTIONS, isProtectedSupply, CHEST_APPROVAL_RADIUS } from './teammate.js';
 
-const chestSchema = z.object({ name: z.string().trim().min(1).max(60), position: z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800) }).strict(), allowedItems: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/).max(80)).min(1).max(24) }).strict();
+const chestSchema = z.object({ name: z.string().trim().min(1).max(60),depositAllowed:z.boolean().default(true), position: z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800) }).strict(), allowedItems: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/).max(80)).min(1).max(24) }).strict();
 export function registerTeammateRoutes(app, { runtime, store, publish, teammate, getOrchestrator }) {
   app.get('/api/teammate', async () => teammate.snapshot());
   app.get('/api/teammate/nearby-chests', async () => {
@@ -13,8 +13,15 @@ export function registerTeammateRoutes(app, { runtime, store, publish, teammate,
   });
   app.post('/api/teammate/preferences', async ({ body }) => {
     const patch = teammateSettingsSchema.parse(body);
-    store.updateSettings({ teammate: { ...teammate.preferences(), ...patch } }); publish(); return teammate.snapshot();
+    store.updateSettings({ ...(patch.busyMode&&store.settings().autonomy==='instructions'?{autonomy:'helpful'}:{}),teammate: { ...teammate.preferences(), ...patch } });if(patch.busyMode)runtime.idleWork?.resume();if(patch.busyMode===false)await runtime.idleWork?.stop();publish(); return teammate.snapshot();
   });
+  app.post('/api/teammate/farm/approve',async({body})=>{
+    const {radius}=z.object({radius:z.number().int().min(2).max(16).default(8)}).strict().parse(body??{}),bot=runtime.bot;
+    if(!bot?.minenessReady)throw new Error('Connect near the farm before approving it.');
+    if(!bot.findBlocks({matching:bot.registry.blocksByName.farmland.id,maxDistance:radius,count:1}).length)throw new Error('No existing farmland is visible here. I will not clear terrain automatically.');
+    const p=bot.entity.position.floored();store.put('workAreas',{id:'farm',position:{x:p.x,y:p.y,z:p.z},radius,realmId:store.settings().realmId,dimension:bot.game.dimension});publish();return teammate.snapshot();
+  });
+  app.post('/api/teammate/farm/revoke',async()=>{store.delete('workAreas','farm');publish();return teammate.snapshot();});
   app.post('/api/teammate/routines', async ({ body }) => {
     const routine = routineSchema.parse(body);
     if (routine.supplies.some(supply => isProtectedSupply(supply.name))) throw new Error('Rare resources require an explicit task; they cannot be taken automatically by a routine.');
@@ -35,6 +42,12 @@ export function registerTeammateRoutes(app, { runtime, store, publish, teammate,
     store.put('supplyChests', chest); publish(); return chest;
   });
   app.post('/api/teammate/chests/revoke', async ({ body }) => { const { id } = z.object({ id: z.string().uuid() }).strict().parse(body); store.delete('supplyChests', id); publish(); return teammate.snapshot(); });
+  app.post('/api/teammate/chests/deposit',async({body})=>{
+    const {id,allowed}=z.object({id:z.string().uuid(),allowed:z.boolean()}).strict().parse(body),chest=store.get('supplyChests').find(value=>value.id===id);
+    if(!chest)throw new Error('Choose an approved supply chest.');
+    if(allowed&&(!runtime.bot?.minenessReady||chest.realmId!==store.settings().realmId||chest.dimension!==runtime.bot.game.dimension||runtime.bot.entity.position.distanceTo(new Vec3(chest.position.x,chest.position.y,chest.position.z))>CHEST_APPROVAL_RADIUS))throw new Error('Bring the companion within six blocks of this chest before enabling deposits.');
+    store.put('supplyChests',{...chest,depositAllowed:allowed});publish();return teammate.snapshot();
+  });
   app.post('/api/teammate/action', async ({ body }) => {
     const value = z.object({ tool: z.enum(Object.keys(TEAMMATE_ACTIONS)), args: z.record(z.string(), z.unknown()).default({}) }).strict().parse(body);
     const args = TEAMMATE_ACTIONS[value.tool].parse(value.args), orchestrator = getOrchestrator();

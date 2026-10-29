@@ -164,7 +164,7 @@ export function registerBuildRoutes(app, context) {
     project.reservations = reservations;
     put(project);
     inFlight.add(project.id);
-    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, signal, save: (p) => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null }), publish }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
+    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, realmId:store.settings().realmId, signal, save: (p) => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null }), publish }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
     // The long-running task is owned by the runtime, not the HTTP connection.
     // Frontend aborts cannot masquerade as backend task cancellation.
     void job.catch((error) => {

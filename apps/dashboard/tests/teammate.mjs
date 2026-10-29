@@ -16,6 +16,10 @@ try {
   await page.goto(`http://127.0.0.1:${app.server.address().port}`);
   await page.getByRole('navigation').getByRole('button', { name: 'Companion', exact: true }).click();
   await page.getByRole('heading', { name: 'Working together' }).waitFor();
+  await page.getByRole('heading',{name:'Survival work',exact:true}).waitFor();
+  for(const name of ['Get food','Hunt','Tend farm','Cook','Store loot','Explore','Resume approved build'])assert.equal(await page.getByRole('button',{name,exact:true}).isDisabled(),true);
+  await page.getByLabel('Stay productive between my requests').click();
+  await page.waitForFunction(async()=>(await (await fetch('/api/state')).json()).teammate.preferences.busyMode===true);assert.equal(store.settings().autonomy,'helpful');
   assert.equal(await page.getByRole('button', { name: 'Help me', exact: true }).isDisabled(), true);
   assert.equal(await page.getByRole('button', { name: 'Resume saved work', exact: true }).isDisabled(), true);
   await page.getByLabel('Routine supplies', { exact: true }).fill('bread 6\ntorch 24\nstone_pickaxe 1');
@@ -32,6 +36,7 @@ try {
   await page.waitForFunction(() => document.querySelector('textarea[aria-label="Routine supplies"]')?.value.includes('torch 24'));
   assert.equal(await page.getByLabel('Restock before new gathering jobs').isChecked(), true);
   assert.equal(await page.getByLabel('Teammate updates').inputValue(), 'quiet');
+  assert.equal(await page.getByLabel('Stay productive between my requests').isChecked(),true);
   await page.getByLabel('Routine supplies', { exact: true }).fill('diamond 64');
   await page.getByRole('button', { name: 'Save routine', exact: true }).click();
   await page.locator('.inline-error[role="alert"]').filter({ hasText: 'Rare resources require an explicit task' }).waitFor();
@@ -52,6 +57,7 @@ try {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1100 });
     await page.screenshot({ path: join(output, `companion-${width}.png`), fullPage: true });
+    await page.getByRole('heading',{name:'Survival work',exact:true}).locator('xpath=ancestor::section[1]').screenshot({path:join(output,`survival-${width}.png`)});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Overflow at ${width}px`);
   }
   assert.deepEqual(evidence.errors, []); evidence.passed = true;

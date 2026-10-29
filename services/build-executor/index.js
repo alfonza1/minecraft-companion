@@ -59,8 +59,9 @@ function abortableWait(operation, signal, bot) {
   });
 }
 
-export async function executeBuild({ project, origin, bot, signal, save, publish = () => {} }) {
+export async function executeBuild({ project, origin, bot, signal, save, publish = () => {}, realmId }) {
   validateOrigin(origin);
+  if(project.checkpoint?.realmId!==undefined&&project.checkpoint.realmId!==realmId)throw new Error('This build checkpoint belongs to another Realm.');
   if (!project.blueprint || project.approvedRevision !== project.revision || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the current blueprint revision before construction.');
   if (!bot?.entity || !bot.inventory || !bot.pathfinder) throw new Error('Companion must be connected and spawned.');
   if (bot.version !== project.blueprint.version) throw new Error(`Blueprint version ${project.blueprint.version} differs from live bot ${bot.version}.`);
@@ -78,7 +79,7 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
     if (!observed) throw new Error('Build area is not fully observed. Move close enough to load it, then retry.');
     if (!EMPTY.has(observed.name) && !matchesPlacement(observed, expected)) throw new Error(`Existing ${observed.name} at ${observed.position} conflicts with the design. Clearing requires separate player approval and is not automatic.`);
   }
-  const checkpoint = { origin, dimension, revision: project.revision, verified: [], status: 'building', updatedAt: new Date().toISOString() };
+  const checkpoint = { origin, dimension, ...(realmId===undefined?{}:{realmId}), revision: project.revision, verified: [], status: 'building', updatedAt: new Date().toISOString() };
   const update = (status, reason) => {
     checkpoint.status = status;
     checkpoint.reason = reason ?? null;

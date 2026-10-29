@@ -10,20 +10,20 @@ export const HANDOFF_APPROACH_DISTANCE = 0.75;
 export const HANDOFF_STEP_BACK_DISTANCE = 3;
 const EQUIPMENT = { head: /(?:_helmet|^carved_pumpkin)$/, torso: /(?:_chestplate|^elytra)$/, legs: /_leggings$/, feet: /_boots$/ };
 
-export async function confirmInventory(bot) {
+export async function confirmInventory(bot,window=bot.inventory) {
   if (!bot.supportFeature('stateIdUsed') || !bot._syncWindow) throw new Error('This client cannot confirm an inventory transfer safely.');
-  bot.companionInventoryUnverified = true;
+  if(window===bot.inventory)bot.companionInventoryUnverified = true;
   // Reuse a timed-out request until it settles, rather than accumulating the
   // library's window listeners when a server stops answering inventory syncs.
-  let pending = pendingSyncs.get(bot);
+  let pending = pendingSyncs.get(window);
   if (!pending) {
-    pending = Promise.resolve().then(() => bot._syncWindow(bot.inventory)).finally(() => pendingSyncs.delete(bot));
-    pendingSyncs.set(bot, pending);
+    pending = Promise.resolve().then(() => bot._syncWindow(window)).finally(() => pendingSyncs.delete(window));
+    pendingSyncs.set(window, pending);
   }
   let timer;
   try {
     await Promise.race([pending, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Server inventory confirmation timed out; transfer is unverified.')), SYNC_TIMEOUT_MS); })]);
-    bot.companionInventoryUnverified = false;
+    if(window===bot.inventory)bot.companionInventoryUnverified = false;
   } finally { clearTimeout(timer); }
 }
 

@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 
 export const CODEX_RESTRICTIONS = ['--ignore-user-config','--ignore-rules','--ephemeral','--skip-git-repo-check','--sandbox','read-only','--disable','shell_tool','--disable','apps','--disable','hooks','--disable','multi_agent','-c','features.code_mode.enabled=false','-c','tools.view_image=false','-c','web_search="disabled"','-c','project_doc_max_bytes=0','-c','mcp_servers={}','-c','plugins={}','-c','approval_policy="never"'];
 export function lowTokenArguments(enabled) { return enabled ? ['-c', 'skills.include_instructions=false', '-c', 'skills.bundled.enabled=false'] : []; }
+export function conversationArguments(fast=true){return [...lowTokenArguments(true),...(fast?['-c','model_reasoning_effort="low"']:[])];}
 export async function locateCodex() {
   // Launch the native binary directly: killing an npm/node wrapper on Windows
   // does not reliably terminate its native inference child.

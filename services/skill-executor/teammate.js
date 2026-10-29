@@ -8,18 +8,27 @@ import { collect } from '../../src/tools/play.js';
 import { requireNaturalTree } from './index.js';
 import { uniqueTreeLogs } from './tree-targets.js';
 import { navigateWithRecovery } from './navigation.js';
+import {tendFarm,huntFood,cookFood,exploreNearby,storeSurplus,foodCount,matureCrops,huntableAnimals,COOKED,cookingFuel} from './survival.js';
 
 const item = z.string().regex(/^[a-z][a-z0-9_]*$/).max(80);
 export const locationSchema = z.object({ name: z.string().trim().min(1).max(60), source: z.enum(['companion', 'player']).default('companion') }).strict();
 export const supplySchema = z.object({ name: item, count: z.number().int().min(1).max(64) }).strict();
 export const routineSchema = z.object({ id: z.enum(['mining', 'building', 'travel']), label: z.string().trim().min(1).max(60), supplies: z.array(supplySchema).min(1).max(12) }).strict();
-export const teammateSettingsSchema = z.object({ autoRestock: z.boolean().optional(), updates: z.enum(['quiet', 'useful', 'chatty']).optional(), resumeAfterHelp: z.boolean().optional() }).strict();
+export const teammateSettingsSchema = z.object({ autoRestock: z.boolean().optional(), busyMode:z.boolean().optional(),autoDeposit:z.boolean().optional(), updates: z.enum(['quiet', 'useful', 'chatty']).optional(), resumeAfterHelp: z.boolean().optional() }).strict();
 export const DEFAULT_ROUTINES = [
   { id: 'mining', label: 'Get ready to mine', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 32 }, { name: 'stone_pickaxe', count: 1 }] },
   { id: 'building', label: 'Get ready to build', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 16 }, { name: 'stone_axe', count: 1 }] },
   { id: 'travel', label: 'Get ready to travel', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 16 }] },
 ];
 export const TEAMMATE_ACTIONS = {
+  hunt_food:z.object({count:z.number().int().min(1).max(2).default(1)}).strict(),
+  tend_farm:z.object({count:z.number().int().min(1).max(8).default(4)}).strict(),
+  cook_food:z.object({count:z.number().int().min(1).max(3).default(2)}).strict(),
+  explore_nearby:z.object({radius:z.number().int().min(8).max(48).default(24),steps:z.number().int().min(1).max(4).default(3)}).strict(),
+  store_surplus:z.object({}).strict(),
+  restock_food:z.object({}).strict(),
+  find_food:z.object({}).strict(),
+  resume_approved_build:z.object({projectId:z.string().uuid().optional()}).strict(),
   rescue_player: z.object({}).strict(),
   bring_items: z.object({ item, count: z.number().int().min(1).max(64), player: z.string().regex(/^[A-Za-z0-9_]{1,16}$/) }).strict(),
   prepare_routine: z.object({ routine: z.enum(['mining', 'building', 'travel']) }).strict(),
@@ -59,9 +68,9 @@ export class TeammateService {
     runtime.on('change', () => this.observe());
     runtime.on('companion-death', event => this.recordDeath(event));
   }
-  preferences() { return { autoRestock: false, updates: this.store.settings().alertFrequency === 'quiet' ? 'quiet' : 'useful', resumeAfterHelp: true, ...this.store.settings().teammate }; }
+  preferences() { return { autoRestock: false, busyMode:false,autoDeposit:true, updates: this.store.settings().alertFrequency === 'quiet' ? 'quiet' : 'useful', resumeAfterHelp: true, ...this.store.settings().teammate }; }
   routines() { return DEFAULT_ROUTINES.map(base => this.store.get('routines').find(value => value.id === base.id) || base); }
-  snapshot() { return { locations: this.store.get('locations'), supplies: this.store.get('supplyChests'), routines: this.routines(), deaths: this.store.get('deaths').slice(-10), preferences: this.preferences() }; }
+  snapshot() { return { locations: this.store.get('locations'), supplies: this.store.get('supplyChests'), routines: this.routines(), deaths: this.store.get('deaths').slice(-10), preferences: this.preferences(),workAreas:this.store.get('workAreas'),idleWork:this.runtime.idleWork?.snapshot() }; }
   notice(text, kind = 'useful', key = text) {
     const cooldown = kind === 'danger' ? 30_000 : 120_000;
     if (Date.now() - (this.alerts.get(key) || 0) < cooldown) return;
@@ -200,6 +209,29 @@ export class TeammateService {
   }
   async execute(name, args, signal) {
     const bot = this.runtime.bot;
+    if(name==='store_surplus')return storeSurplus(this,signal);
+    if(name==='tend_farm')return tendFarm(this,args,signal);
+    if(name==='hunt_food')return huntFood(this,args,signal);
+    if(name==='cook_food')return cookFood(this,args,signal);
+    if(name==='explore_nearby')return exploreNearby(this,args,signal);
+    if(name==='restock_food'){
+      const supplies=['cooked_beef','cooked_porkchop','cooked_mutton','cooked_chicken','bread','baked_potato','carrot'].filter(name=>this.store.get('supplyChests').some(chest=>chest.approved&&chest.allowedItems.includes(name)));
+      if(!supplies.length)throw new Error('No approved food supply is configured.');
+      for(const name of supplies){if(foodCount(bot)>=8)break;await this.withdraw([{name,count:(inventoryCounts(bot)[name]||0)+8-foodCount(bot)}],signal);}
+      return {success:foodCount(bot)>0,summary:`Checked approved supplies; carrying ${foodCount(bot)} food items.`};
+    }
+    if(name==='find_food'){
+      if(foodCount(bot)>=8)return {success:true,summary:`Already carrying ${foodCount(bot)} food items.`};
+      if(bot.inventory.items().some(item=>COOKED[item.name])&&cookingFuel(bot)&&bot.findBlock({matching:bot.registry.blocksByName.furnace.id,maxDistance:16}))return cookFood(this,{count:2},signal);
+      const stock=await this.execute('restock_food',{},signal).catch(error=>{signal.throwIfAborted();return null;});if(stock?.success)return stock;
+      if(matureCrops(this).length){
+        const result=await tendFarm(this,{count:3},signal),table=bot.findBlock({matching:bot.registry.blocksByName.crafting_table.id,maxDistance:16}),recipe=table&&bot.recipesFor(bot.registry.itemsByName.bread.id,null,1,table)[0];
+        if(recipe&&(inventoryCounts(bot).wheat||0)-this.reserved('wheat')>=3){await navigateWithRecovery(bot,table.position,2,signal);await bot.craft(recipe,1,table);await confirmInventory(bot);}
+        return {...result,summary:`${result.summary} Carrying ${foodCount(bot)} food items.`};
+      }
+      if(huntableAnimals(this).length)return huntFood(this,{count:1},signal);
+      return {success:false,summary:'No safe food source is currently visible. Approve a farm or supply chest, or help me reach wild animals.'};
+    }
     if (name === 'rescue_player') return this.rescue(signal);
     if (name === 'prepare_routine' || name === 'restock_supplies') return this.routine(args.routine, signal);
     if (name === 'recover_items') return this.recover(args.deathId, signal);

@@ -16,6 +16,12 @@ These checked increments are subsets of the requested phases, not claims that th
 
 ## Teammate quality of life
 
+- [x] Basic approved-plot mature crop harvesting/replanting, eligible adult animal hunting, owned-food cooking in an empty furnace, surplus/valuable deposits, bounded loaded surface exploration and chat resume of an approved build. Seven official localhost26.3 survival checks passed; no new Realm gameplay was claimed.
+- [x] Deterministic idle-work priorities, stock targets, single-body ownership, safety gates, storage permissions, two-minute failure cooldown and Stop/Pause handling; automatic valuable deposits passed real local gameplay.
+- [x] Warm local speech worker with actual cancellation/process cleanup and no recording files; full-precision Kokoro/Piper and INT8 Whisper weights unload after pause/stop or60idle seconds.
+- [x] Faster Codex conversation profile and measured fixed-prompt provider latency/token comparison; model selection is preserved.
+- [ ] YouTube search/options, chosen-reference material workflow and separate fast conversation/work model selectors: requested next increment; source-video reconstruction must preserve accuracy labels.
+
 - [x] Temporary and nested action requests save remaining work, perform the new request and resume the original job; general conversation continues independently.
 - [x] Pause/crash checkpoints, task stack UI, discard/resume controls and Stop-wins cancellation checks.
 - [x] Help-me travel/food support, conservative bounded defense with risk gates; real travel/food handoff passed, hostile combat remains unverified.

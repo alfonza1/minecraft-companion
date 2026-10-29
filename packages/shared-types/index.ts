@@ -94,10 +94,12 @@ export interface CompanionState {
   currentTask: any | null;
   taskStack?: { held: boolean; switching: boolean; frames: { id: string; label: string; status: string; step: number; steps: number; actions: { tool: string; args: Record<string, any> }[]; error?: string }[] };
   teammate?: {
-    preferences: { autoRestock: boolean; updates: 'quiet' | 'useful' | 'chatty'; resumeAfterHelp: boolean };
+    preferences: { autoRestock: boolean;busyMode?:boolean;autoDeposit?:boolean; updates: 'quiet' | 'useful' | 'chatty'; resumeAfterHelp: boolean };
+    workAreas?:{id:string;radius:number;dimension:string;position:{x:number;y:number;z:number}}[];
+    idleWork?:{held:boolean;reason:string;running:boolean};
     locations: { id: string; name: string; position: { x: number; y: number; z: number }; dimension: string; observedAt: string }[];
     routines: { id: string; label: string; supplies: { name: string; count: number }[] }[];
-    supplies: { id: string; name: string; position: { x: number; y: number; z: number }; dimension: string; allowedItems: string[]; observedAt: string | null; inventory: { name: string; count: number }[] | null }[];
+    supplies: { id: string; name: string;depositAllowed?:boolean; position: { x: number; y: number; z: number }; dimension: string; allowedItems: string[]; observedAt: string | null; inventory: { name: string; count: number }[] | null }[];
     deaths: { id: string; at: string; position: { x: number; y: number; z: number }; dimension: string; status: string; warning: string; inventory: { name: string; count: number }[]; gained?: Record<string, number> }[];
   };
   tasks: any[];
@@ -133,6 +135,7 @@ export interface CompanionState {
     provider?: 'codex' | 'claude' | 'opencode';
     providerModels?: { claude?: string; opencode?: string };
     lowTokenMode?: boolean;
+    fastResponses?:boolean;
     maxRequestsPerHour: number;
     maxInputTokens: number;
     inputTokenLimitEnabled?: boolean;

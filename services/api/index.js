@@ -24,6 +24,7 @@ import { TeammateService } from '../skill-executor/teammate.js';
 import { registerTeammateRoutes } from '../skill-executor/teammate-routes.js';
 import { createProviderRegistry } from '../agent-orchestrator/providers/index.js';
 import { modelSelection } from '../../packages/shared-types/providers.js';
+import { IdleWorkService } from '../skill-executor/idle-work.js';
 import { createModelCatalog } from '../agent-orchestrator/models.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -32,7 +33,7 @@ const hotkeySchema = z.unknown().transform((value, context) => { try { return no
 const desktopDevice = z.object({name:z.string().min(1).max(300),hostapi:z.number().int().min(0).max(100)}).strict().nullable();
 const voiceSettings = z.object({ enabled: z.boolean().optional(), desktopEnabled:z.boolean().optional(), desktopInputDevice:desktopDevice.optional(), desktopOutputDevice:desktopDevice.optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional(), pushToTalk: hotkeySchema.optional(), ttsVoice: z.enum(voiceCatalog.map(voice => voice.id)).optional() }).strict();
 const miningZoneSchema = z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800), radius: z.number().int().min(1).max(32) }).strict();
-export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode']).optional(), providerModels: z.object({ claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), inputTokenLimitEnabled: z.boolean().optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
+export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode']).optional(), providerModels: z.object({ claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), fastResponses:z.boolean().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), inputTokenLimitEnabled: z.boolean().optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
 
 export async function createApp(options = {}) {
   const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024, trustProxy: false });
@@ -42,7 +43,7 @@ export async function createApp(options = {}) {
   const modelCatalog = options.modelCatalog || createModelCatalog();
   const clients = new Set();
   let providerRegistry;
-  let orchestrator, teammate, voiceModule = options.voiceModule;
+  let orchestrator, teammate, idleWork, voiceModule = options.voiceModule;
   let codexStatus = { available: null, authenticated: null, version: null, error: null };
   const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
     projects: store.get('projects'), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
@@ -76,6 +77,7 @@ export async function createApp(options = {}) {
   };
   const context = { store, connector, runtime, publish, modelCatalog, providerRegistry, dataDir: store.directory, readiness };
   teammate = new TeammateService(context); context.teammate = teammate;
+  idleWork=new IdleWorkService({runtime,teammate,publish});
   app.decorate('companion', { ...context, snapshot });
   const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   app.addHook('onRequest', async (request, reply) => {
@@ -119,7 +121,9 @@ export async function createApp(options = {}) {
   app.post('/api/settings', async request => { const settings = store.updateSettings(settingsSchema.parse(request.body)); await voiceModule?.updateVoiceSettings(settings.voice); if(settings.inputTokenLimitEnabled===false)voiceModule?.clearTokenBudgetError?.(); publish(); return settings; });
   app.post('/api/permissions/mining', async request => {
     const { zone } = z.object({ zone: miningZoneSchema.nullable() }).strict().parse(request.body);
-    const settings = store.updateSettings({ miningZone: zone }); publish(); return settings;
+    const settings = store.updateSettings({ miningZone: zone });
+    if(zone&&runtime.world)store.put('workAreas',{id:'mining',realmId:settings.realmId,dimension:runtime.world.dimension,position:{x:zone.x,y:zone.y,z:zone.z},radius:zone.radius});else store.delete('workAreas','mining');
+    publish(); return settings;
   });
   app.post('/api/control', async request => {
     const { command } = z.object({ command: z.enum(['start','plan','pause','resume','stop','cancel','emergency','disconnect']) }).strict().parse(request.body);
@@ -183,6 +187,7 @@ export async function createApp(options = {}) {
     app.setNotFoundHandler((request, reply) => request.url.startsWith('/api/') ? reply.code(404).send({ error: 'API endpoint not found.' }) : reply.sendFile('index.html'));
   } else app.get('/', async (_, reply) => reply.type('text/plain').send('Minecraft Companion: run npm run build, then restart the launcher.'));
   app.addHook('onClose', async () => {
+    idleWork.close();
     for (const client of clients) client.close(1001, 'Companion shutting down'); clients.clear();
     await runtime.close(); await orchestrator?.close(); await providerRegistry.close(); await modelCatalog.close(); store.close();
   });

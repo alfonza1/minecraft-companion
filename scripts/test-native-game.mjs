@@ -20,6 +20,7 @@ import { createOrchestrator } from '../services/agent-orchestrator/index.js';
 import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { registerBuildRoutes } from '../services/build-planner/index.js';
+import {survivalFixtureChecks} from './survival-fixture-checks.mjs';
 const cache = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/test-runtime-modern');
 const manifest = JSON.parse((await readFile(path.join(cache,'runtime.json'),'utf8')).replace(/^\uFEFF/,''));
 const SERVER_SHA1 = '33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c';
@@ -39,7 +40,7 @@ if (process.argv.includes('--check-runtime')) { console.log('Verified private Ja
 assert.equal(nativeProtocol.installed, true, 'Run npm run setup:native first.');
 const directory = await mkdtemp(path.join(os.tmpdir(),'companion-native-'));
 const logs=[],results=[], errors=[]; let child,runtime,store,recipient,exitPromise,exited=false,failed=false;
-const EXPECTED_CHECKS = 17;
+const EXPECTED_CHECKS = process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate, label, timeout = 30000) {
   const started = Date.now();
@@ -51,11 +52,11 @@ async function until(predicate, label, timeout = 30000) {
 }
 const command=text=>child.stdin.write(text+'\n');
 async function check(name, work) {
-  const detail = await work();
+  let detail;try{detail=await work();}catch(error){console.error('FIXTURE DIAGNOSTIC '+JSON.stringify({stack:runtime?.taskStack?.snapshot(),task:runtime?.currentTask,logs:runtime?.logs?.slice(-5)}));throw error;}
   results.push({ name, status: 'passed', detail });
   console.log(`PASS ${name} ${JSON.stringify(detail ?? {})}`);
 }
-const timeout=setTimeout(()=>{failed=true;runtime?.bot?.end();child?.kill();},240000);
+const timeout=setTimeout(()=>{failed=true;runtime?.bot?.end();child?.kill();},process.argv.includes('--survival-skills')?360000:240000);
 try {
  const probe=net.createServer();probe.listen(0,'127.0.0.1');await once(probe,'listening');const port=probe.address().port;await new Promise(r=>probe.close(r));
  await writeFile(path.join(directory,'eula.txt'),'eula=true\n');
@@ -78,6 +79,10 @@ try {
  const teammate = new TeammateService({ runtime, store, publish() {} });
  const orchestrator = createOrchestrator({ runtime, store, publish() {}, request: async () => { throw new Error('Native fixture must not request a model.'); } });
  runtime.modelCancel = options => orchestrator.cancel(options);
+ if(process.argv.includes('--survival-only')){
+  const api=Fastify();await registerBuildRoutes(api,{runtime,store,publish(){},orchestrator,dataDir:store.directory});
+  try{await survivalFixtureChecks({check,command,until,runtime,store,teammate,orchestrator});}finally{await api.close();}
+ }else{
  await check('native survival spawn',async()=>{assert.equal(bot.version,'26.3');assert.equal(bot.registry.version.version,777);assert.equal(bot.game.gameMode,'survival');return {version:bot.version,protocol:bot.registry.version.version,gameMode:bot.game.gameMode}});
  await check('stable native physics',async()=>{let ticks=0;bot.on('physicsTick',()=>ticks++);await until(()=>ticks>=60,'60 physics ticks');assert.equal(runtime.connection.status,'connected');return{ticks}});
  command('tp NativeFixture 0 -59 0');
@@ -181,6 +186,7 @@ try {
    return{verified:8,modelRequests:orchestrator.usage.requests,approvalRevalidated:true};
   }finally{await api.close();}
  });
+ if(process.argv.includes('--survival-skills'))await survivalFixtureChecks({check,command,until,runtime,store,teammate,orchestrator});
  await check('native death record and legitimate pickup recovery',async()=>{
   await runtime.execute('goto',{x:30,y:-59,z:5,tolerance:1});
   command('kill NativeFixture');await until(()=>store.get('deaths').length&&runtime.state==='PAUSED','saved death and pause');
@@ -192,6 +198,7 @@ try {
   return{deathPosition:death.position,gained:result.gained,status:store.get('deaths').at(-1).status};
  });
  await check('native disconnect and reconnect',async()=>{const old=bot;old._client.end('Native fixture transport loss');await until(()=>runtime.bot!==old&&runtime.connection.status==='connected','reconnect',50000);bot=runtime.bot;assert.equal(runtime.state,'PAUSED');await until(()=>runtime.world?.inventory.some(i=>i.name==='oak_planks'&&i.count>=4),'inventory retained');return{state:runtime.state,version:bot.version}});
+}
 }catch(e){failed=true;console.error(e.stack);results.push({failure:e.stack});}
 finally {
   if (recipient && !recipient._client.ended) recipient.end('Local handoff fixture complete');
@@ -203,7 +210,7 @@ finally {
   }
   store?.close(); clearTimeout(timeout);
   const passed = !failed && exited && results.length === EXPECTED_CHECKS;
-  await writeFile('.git/native-game-results.json', JSON.stringify({
+  await writeFile(process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
     at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1,
     clientVersion: '26.3', protocol: 777, translated: false, lockHash: nativeProtocol.lockHash,
     scope: 'Disposable localhost-only official 26.3 survival server; no Microsoft authentication or Realm gameplay claimed.',

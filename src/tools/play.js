@@ -48,6 +48,15 @@ export async function collect(bot, blocks, signal) {
       // Enter the item's block and follow it while it falls; stopping one
       // block away can leave the drop just outside the pickup hitbox.
       try { await bot.pathfinder.goto(new goals.GoalFollow(drop, 0)); }
+      catch(error){
+        signal.throwIfAborted();
+        // A pickup removes its moving goal before pathfinder finishes. That is
+        // not a failed route. Still-visible drops get one grounded retry.
+        if(drop.isValid&&bot.entities[drop.id]){
+          await delay(150,undefined,{signal});
+          if(drop.isValid&&bot.entities[drop.id])await walkTo(bot,drop.position,.5,signal);
+        }
+      }
       finally { bot.pathfinder.setGoal(null); }
       for (let tick = 0; tick < 8 && drop.isValid; tick++) await delay(50, undefined, { signal });
     }

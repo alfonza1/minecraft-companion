@@ -15,6 +15,15 @@ function ownedItems(phrase, inventory) {
 export function quickPlan(text, { world, playerName, currentTask, locations = [] } = {}) {
   if (!world) return null;
   const message = text.trim().toLowerCase().replace(/^[\s]*(?:hey[, ]+|yo[, ]+)?(?:can you |could you |please )?/, '').replace(/[.!?]+$/, '').replace(/ please$/, '').trim();
+  for(const [pattern,tool,reply] of [
+    [/^(?:hunt(?: for food)?|get (?:some )?meat|hunt (?:some )?animals)$/,'hunt_food','I’ll look for a safe wild animal.'],
+    [/^(?:farm|tend (?:the |our )?farm|harvest (?:the |our )?(?:farm|crops))$/,'tend_farm','I’ll harvest the ripe crops and replant.'],
+    [/^(?:cook(?: (?:some |the )?food)?|smelt (?:the )?food)$/,'cook_food','I’ll cook what I own in an empty nearby furnace.'],
+    [/^(?:explore|go exploring|scout(?: (?:the area|nearby))?)$/,'explore_nearby','I’ll check nearby safe surface paths and come back.'],
+    [/^(?:store (?:your |the )?(?:loot|items|valuables)|deposit(?: (?:your |the )?(?:loot|items|surplus))?|put (?:your |the )?(?:loot|items|valuables) away)$/,'store_surplus','I’ll put the surplus in approved storage and keep my kit.'],
+    [/^(?:resume (?:the )?build|continue (?:the )?(?:build|building)|build (?:the )?approved (?:house|project))$/,'resume_approved_build','I’ll check the approved blueprint and saved site, then continue.'],
+    [/^(?:find|get|gather)(?: (?:some|us))? food$/,'find_food','I’ll check safe food sources.'],
+  ])if(pattern.test(message))return {reply,intent:'minecraft_action',actions:[{tool,args:{}}]};
   if (/^(?:help me|come help me|come help|i need help|rescue me)$/.test(message)) return { reply: 'Coming to help. I’ll pick up my work afterward.', intent: 'minecraft_action', actions: [{ tool: 'rescue_player', args: {} }] };
   const routine = message.match(/^(?:get ready|prepare)(?: to| for)? (mine|mining|build|building|travel|a trip)$/);
   if (routine) return { reply: 'Let me check my supplies.', intent: 'minecraft_action', actions: [{ tool: 'prepare_routine', args: { routine: /min/.test(routine[1]) ? 'mining' : /build/.test(routine[1]) ? 'building' : 'travel' } }] };

@@ -286,6 +286,12 @@ export class CompanionRuntime extends EventEmitter {
   }
   async execute(name, args = {}) {
     if (this.resumeHandlers?.has(name)) return this.resumeHandlers.get(name)(args);
+    if(name==='resume_approved_build'){
+      const {projectId}=this.teammate.schemas[name].parse(args);
+      const project=this.store.get('projects').find(project=>(!projectId||project.id===projectId)&&project.checkpoint?.realmId===this.store.settings().realmId&&project.checkpoint?.dimension===this.bot?.game?.dimension&&project.approvedRevision===project.revision&&project.approvedHash&&project.status!=='complete');
+      if(!project||!this.resumeHandlers?.has('resume_build'))throw new Error('Approve a blueprint and start its chosen site once in Build Studio before resuming construction by voice.');
+      return this.resumeHandlers.get('resume_build')({projectId:project.id,origin:project.checkpoint.origin,expectedRevision:project.revision,expectedHash:project.approvedHash});
+    }
     if (this.teammate && Object.hasOwn(this.teammate.schemas, name)) {
       if (this.bot?.companionTransport?.projected) throw new Error('Teammate resource actions require a native Minecraft connection.');
       const validated = this.teammate.schemas[name].parse(args);
@@ -351,7 +357,7 @@ export class CompanionRuntime extends EventEmitter {
       }); return;
     }
     if (bot.food < 16) {
-      const foods = bot.inventory.items().filter(item => bot.registry.foodsByName?.[item.name] && !['rotten_flesh', 'spider_eye', 'poisonous_potato', 'pufferfish', 'chorus_fruit'].includes(item.name));
+      const foods = bot.inventory.items().filter(item => bot.registry.foodsByName?.[item.name] && !['rotten_flesh', 'spider_eye', 'poisonous_potato', 'pufferfish', 'chorus_fruit','chicken','suspicious_stew','golden_apple','enchanted_golden_apple'].includes(item.name));
       const food = foods.sort((a, b) => bot.registry.foodsByName[b.name].foodPoints - bot.registry.foodsByName[a.name].foodPoints)[0];
       if (food) await this.runJob('eat', async signal => { await bot.equip(food, 'hand'); signal.throwIfAborted(); await bot.consume(); signal.throwIfAborted(); });
     }
