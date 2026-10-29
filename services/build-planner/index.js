@@ -9,6 +9,7 @@ import { archiveReference, parseSchematic, privateDataDir, REFERENCE_LIMITS, you
 import { constructionCompatibility, executeBuild, matchesPlacement, validateOrigin } from '../build-executor/index.js';
 import { Vec3 } from 'vec3';
 import {assistedAssignments} from '../resource-ledger/acquisition.js';
+import {registerAnalysisRoutes} from '../reference-ingestion/analysis-routes.js';
 
 export { validateBlueprint, blueprintHash, calculateMaterials };
 
@@ -49,6 +50,7 @@ export function registerBuildRoutes(app, context) {
     store.put('blueprintRevisions', { id: `${project.id}:${project.revision}`, projectId: project.id, revision: project.revision, blueprint: project.blueprint, at: new Date().toISOString() });
     return put(project);
   };
+  registerAnalysisRoutes(app,{...context,dataDir:directory},{getProject,ensureEditable,put,saveRevision,inFlight,reviseProject});
 
   app.get('/api/projects', async () => store.get('projects'));
   app.post('/api/references/search',endpoint(async({body})=>context.orchestrator.searchYouTube(body?.query)));
@@ -62,7 +64,7 @@ export function registerBuildRoutes(app, context) {
     const references=existing?project.references:[...project.references,reference];
     const changed=project.selectedReference?.url!==reference.url;
     store.put('projectFocus',{id:'current',projectId:project.id});
-    return put({...project,...(changed?{approvedRevision:null,approvedHash:null,status:'draft'}:{}),references,selectedReference:{searchId:search.id,referenceId:existing?.id||reference.id,title:reference.title,url:reference.url,reason:reference.reason},updatedAt:new Date().toISOString()});
+    return put({...project,...(changed?{approvedRevision:null,approvedHash:null,status:'draft',sourceAnalysis:null,analysisStatus:null,reconstruction:null}:{}),references,selectedReference:{searchId:search.id,referenceId:existing?.id||reference.id,title:reference.title,url:reference.url,reason:reference.reason},updatedAt:new Date().toISOString()});
   }));
   app.post('/api/projects', endpoint(async ({ body = {} }) => {
     const name = typeof body.name === 'string' ? body.name.trim() : '';

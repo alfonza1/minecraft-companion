@@ -1,6 +1,7 @@
 import { MODEL_PROVIDERS } from '../../../packages/shared-types/providers';
 import YouTubeOptions from './YouTubeOptions';
 import SelectedReference from './SelectedReference';
+import SourceAnalysis from './SourceAnalysis';
 import {
   Box,
   Check,
@@ -224,7 +225,8 @@ export default function Studio({ state, mutate, busy }: Common) {
               </div>
             </Panel>
             <Panel title="Source material" eyebrow="START WITH AN IDEA">
-              <SelectedReference key={project.id+project.selectedReference?.referenceId} project={project} state={state} mutate={mutate} busy={busy}/>
+              <SourceAnalysis key={project.id} project={project} state={state} mutate={mutate} busy={busy}/>
+              {project.selectedReference?<details><summary>Optional: design a different inspired build</summary><SelectedReference key={project.id+project.selectedReference.referenceId} project={project} state={state} mutate={mutate} busy={busy}/></details>:null}
               <div className="segmented full">
                 <button
                   className={sourceTab === "reference" ? "selected" : ""}
@@ -340,8 +342,7 @@ export default function Studio({ state, mutate, busy }: Common) {
               </button>
               {state.settings.lowTokenMode ? <p className="note">Low token mode disables new AI designs. Turn it off in Settings → AI models & reasoning to generate one. Blueprint imports, previews, material calculations and approved construction still work.</p> : null}
               <p className="note">
-                Design sends the notes above to Codex. Saved media stays local;
-                image and video reconstruction is not implemented. Partial
+                This design button sends only the notes above. Use Analyze the actual source to share selected visuals for analysis and source reconstruction. Partial
                 references aren’t exact blueprints. Hidden details and
                 unmeasured dimensions stay unresolved until a complete design is
                 approved.

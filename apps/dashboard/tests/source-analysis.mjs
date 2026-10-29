@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {chromium} from 'playwright';
+import {createApp} from '../../../services/api/index.js';
+import {Store} from '../../../services/memory/store.js';
+const directory=await mkdtemp(join(tmpdir(),'companion-analysis-ui-')),store=new Store(directory);
+const report={sourceAccessible:true,summary:'Source fixture shows a 3 by 3 plank floor with a two-block corner pillar.',dimensions:{x:3,y:3,z:3},observations:[{topic:'layout',detail:'Oak planks floor and cobblestone pillar, with visible measurements.',evidence:'visible',timestamp:'00:04'}],materialList:[{name:'oak_planks',quantity:9,basis:'shown',timestamp:'00:01'},{name:'cobblestone',quantity:2,basis:'shown',timestamp:'00:01'}],uncertainties:['Hidden block faces require review; no complete schematic supplied.']};
+const operation=(name,from,to)=>({name,from,to,mode:'fill',properties:'{}',section:'structure'});
+let unavailable=true,analyses=0,reconstructions=0;
+const app=await createApp({store,youtubeAnalysis:async()=>{analyses++;if(unavailable)throw new Error('Fixture video temporarily unavailable.');return {report,model:'fixture-video',usage:{input_tokens:10}};},visionRequest:async()=>{reconstructions++;return {model:'fixture-work',usage:{input_tokens:20},data:{version:'26.3',dimensions:{x:3,y:3,z:3},operations:[operation('oak_planks',{x:0,y:0,z:0},{x:2,y:0,z:2}),operation('cobblestone',{x:0,y:1,z:0},{x:0,y:2,z:0})],uncertainties:[]}};}});
+await app.listen({host:'127.0.0.1',port:0});
+const project=(await app.inject({method:'POST',url:'/api/projects',payload:{name:'Source reconstruction workflow',version:'26.3'}})).json();
+store.put('projects',{...project,selectedReference:{referenceId:'ref',title:'Chosen public tutorial'},references:[{id:'ref',type:'youtube',title:'Chosen public tutorial',url:'https://www.youtube.com/watch?v=2ToE3wGcbso'}]});
+const browser=await chromium.launch({headless:true}),output='.git/verification/source-analysis-ui',evidence={at:new Date().toISOString(),passed:false,errors:[],scope:'Headless browser, real API/SQLite and Windows DPAPI with a fake non-account key. Explicit video/reconstruction provider fixtures. Covers consent, setup, failure/retry, evidence, reconstruct, source vs blueprint counts, approval gate, persistence, pause and desktop/mobile. Actual Codex visual inference is separately recorded in source-vision.'};
+try{
+  const page=await browser.newPage({viewport:{width:1440,height:1100},reducedMotion:'reduce'});page.on('pageerror',error=>evidence.errors.push(error.message));
+  await page.goto(`http://127.0.0.1:${app.server.address().port}`);await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();
+  await page.getByRole('heading',{name:'Analyze the actual source',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Analyze YouTube video',exact:true}).isDisabled(),true);
+  await page.getByRole('button',{name:'Start planning offline',exact:true}).click();
+  await page.locator('.video-provider-setup > summary').click();
+  const secret='fixture-key-only-no-account-9876543210';await page.getByLabel('Google AI Studio API key',{exact:true}).fill(secret);
+  await page.getByRole('button',{name:'Save video analysis key',exact:true}).click();await page.getByText('Direct YouTube connection · Key saved securely',{exact:true}).waitFor();
+  await page.getByLabel('Send this public video and these notes to Google for analysis.',{exact:false}).click();
+  await page.getByRole('button',{name:'Analyze YouTube video',exact:true}).click();await page.locator('.source-analysis .inline-error').filter({hasText:'Fixture video temporarily unavailable'}).waitFor();
+  unavailable=false;await page.getByRole('button',{name:'Analyze YouTube video',exact:true}).click();await page.getByText(report.summary,{exact:true}).waitFor();
+  const reconstruct=page.getByRole('button',{name:'Reconstruct this build + calculate materials',exact:true});assert.equal(await reconstruct.isDisabled(),true);
+  await page.getByLabel('I reviewed the evidence and unresolved details.',{exact:false}).click();await reconstruct.click();await page.getByText('11 block placements',{exact:true}).waitFor();
+  const saved=store.get('projects')[0];assert.equal(saved.approvedRevision,null);assert.equal(saved.materials.placed.find(row=>row.name==='oak_planks').quantity,9);assert.equal(saved.sourceAnalysis.exactSourceCounts,false);
+  await page.getByText('Compare source quantities with this blueprint',{exact:true}).click();
+  await page.getByText('Oak Planks · Source 9 · Blueprint 9 (placement-items)',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Start construction',exact:true}).isDisabled(),true);
+  await mkdir(output,{recursive:true});
+  for(const width of [1440,390]){await page.setViewportSize({width,height:1100});await page.screenshot({path:join(output,`studio-${width}.png`),fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+  await page.reload();await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();await page.getByText(report.summary,{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Pause',exact:true}).click();assert.equal(await reconstruct.isDisabled(),true);
+  assert.equal((await app.inject('/api/state')).body.includes(secret),false);assert.equal(analyses,2);assert.equal(reconstructions,1);assert.deepEqual(evidence.errors,[]);evidence.passed=true;
+}finally{await mkdir(output,{recursive:true});await writeFile(join(output,'results.json'),JSON.stringify(evidence,null,2));await browser.close();await app.close();await rm(directory,{recursive:true,force:true});}
+console.log(evidence);

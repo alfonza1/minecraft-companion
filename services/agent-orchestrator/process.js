@@ -17,7 +17,7 @@ export function runProcess(command, args, { input, signal, cwd, env, onStdout, m
     child.on('close', code => {
       clearTimeout(timer); signal?.removeEventListener('abort', abort);
       if (failure) reject(failure);
-      else if (code) reject(new Error(`Local worker exited (${code}): ${stderr.slice(-1500)}`));
+      else if (code) { const error=new Error(`Local worker exited (${code}): ${stderr.slice(-1500)}`);error.stdout=stdout;reject(error); }
       else resolve({ stdout, stderr });
     });
     child.stdin.end(input ?? '');

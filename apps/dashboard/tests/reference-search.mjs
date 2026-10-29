@@ -23,6 +23,7 @@ try{
   await page.getByRole('heading',{name:videos[0].title,exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'Choose reference',exact:true}).count(),3);
   await page.getByRole('button',{name:'Choose reference',exact:true}).first().click();
+  await page.getByText('Optional: design a different inspired build',{exact:true}).click();
   await page.getByText('Chosen reference: '+videos[0].title,{exact:true}).waitFor();
   assert.equal(store.get('projects')[0].selectedReference.referenceId,videos[0].id);
   await page.getByRole('button',{name:'Generate inspired design + shared plan',exact:true}).click();
@@ -35,7 +36,7 @@ try{
   await page.getByRole('navigation').getByRole('button',{name:'Shared tasks',exact:true}).click();
   await page.getByText('Recommended for you:',{exact:true}).waitFor();
   await page.screenshot({path:join(output,'assignments-390.png'),fullPage:true});
-  await page.reload();await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();await page.getByText('Chosen reference: '+videos[0].title,{exact:true}).waitFor();
+  await page.reload();await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();await page.getByText('Optional: design a different inspired build',{exact:true}).click();await page.getByText('Chosen reference: '+videos[0].title,{exact:true}).waitFor();
   assert.equal(searches,2);assert.equal(designs,1);assert.deepEqual(evidence.errors,[]);evidence.passed=true;
 }finally{await mkdir(output,{recursive:true});await writeFile(join(output,'results.json'),JSON.stringify(evidence,null,2));await browser.close();await app.close();await rm(directory,{recursive:true,force:true});}
 console.log(evidence);

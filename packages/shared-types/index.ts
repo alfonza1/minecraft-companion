@@ -34,6 +34,22 @@ export interface Blueprint {
   provenance: "schematic" | "reconstructed" | "estimated";
   uncertainties: string[];
 }
+export interface SourceEvidence {
+  id: string;
+  referenceIds: string[];
+  sourceAccessible: boolean;
+  summary: string;
+  dimensions: {x:number|null;y:number|null;z:number|null};
+  observations: {topic:'dimensions'|'palette'|'layout'|'materials'|'steps';detail:string;evidence:'visible'|'spoken'|'inferred';timestamp:string}[];
+  materialList: {name:string;quantity:number|null;basis:'shown'|'spoken'|'estimated';timestamp:string}[];
+  uncertainties: string[];
+  provider: string;
+  model: string;
+  at: string;
+  coverage: string;
+  accuracy: 'model-interpreted-source';
+  exactSourceCounts: false;
+}
 export interface Project {
   id: string;
   name: string;
@@ -45,6 +61,10 @@ export interface Project {
   assignments?: any;
   checkpoint?: any;
   references?: any[];
+  sourceAnalysis?: SourceEvidence | null;
+  analysisStatus?: 'analyzing'|'analyzed'|'unavailable'|'reconstructing'|'reconstructed'|'error'|null;
+  analysisError?: string|null;
+  reconstruction?: {analysisId:string;revision:number;at:string;exactSource:false;materialComparison?:{name:string;sourceQuantity:number|null;blueprintQuantity:number|null;basis:string;difference:number|null}[]}|null;
   [key: string]: any;
 }
 export interface CompanionState {

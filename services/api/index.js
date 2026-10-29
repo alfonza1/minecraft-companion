@@ -76,6 +76,9 @@ export async function createApp(options = {}) {
     },
   };
   const context = { store, connector, runtime, publish, modelCatalog, providerRegistry, dataDir: store.directory, readiness };
+  if(options.videoCredentials)context.videoCredentials=options.videoCredentials;
+  if(options.visionRequest)context.visionRequest=options.visionRequest;
+  if(options.youtubeAnalysis)context.youtubeAnalysis=options.youtubeAnalysis;
   teammate = new TeammateService(context); context.teammate = teammate;
   idleWork=new IdleWorkService({runtime,teammate,publish});
   app.decorate('companion', { ...context, snapshot });

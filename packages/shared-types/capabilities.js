@@ -1,0 +1,10 @@
+export const COMPANION_LIMITS=Object.freeze([
+  {area:'Detailed construction',detail:'Only inert full cubes are placeable today. Stairs, slabs, doors, fences, orientation, scaffolding, site clearing, automatic resupply and repairs still need tested controllers.'},
+  {area:'Video reproduction',detail:'Video and sampled-frame analysis can miss details. Hidden blocks and exact source quantities cannot be guaranteed from a tutorial; a complete authorized schematic is the strongest source. Direct YouTube analysis requires a Google AI Studio key.'},
+  {area:'Gathering and crafting',detail:'Assigned project auto-gather supports oak, spruce and birch logs. Approved-area mining and owned crafting are separate skills. General furnace production, villager trading and automatic armor/tool upgrades are unfinished.'},
+  {area:'Farming and exploration',detail:'It tends mature crops in approved existing farms; it does not create farmland or expand farms. Exploration is bounded loaded surface scouting, not reliable cave, branch-mine, Nether or End progression.'},
+  {area:'Combat and loot',detail:'Combat is conservative defense/retreat, not a guaranteed bodyguard. Hunting ownership uses visible cues. Storage needs an approved reachable chest; death recovery cannot guarantee lost items survive or are found.'},
+  {area:'Observation and teamwork',detail:'It only sees loaded surroundings, observed chests and its own inventory. Your inventory and project contributions need reporting. Shared project chest allocation and open-ended strategic coordination remain incomplete.'},
+  {area:'Conversation and voice',detail:'Replies still have model/network/speech latency; speech is not fully streaming. Memory does not automatically summarize unlimited history. Physical microphone/headphone behavior needs testing on your devices.'},
+  {area:'Evidence and compatibility',detail:'Basic survival paths passed isolated local gameplay tests. Many complex skills have not been verified on your Realm. Unknown protocols and unvalidated newer materials remain gated.'},
+]);

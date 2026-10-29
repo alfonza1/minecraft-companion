@@ -31,7 +31,7 @@ export async function archiveReference(buffer, mime, directory = privateDataDir(
   await mkdir(folder, { recursive: true, mode: 0o700 });
   const filename = `${id}${extension}`;
   await writeFile(join(folder, filename), buffer, { flag: 'wx', mode: 0o600 });
-  return { id, filename, mime, bytes: buffer.length, type: mime.startsWith('image/') ? 'image' : 'video', at: new Date().toISOString(), analysis: { status: 'awaiting-design', confidence: 'unknown', uncertainties: ['Reference archived locally. No dimensions, hidden blocks or material counts have been inferred. Image/video design inference is not yet connected; import a schematic or complete blueprint for exact counts.'] } };
+  return { id, filename, mime, bytes: buffer.length, type: mime.startsWith('image/') ? 'image' : 'video', at: new Date().toISOString(), analysis: { status: 'awaiting-design', confidence: 'unknown', uncertainties: ['Reference archived locally. No dimensions, hidden blocks or material counts have been inferred. Select this reference in Analyze the actual source to inspect its visuals. A complete blueprint is required for exact placement counts.'] } };
 }
 
 export function youtubeId(input) {

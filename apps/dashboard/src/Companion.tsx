@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import type { CompanionState } from "../../../packages/shared-types";
 import Teamwork, { SavedWork } from './Teamwork';
+import {COMPANION_LIMITS} from '../../../packages/shared-types/capabilities';
 import {
   attempt,
   Badge,
@@ -123,6 +124,7 @@ export default function Companion({ state, mutate, busy }: Common) {
       <div>
         <SavedWork state={state} mutate={mutate} />
         <Teamwork state={state} mutate={mutate} />
+        <Panel title="Current capabilities and limits"><details><summary>What still needs work</summary>{COMPANION_LIMITS.map(limit=><div key={limit.area}><h4>{limit.area}</h4><p className="note">{limit.detail}</p></div>)}</details></Panel>
         <Panel
           title="How we play"
           action={<Settings2 size={17} className="muted" />}

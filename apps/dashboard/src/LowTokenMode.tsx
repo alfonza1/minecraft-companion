@@ -18,6 +18,7 @@ export default function LowTokenMode({ state, mutate }: { state: CompanionState;
       <summary>Exactly what this changes</summary>
       <ul>
         <li><strong>Disables new AI blueprint generation and redesign.</strong> Imports, 3D previews, material calculations, assignments and approved survival construction still work.</li>
+        <li><strong>Disables new video/image analysis and source reconstruction.</strong> Saved evidence and blueprints remain available. Explicit YouTube search for reference options still works and uses a model request.</li>
         <li><strong>Omits optional coding-skill instructions</strong> from new Codex requests. The companion’s gameplay rules, tool restrictions and safety checks remain.</li>
         <li><strong>Limits recent conversation context</strong> to {limits.messages} previous messages, up to {limits.messageCharacters} characters each, and {limits.memories} relevant saved notes up to {limits.memoryCharacters} characters each. Older history and notes stay saved locally.</li>
         <li><strong>Replaces full world, chest, death and job records with summaries.</strong> Sends inventory totals, equipment, health, hunger, coordinates, up to {limits.nearbyEntities} nearby entities with threats prioritized, {limits.locations} relevant saved places, and the latest {limits.tasks} saved jobs. Full chest contents and death inventories are excluded from AI context.</li>
