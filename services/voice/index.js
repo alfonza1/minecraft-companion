@@ -9,6 +9,8 @@ import { z } from 'zod';
 import { createPreviewCache } from './preview-cache.js';
 import { createDesktopController, resolveDesktopDevice } from './desktop-controller.js';
 import {createSpeechWorker} from './speech-worker.js';
+import { speechStream } from './streaming.js';
+import { companionPerformance } from '../companion-runtime/performance.js';
 
 const voiceIdSchema=z.enum(voices.map(voice=>voice.id));
 const previewSchema=z.object({voiceId:voiceIdSchema.optional(),speed:z.number().min(0.5).max(2).optional()}).strict();
@@ -59,7 +61,7 @@ export async function stopVoice() {await Promise.all([cancelSpeech(),desktopCont
 export function clearTokenBudgetError() {desktopController?.clearError('token_budget');}
 export function transcribeAudio(audio,signal){
   if(!Buffer.isBuffer(audio)||!audio.length||audio.length>12*1024*1024)throw new Error('Audio must be a nonempty recording of at most 12 MiB.');
-  return speechWorker.request({mode:'transcribe',audio:audio.toString('base64')},signal);
+  return companionPerformance.measure('speech transcription',()=>speechWorker.request({mode:'transcribe',audio:audio.toString('base64')},signal));
 }
 async function listDesktopDevices(signal) {
   const {stdout}=await runProcess(python,[path.join(root,'worker.py'),'devices'],{signal,timeout:20_000});return JSON.parse(stdout);
@@ -69,9 +71,9 @@ export async function checkVoice() {
   catch { ready=false;lastError='Local speech is not installed. Run services/voice/setup.ps1.'; }
   return getVoiceStatus();
 }
-export async function withVoiceJob(fn) {
+export async function withVoiceJob(fn, { warmup = false } = {}) {
   const controller=new AbortController();
-  const job={controller,promise:null};
+  const job={controller,promise:null,warmup};
   job.promise=Promise.resolve().then(() => fn(controller.signal));pending.add(job);
   try { return await job.promise; } finally {pending.delete(job);}
 }
@@ -81,7 +83,7 @@ export async function synthesize(text,speed=1,signal,voiceId='auto') {
   const selected=voiceOptions().find(voice=>voice.id===voiceId);
   if(!selected)throw new Error('Unknown local voice. Choose one from the voice list.');
   if(!selected.available)throw new Error('This local voice is not installed. Run speech setup, or choose an installed voice.');
-  if(kokoroReady||piperReady)return speechWorker.request({text,speed,voice:voiceId},signal);
+  if(kokoroReady||piperReady)return companionPerformance.measure('speech synthesis',()=>speechWorker.request({text,speed,voice:voiceId},signal));
   await mkdir(dataRoot,{recursive:true});
   const temp=await mkdtemp(path.join(dataRoot,'speech-'));
   try {
@@ -104,7 +106,16 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     }
     return runProcess(python,args,{signal,onStdout,timeout:12*60*60*1000});
   })});
-  const cancelOnPause=()=>{void Promise.all([cancelSpeech(),speechWorker.close()]);};
+  let wasActive=false;
+  const retainSpeech=()=>{
+    const active=runtime.isActive();speechWorker.keepWarm(active);
+    if(active&&!wasActive&&ready&&(kokoroReady||piperReady)){
+      void withVoiceJob(signal=>{gate();return speechWorker.request({mode:'warmup',text:'Ready.',speed:1,voice:store?.settings?.().voice.ttsVoice??'auto'},signal);},{warmup:true}).catch(()=>{});
+    }
+    wasActive=active;
+  };
+  runtime.on('change',retainSpeech); retainSpeech();
+  const cancelOnPause=()=>{speechWorker.keepWarm(false);void Promise.all([cancelSpeech(),speechWorker.close()]);};
   for(const event of ['pause','stop','disconnect'])runtime.on(event,cancelOnPause);
   app.get('/api/voice/status',async() => checkVoice());
   app.get('/api/voice/options',async()=>voiceOptions());
@@ -134,7 +145,7 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
   app.post('/api/voice/cancel',async() => {await cancelSpeech();return {stopped:true};});
   app.post('/api/voice/transcribe',async(request,reply) => {
     gate();
-    if (pending.size) return reply.code(409).send({error:'A speech request is already active.'});
+    if ([...pending].some(job=>!job.warmup)) return reply.code(409).send({error:'A speech request is already active.'});
     const file=await request.file({limits:{fileSize:12*1024*1024,files:1,parts:1}});
     if (!file || !['audio/webm','audio/wav','audio/x-wav','audio/ogg','audio/mp4','audio/mpeg'].includes(file.mimetype)) return reply.code(400).send({error:'Upload one supported audio recording.'});
     const audio=await file.toBuffer();
@@ -154,6 +165,21 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     const audio=await withVoiceJob(signal => synthesize(text,speed,signal,voiceId??store?.settings?.().voice.ttsVoice??'auto'));
     gate();return reply.type('audio/wav').header('Cache-Control','no-store').send(audio);
   });
+  app.post('/api/voice/speak-stream',async(request,reply)=>{
+    gate();
+    const {text,speed=1,voiceId}=speechSchema.parse(request.body);
+    const controller=new AbortController(),started=performance.now();let generation=Promise.resolve();
+    const output=speechStream({text,signal:controller.signal,gate,
+      synthesize:(chunk,signal)=>(generation=synthesize(chunk,speed,signal,voiceId??store?.settings?.().voice.ttsVoice??'auto')),
+      firstAudio:()=>companionPerformance.record('speech first audio',performance.now()-started)});
+    let finish;
+    const job={controller,promise:new Promise(resolve=>{finish=resolve;})}; pending.add(job);
+    const cancel=()=>{controller.abort();output.destroy();};
+    reply.raw.once('close',cancel);
+    controller.signal.addEventListener('abort',()=>output.destroy(),{once:true});
+    output.once('close',()=>{controller.abort();reply.raw.off('close',cancel);void generation.catch(()=>{}).finally(()=>{pending.delete(job);finish();});});
+    return reply.type('application/x-ndjson').header('Cache-Control','no-store').send(output);
+  });
   app.post('/api/voice/preview',async(request,reply)=>{
     if(runtime.snapshot().state==='PAUSED')return reply.code(409).send({error:'Resume the companion before previewing a voice.'});
     const settings=previewSchema.parse(request.body??{});
@@ -164,5 +190,5 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     return reply.type('audio/wav').header('Cache-Control','no-store').header('X-Companion-Preview-Cache',cached?'hit':'miss').header('X-Companion-Preview-Speed',String(speed)).send(audio);
   });
   app.addHook('onListen',async()=>{await desktopController.sync();});
-  app.addHook('onClose',async()=>{for(const event of ['pause','stop','disconnect'])runtime.off(event,cancelOnPause);await Promise.all([desktopController.close(),cancelSpeech(),speechWorker.close()]);});
+  app.addHook('onClose',async()=>{runtime.off('change',retainSpeech);for(const event of ['pause','stop','disconnect'])runtime.off(event,cancelOnPause);await Promise.all([desktopController.close(),cancelSpeech(),speechWorker.close()]);});
 }

@@ -1,3 +1,4 @@
+import { companionPerformance } from '../companion-runtime/performance.js';
 import { z } from 'zod';
 import { inventoryCounts, resolvePlayer, walkTo } from '../../src/actions.js';
 import { toolResult } from '../../src/bot.js';
@@ -17,7 +18,7 @@ export async function confirmInventory(bot,window=bot.inventory) {
   // library's window listeners when a server stops answering inventory syncs.
   let pending = pendingSyncs.get(window);
   if (!pending) {
-    pending = Promise.resolve().then(() => bot._syncWindow(window)).finally(() => pendingSyncs.delete(window));
+    pending = Promise.resolve().then(() => companionPerformance.measure('inventory confirmation', () => bot._syncWindow(window))).finally(() => pendingSyncs.delete(window));
     pendingSyncs.set(window, pending);
   }
   let timer;

@@ -4,7 +4,7 @@ import {join} from 'node:path';
 export const SPEECH_IDLE_MS=60_000;
 const MAX_MESSAGE_BYTES=16*1024*1024;
 export function createSpeechWorker({command,args,idleMs=SPEECH_IDLE_MS}){
-  let session=null,queue=Promise.resolve(),idleTimer=null;
+  let session=null,queue=Promise.resolve(),idleTimer=null,retained=false;
   async function stop(){
     clearTimeout(idleTimer);const current=session;if(!current)return;
     if(!current.stopping){
@@ -42,6 +42,7 @@ export function createSpeechWorker({command,args,idleMs=SPEECH_IDLE_MS}){
   }
   return {
     get running(){return Boolean(session);},
+    keepWarm(value){retained=Boolean(value);clearTimeout(idleTimer);if(!retained&&session){idleTimer=setTimeout(()=>{void stop();},idleMs);idleTimer.unref?.();}},
     request(payload,signal){
       const operation=queue.catch(()=>{}).then(async()=>{
         signal?.throwIfAborted();clearTimeout(idleTimer);
@@ -58,7 +59,7 @@ export function createSpeechWorker({command,args,idleMs=SPEECH_IDLE_MS}){
           }
           if(typeof result?.audio!=='string')throw new Error('Local speech synthesis failed. Check the selected voice.');
           const audio=Buffer.from(result.audio,'base64');if(audio.length<44||audio.toString('ascii',0,4)!=='RIFF')throw new Error('Local speech returned invalid audio.');return audio;
-        }finally{if(session){idleTimer=setTimeout(()=>{void stop();},idleMs);idleTimer.unref?.();}}
+        }finally{if(session&&!retained){idleTimer=setTimeout(()=>{void stop();},idleMs);idleTimer.unref?.();}}
       });queue=operation.then(()=>{},()=>{});return operation;
     },
     close:stop,

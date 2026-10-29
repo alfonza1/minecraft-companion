@@ -33,6 +33,7 @@ export default function SharedTasks({ state, mutate, busy }: Common) {
           eyebrow="SHARED RESOURCE PLAN"
           action={<Badge>{human(project.status)}</Badge>}
         >
+          {(state.materialRequests ?? []).filter(request => request.projectId === project.id && request.revision === project.revision && request.status === 'requested').map(request => <div className="info-note" style={{display:'block'}} key={request.id}><strong>Could you bring {request.count} {human(request.item)}?</strong><p>{request.reason}</p><p className="note">Say “find {human(request.item).toLowerCase()}” to send the companion on a safe nearby search instead. Finding a source does not mean it has collected the material.</p></div>)}
           <div className="split-control">
             <div>
               <h3>Split the gathering</h3>

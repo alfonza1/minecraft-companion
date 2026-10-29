@@ -3,6 +3,7 @@
 No key hook installation: GetAsyncKeyState observes the selected key/modifiers.
 Audio stays in RAM; local API deletes temporary transcription files.
 """
+import base64
 import argparse
 import ctypes
 import io
@@ -70,17 +71,25 @@ def main():
             settings = json.loads(api('/api/state'))['settings'].get('voice', {})
             if token != generation[0] or held:
                 return
-            speech = api('/api/voice/speak', {'text': text, 'speed': settings.get('speed', 1)})
-            if token != generation[0]:
-                return
-            with wave.open(io.BytesIO(speech), 'rb') as source:
-                samples = np.frombuffer(source.readframes(source.getnframes()), dtype=np.int16)
-                samples = samples.reshape(-1, source.getnchannels())
-                emit_status('speaking')
-                sd.play(samples.astype(np.float32) / 32768 * settings.get('volume', .8), source.getframerate(), device=args.output_device)
-                sd.wait()
-                if token == generation[0]:
-                    emit_status('ready')
+            payload = json.dumps({'text': text, 'speed': settings.get('speed', 1)}).encode()
+            req = urllib.request.Request(BASE + '/api/voice/speak-stream', data=payload,
+                                         headers={'Origin': BASE, 'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=60) as response:
+                for line in response:
+                    if token != generation[0] or held:
+                        return
+                    chunk = json.loads(line)
+                    speech = base64.b64decode(chunk['audio'], validate=True)
+                    with wave.open(io.BytesIO(speech), 'rb') as source:
+                        samples = np.frombuffer(source.readframes(source.getnframes()), dtype=np.int16)
+                        samples = samples.reshape(-1, source.getnchannels())
+                        if token != generation[0] or held:
+                            return
+                        emit_status('speaking')
+                        sd.play(samples.astype(np.float32) / 32768 * settings.get('volume', .8), source.getframerate(), device=args.output_device)
+                        sd.wait()
+            if token == generation[0]:
+                emit_status('ready')
         finally:
             audio_busy.release()
 

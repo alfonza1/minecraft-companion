@@ -36,16 +36,30 @@ export function useVoice(options:Options) {
     const controller=new AbortController();request.current=controller;
     let objectUrl:string|undefined;
     try{
-      const res=await fetch('/api/voice/speak',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,speed:config.current.settings.speed??1}),signal:controller.signal});
+      const res=await fetch('/api/voice/speak-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,speed:config.current.settings.speed??1}),signal:controller.signal});
       if(!res.ok)throw new Error((await res.json()).error??'Speech output failed.');
-      const blob=await res.blob();if(current!==generation.current||!ALLOWED.has(config.current.state))return;
-      objectUrl=URL.createObjectURL(blob);const output=new Audio(objectUrl);audio.current=output;
-      output.volume=Math.max(0,Math.min(1,config.current.settings.volume??0.8));
-      const sink=config.current.settings.outputDevice;
-      await configureAudioOutput(output,sink);
-      if(current!==generation.current||!ALLOWED.has(config.current.state))return;
-      speakingRef.current=true;setSpeaking(true);
-      await new Promise<void>((resolve,reject)=>{output.onended=()=>resolve();output.onerror=()=>reject(new Error('Audio playback failed.'));output.onpause=()=>resolve();void output.play().catch(reject);});
+      if(!res.body)throw new Error('Speech stream unavailable.');
+      const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='';
+      try {
+        while(true){
+          const {value,done}=await reader.read();buffer+=decoder.decode(value,{stream:!done});
+          let newline;
+          while((newline=buffer.indexOf('\n'))>=0){
+            const chunk=JSON.parse(buffer.slice(0,newline));buffer=buffer.slice(newline+1);
+            if(current!==generation.current||!ALLOWED.has(config.current.state))return;
+            const bytes=Uint8Array.from(atob(chunk.audio),(char:string)=>char.charCodeAt(0));
+            objectUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));const output=new Audio(objectUrl);audio.current=output;
+            output.volume=Math.max(0,Math.min(1,config.current.settings.volume??0.8));
+            await configureAudioOutput(output,config.current.settings.outputDevice);
+            if(current!==generation.current||!ALLOWED.has(config.current.state))return;
+            speakingRef.current=true;setSpeaking(true);
+            await new Promise<void>((resolve,reject)=>{output.onended=()=>resolve();output.onerror=()=>reject(new Error('Audio playback failed.'));output.onpause=()=>resolve();void output.play().catch(reject);});
+            URL.revokeObjectURL(objectUrl);objectUrl=undefined;
+          }
+          if(done)break;
+          if(buffer.length>16*1024*1024)throw new Error('Speech chunk exceeds limit.');
+        }
+      } finally {await reader.cancel().catch(()=>{});}
     }catch(error){report(error);}finally{if(objectUrl)URL.revokeObjectURL(objectUrl);if(current===generation.current){audio.current=null;speakingRef.current=false;setSpeaking(false);}}
   },[]);
   const stopTalking=useCallback(()=>{if(recorder.current?.state==='recording')recorder.current.stop();setListening(false);},[]);

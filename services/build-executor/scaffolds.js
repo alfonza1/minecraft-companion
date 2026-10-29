@@ -87,9 +87,9 @@ export function createScaffoldController({ project, bot, signal, save, ensureMat
     }
     return true;
   }
-  async function build(kind = 'access') {
+  async function build(kind = 'access', throughY = Infinity) {
     await reconcile();
-    let pending = entries.filter(entry => entry.kind === kind && entry.status !== 'placed');
+    let pending = entries.filter(entry => entry.kind === kind && entry.status !== 'placed' && entry.position.y <= throughY);
     while (pending.length) {
       let madeProgress = false;
       for (const entry of pending) if (await place(entry)) madeProgress = true;

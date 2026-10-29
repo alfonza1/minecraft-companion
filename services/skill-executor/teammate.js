@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { findResource } from './resource-search.js';
 import { Vec3 } from 'vec3';
 import { setTimeout as delay } from 'node:timers/promises';
 import { inventoryCounts } from '../../src/actions.js';
@@ -29,6 +30,7 @@ export const TEAMMATE_ACTIONS = {
   restock_food:z.object({}).strict(),
   find_food:z.object({}).strict(),
   resume_approved_build:z.object({projectId:z.string().uuid().optional()}).strict(),
+  find_resource:z.object({item, radius:z.number().int().min(8).max(64).default(48),steps:z.number().int().min(1).max(6).default(6)}).strict(),
   rescue_player: z.object({}).strict(),
   bring_items: z.object({ item, count: z.number().int().min(1).max(64), player: z.string().regex(/^[A-Za-z0-9_]{1,16}$/) }).strict(),
   prepare_routine: z.object({ routine: z.enum(['mining', 'building', 'travel']) }).strict(),
@@ -209,6 +211,7 @@ export class TeammateService {
   }
   async execute(name, args, signal) {
     const bot = this.runtime.bot;
+    if(name==='find_resource')return findResource(this,args,signal);
     if(name==='store_surplus')return storeSurplus(this,signal);
     if(name==='tend_farm')return tendFarm(this,args,signal);
     if(name==='hunt_food')return huntFood(this,args,signal);

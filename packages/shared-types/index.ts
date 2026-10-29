@@ -68,6 +68,9 @@ export interface Project {
   [key: string]: any;
 }
 export interface CompanionState {
+  performance?: {stage:string;count:number;failures:number;totalMs:number;lastMs:number;medianMs:number;p95Ms:number;sampleCount:number}[];
+  materialRequests?: {id:string;projectId:string;revision:number;item:string;count:number;reason:string;status:string;at:string}[];
+  resourceLocations?: {id:string;item:string;block:string;position:{x:number;y:number;z:number};provenance:string;at:string}[];
   ai?: { provider: 'codex' | 'claude' | 'opencode'; available?: boolean | null; authenticated?: boolean | null; version?: string | null; error?: string | null; modelState?: { active: { provider?: string; model: string | null; purpose: string; startedAt: string } | null; last: { provider?: string; model: string; purpose: string; at: string } | null } };
   codex?: { available: boolean | null; authenticated: boolean | null; version: string | null; error: string | null; model?: { active: { provider?: string; model: string | null; purpose: string; startedAt: string } | null; last: { provider?: string; model: string; purpose: string; at: string } | null } };
   state: RuntimeState;

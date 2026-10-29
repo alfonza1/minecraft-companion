@@ -12,7 +12,7 @@ function ownedItems(phrase, inventory) {
 
 // Anchored everyday commands only. Ambiguous or unrelated speech falls through
 // to conversation; this path performs no model or external service request.
-export function quickPlan(text, { world, playerName, currentTask, locations = [] } = {}) {
+export function quickPlan(text, { world, playerName, currentTask, locations = [], project } = {}) {
   if (!world) return null;
   const message = text.trim().toLowerCase().replace(/^[\s]*(?:hey[, ]+|yo[, ]+)?(?:can you |could you |please )?/, '').replace(/[.!?]+$/, '').replace(/ please$/, '').trim();
   for(const [pattern,tool,reply] of [
@@ -21,9 +21,26 @@ export function quickPlan(text, { world, playerName, currentTask, locations = []
     [/^(?:cook(?: (?:some |the )?food)?|smelt (?:the )?food)$/,'cook_food','I’ll cook what I own in an empty nearby furnace.'],
     [/^(?:explore|go exploring|scout(?: (?:the area|nearby))?)$/,'explore_nearby','I’ll check nearby safe surface paths and come back.'],
     [/^(?:store (?:your |the )?(?:loot|items|valuables)|deposit(?: (?:your |the )?(?:loot|items|surplus))?|put (?:your |the )?(?:loot|items|valuables) away)$/,'store_surplus','I’ll put the surplus in approved storage and keep my kit.'],
-    [/^(?:resume (?:the )?build|continue (?:the )?(?:build|building)|build (?:the )?approved (?:house|project))$/,'resume_approved_build','I’ll check the approved blueprint and saved site, then continue.'],
+    [/^(?:resume (?:the )?build|(?:continue|keep|carry on) (?:the )?(?:build|building)|build (?:the )?approved (?:house|project))$/,'resume_approved_build','I’ll check the approved blueprint and saved site, then continue.'],
     [/^(?:find|get|gather)(?: (?:some|us))? food$/,'find_food','I’ll check safe food sources.'],
   ])if(pattern.test(message))return {reply,intent:'minecraft_action',actions:[{tool,args:{}}]};
+  const search = message.match(/^(?:find|look for|search for|go find|you (?:find|look for)) (?:some |the |a source of )?([a-z_ ]{1,60})$/);
+  if(search && !/\b(?:house|build|youtube|video|food|movie)\b/.test(search[1])) {
+    const phrase=normalize(search[1]), item=phrase==='jungle'?'jungle_log':phrase.replaceAll(' ','_');
+    if(!/^(?:bamboo|scaffolding|string|cobweb|glass|sand|dirt|stone|cobblestone|diamond|iron_ingot|coal|cocoa_beans|(?:oak|birch|spruce|jungle|acacia|dark_oak|cherry|mangrove)_(?:log|planks))$/.test(item))return null;
+    return {reply:`I’ll check safe nearby terrain for ${phrase} and come back. I won’t clear structures or head into danger.`,intent:'minecraft_action',actions:[{tool:'find_resource',args:{item}}]};
+  }
+  const stack = message.match(/^(?:get|gather|collect|chop) (?:me )?(?:another |one |a )?stack(?: of ([a-z ]+))?$/);
+  if(stack){
+    const phrase=stack[1]||currentTask?.args?.species&&`${currentTask.args.species} logs`||currentTask?.args?.block;
+    if(phrase){const name=normalize(phrase).replaceAll(' ','_');const wood=name==='wood'||name==='log'||name.endsWith('_log');return {reply:'I’ll get another stack, then return to my previous task.',intent:'minecraft_action',actions:[{tool:wood?'chop_tree':'gather_blocks',args:wood?{count:64,...(name.endsWith('_log')?{species:name.slice(0,-4)}:{})}:{block:name,count:64}}]};}
+  }
+  const remainingRequest = message.match(/^(?:bring|fetch|get) (?:me )?(?:the )?remaining (wood|stone|[a-z_]+)$/);
+  if(remainingRequest&&project?.assignments&&playerName){
+    const row=project.assignments.find(value=>remainingRequest[1]==='wood'?value.material.endsWith('_log'):remainingRequest[1]==='stone'?value.material==='cobblestone':value.material===remainingRequest[1]);
+    const missing=row?Math.max(0,row.total-(row.aiProgress||0)-(row.userProgress||0)):0;
+    if(row)return missing?{reply:`I’ll bring up to ${Math.min(64,missing)} ${row.material.replaceAll('_',' ')} from this project’s missing amount.`,intent:'minecraft_action',actions:[{tool:'bring_items',args:{item:row.material,count:Math.min(64,missing),player:playerName}}]}:{reply:'The reported assignments for that material are covered. Check the stock at the build site before gathering more.',intent:'minecraft_question',actions:[]};
+  }
   if (/^(?:help me|come help me|come help|i need help|rescue me)$/.test(message)) return { reply: 'Coming to help. I’ll pick up my work afterward.', intent: 'minecraft_action', actions: [{ tool: 'rescue_player', args: {} }] };
   const routine = message.match(/^(?:get ready|prepare)(?: to| for)? (mine|mining|build|building|travel|a trip)$/);
   if (routine) return { reply: 'Let me check my supplies.', intent: 'minecraft_action', actions: [{ tool: 'prepare_routine', args: { routine: /min/.test(routine[1]) ? 'mining' : /build/.test(routine[1]) ? 'building' : 'travel' } }] };

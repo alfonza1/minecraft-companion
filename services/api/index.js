@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { Store } from '../memory/store.js';
 import { RealmConnector, supportedVersions } from '../realm-connector/index.js';
+import { companionPerformance } from '../companion-runtime/performance.js';
 import { CompanionRuntime } from '../companion-runtime/index.js';
 import { lockBody } from '../../src/session.js';
 import { registerSetupRoutes } from '../setup/index.js';
@@ -46,7 +47,7 @@ export async function createApp(options = {}) {
   let orchestrator, teammate, idleWork, voiceModule = options.voiceModule;
   let codexStatus = { available: null, authenticated: null, version: null, error: null };
   const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
-    projects: store.get('projects'),referenceSearches:store.get('referenceSearches').slice(-10), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
+    performance: companionPerformance.snapshot(), materialRequests: store.get('materialRequests'), resourceLocations: store.get('resourceLocations'), projects: store.get('projects'),referenceSearches:store.get('referenceSearches').slice(-10), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
     usage: orchestrator?.usage || { requests: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billingCost: null },
     ai: { ...modelSelection(store.settings()), ...((store.settings().provider || 'codex') === 'codex' ? codexStatus : providerRegistry?.status(store.settings().provider)), modelState: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } },
     settings: store.settings(), teammate: teammate?.snapshot(), codex: { ...codexStatus, model: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } }, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },

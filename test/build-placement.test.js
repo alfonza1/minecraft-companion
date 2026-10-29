@@ -78,7 +78,8 @@ function supplyFixture() {
   const bot = { version, registry, inventory: { items: () => inventory }, blockAt: p => blockAt('air', p), findBlock: () => null, recipesFor: () => [], recipesAll: () => [] };
   const design = blueprint([{ x: 0, y: 0, z: 0, name: 'oak_planks' }]);
   const project = { id: 'building', blueprint: design }, other = { id: 'other', reservations: { oak_planks: 4 } };
-  const store = { get: () => [project, other] };
+  const requests=new Map();
+  const store = { get: name => name==='projects'?[project, other]:[...requests.values()], put:(_name,value)=>requests.set(value.id,value) };
   return { bot, inventory, project, store };
 }
 
@@ -86,7 +87,7 @@ test('build restock requests include other reservations and cannot consume them'
   const f = supplyFixture(); f.inventory.push({ name: 'oak_planks', count: 4 });
   const calls = [];
   const ensure = createBuildSupplies({ ...f, origin, save() {}, teammate: { withdraw: async values => { calls.push(values); } } });
-  await assert.rejects(ensure(f.project.blueprint.blocks[0], 1, new AbortController().signal), /could not cover/);
+  await assert.rejects(ensure(f.project.blueprint.blocks[0], 1, new AbortController().signal), /Could you grab/);
   assert.deepEqual(calls, [[{ name: 'oak_planks', count: 5 }]]);
   assert.equal(f.project.reservations.oak_planks, 0);
 });
@@ -103,6 +104,19 @@ test('temporary supply allowance does not include blueprint demand for the same 
   const f = supplyFixture(), calls = [];
   f.project.blueprint = blueprint([{ x: 0, y: 0, z: 0, name: 'cobblestone' }]);
   const ensure = createBuildSupplies({ ...f, origin, save() {}, teammate: { withdraw: async values => calls.push(values) } });
-  await assert.rejects(ensure({ name: 'cobblestone' }, 1, new AbortController().signal, { temporaryDemand: 3 }), /could not cover/);
+  await assert.rejects(ensure({ name: 'cobblestone' }, 1, new AbortController().signal, { temporaryDemand: 3 }), /Could you grab/);
   assert.deepEqual(calls, [[{ name: 'cobblestone', count: 3 }]], 'The blueprint block must not be acquired under the extra worksite allowance');
+});
+
+test('phase preparation crafts multiple recipe repetitions together and preserves other reservations',async()=>{
+  const f=supplyFixture(),calls=[];
+  f.project.blueprint=blueprint(Array.from({length:20},(_,index)=>({x:index%5,y:0,z:Math.floor(index/5),name:'oak_planks'})));
+  f.inventory.push({name:'oak_log',count:10},{name:'oak_planks',count:4});
+  const logs=f.bot.registry.itemsByName.oak_log.id,planks=f.bot.registry.itemsByName.oak_planks.id;
+  const recipe={result:{id:planks,count:4},delta:[{id:logs,count:-1},{id:planks,count:4}],requiresTable:false};
+  f.bot.recipesFor=()=>[recipe];f.bot.supportFeature=()=>true;f.bot._syncWindow=async()=>{};
+  f.bot.craft=async(_recipe,repetitions)=>{calls.push(repetitions);f.inventory[0].count-=repetitions;f.inventory[1].count+=4*repetitions;};
+  const ensure=createBuildSupplies({...f,origin,save(){}});
+  await ensure.preparePhase(f.project.blueprint.blocks,new AbortController().signal);
+  assert.deepEqual(calls,[5]);assert.equal(f.inventory[1].count,24);assert.equal(f.project.reservations.oak_planks,20);
 });

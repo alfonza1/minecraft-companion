@@ -10,8 +10,14 @@ import { createRawGatherer, RAW_BUILD_SOURCES } from './raw-materials.js';
 import { approach, occupied, abortableWait } from './site.js';
 import { placementSupport, placeAdaptedBlock, EMPTY } from './placement.js';
 import { vector } from './construction-plan.js';
+import { companionPerformance } from '../companion-runtime/performance.js';
+import { requestMaterial, resolveMaterialRequest } from '../resource-ledger/material-requests.js';
 
 const MAX_CRAFT_BATCHES = 16;
+const MAX_PHASE_MATERIAL_TYPES = 4;
+const FREE_SUPPLY_SLOTS = 2;
+const RAW_STOCK_TARGET = 64;
+const CRAFTED_STOCK_TARGET = 32;
 export function remainingMaterials(blueprint, bot, origin) {
   const counts = new Map(), data = dataFor(blueprint.version), base = new Vec3(origin.x, origin.y, origin.z);
   for (const block of blueprint.blocks) {
@@ -25,7 +31,8 @@ export function remainingMaterials(blueprint, bot, origin) {
 
 export function createBuildSupplies({ project, origin, bot, store, teammate, save }) {
   let demand = [];
-  const gather = createRawGatherer({ project, bot, store, save });
+  let phaseDemand = null;
+  const gather = createRawGatherer({ project, bot, store, save, teammate });
   const refresh = () => {
     project.reservations = reserveMaterials(store.get('projects'), project.id, demand, bot.inventory.items(), { partial: true });
     save(project);
@@ -52,14 +59,16 @@ export function createBuildSupplies({ project, origin, bot, store, teammate, sav
       if (recipe.requiresTable) await navigateWithRecovery(bot, table.position, 2, signal);
       signal.throwIfAborted();
       if (!craftable(recipe)) throw new Error('Crafting ingredients changed or were reserved by another project.');
+      const repetitions = Math.max(1, Math.min(MAX_CRAFT_BATCHES - batch, Math.ceil((desired-free(name))/recipe.result.count), ...recipe.delta.filter(value=>value.count<0).map(value=>Math.floor((free(bot.registry.items[value.id].name)-reservedHere(bot.registry.items[value.id].name))/-value.count))));
       const before = free(name), originalClick = bot.clickWindow;
       bot.clickWindow = async (...args) => {
         signal.throwIfAborted(); await originalClick(...args);
         await bot.waitForTicks(2); signal.throwIfAborted();
         await confirmInventory(bot, bot.currentWindow ?? bot.inventory);
       };
-      try { await bot.craft(recipe, 1, recipe.requiresTable ? table : null); }
+      try { await companionPerformance.measure('crafting batch', () => bot.craft(recipe, repetitions, recipe.requiresTable ? table : null)); }
       finally { bot.clickWindow = originalClick; }
+      batch += repetitions - 1;
       await confirmInventory(bot); signal.throwIfAborted();
       if (free(name) <= before) throw new Error(`Crafting ${name} did not produce confirmed inventory. Resupply stopped.`);
     }
@@ -110,11 +119,11 @@ export function createBuildSupplies({ project, origin, bot, store, teammate, sav
     await confirmInventory(bot); signal.throwIfAborted();
     return bot.blockAt(p);
   }
-  return async (block, minimum, signal, { temporaryDemand = 0 } = {}) => {
+  const ensure = async (block, minimum, signal, { temporaryDemand = 0 } = {}) => {
     signal.throwIfAborted();
     const item = blockItem(block, dataFor(bot.version));
-    if (free(item.name) >= minimum) return;
-    demand = remainingMaterials(project.blueprint, bot, origin);
+    if (free(item.name) >= minimum) { resolveMaterialRequest(store, project, item.name, free(item.name)); return; }
+    demand = structuredClone(phaseDemand ?? remainingMaterials(project.blueprint, bot, origin));
     if (temporaryDemand) {
       const row = demand.find(value => value.name === item.name);
       if (row) row.quantity += temporaryDemand;
@@ -124,7 +133,7 @@ export function createBuildSupplies({ project, origin, bot, store, teammate, sav
     // Extra worksite material has its own allowance; do not charge blueprint
     // demand to that allowance when the scaffold happens to use the same block.
     const remaining = temporaryDemand || demand.find(row => row.name === item.name)?.quantity || minimum;
-    const desired = Math.min(remaining, RAW_BUILD_SOURCES[item.name] ? 64 : 32, bot.registry.itemsByName[item.name].stackSize);
+    const desired = Math.min(remaining, RAW_BUILD_SOURCES[item.name] ? RAW_STOCK_TARGET : CRAFTED_STOCK_TARGET, bot.registry.itemsByName[item.name].stackSize);
     // Chest permissions are checked live by the existing teammate service.
     // The request is an inventory target including other projects' reservations.
     const reservedElsewhere = (inventoryCounts(bot.inventory.items())[item.name] ?? 0) - free(item.name);
@@ -147,6 +156,22 @@ export function createBuildSupplies({ project, origin, bot, store, teammate, sav
       await craft(item.name, desired, signal);
     }
     refresh(); signal.throwIfAborted();
-    if (free(item.name) < minimum) throw new Error(`Need ${minimum} ${item.name}. Approved chests, owned crafting ingredients and enabled common-material sources could not cover it. Check the supply route or deliver this material, then resume the saved checkpoint.`);
+    if (free(item.name) < minimum) throw requestMaterial({store, project, teammate, item:item.name, count:desired-free(item.name), available:free(item.name)});
+    resolveMaterialRequest(store, project, item.name, free(item.name));
   };
+  ensure.preparePhase = async (blocks, signal) => {
+    phaseDemand = remainingMaterials({...project.blueprint,blocks},bot,origin);
+    demand = structuredClone(phaseDemand);
+    refresh();
+    const limit=Math.min(MAX_PHASE_MATERIAL_TYPES,Math.max(0,(bot.inventory.emptySlotCount?.()??6)-FREE_SUPPLY_SLOTS));
+    for(const row of phaseDemand.slice(0,limit)){
+      signal.throwIfAborted();
+      const definition=bot.registry.itemsByName[row.name];
+      const target=Math.min(row.quantity,definition.stackSize,RAW_BUILD_SOURCES[row.name]?RAW_STOCK_TARGET:CRAFTED_STOCK_TARGET);
+      if(free(row.name)>=target)continue;
+      try { await ensure({name:row.name},target,signal); }
+      catch(error){signal.throwIfAborted();if(error.code!=='MATERIAL_HELP_NEEDED')throw error;}
+    }
+  };
+  return ensure;
 }

@@ -6,6 +6,8 @@ import { dataFor } from '../../packages/minecraft-data/index.js';
 import { confirmInventory } from '../skill-executor/items.js';
 import { createScaffoldController } from './scaffolds.js';
 import { assertConstructionScope } from './construction-plan.js';
+import { phasePlacements, orderPlacements, BUILD_PHASE_HEIGHT } from './work-order.js';
+import { companionPerformance } from '../companion-runtime/performance.js';
 export { placementSupport, matchesPlacement, constructionCompatibility } from './placement.js';
 
 import { approach, occupied, abortableWait, canReachPlacement } from './site.js';
@@ -57,14 +59,13 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
       await scaffolds.cleanup(); update('paused', 'Temporary scaffolds removed. Construction can resume with the saved plan.');
       return { status: 'paused', scaffoldsRemoved: true };
     }
-    const needsPlacement = placements.some(block => !matchesPlacement(bot.blockAt(base.offset(block.x, block.y, block.z)), block, { final: false }));
-    if (scaffolds && needsPlacement) await scaffolds.build('access');
     let pending = placements.map((_, index) => index);
+    const preparedPhases = new Set();
     while (pending.length) {
       let progress = false;
       const deferred = [];
       const shellPending = pending.some(index => !placements[index].name.endsWith('_door'));
-      for (const index of pending) {
+      for (const index of orderPlacements(pending, placements, bot.entity.position, origin)) {
         signal.throwIfAborted();
         const expected = placements[index];
         const position = base.offset(expected.x, expected.y, expected.z);
@@ -75,6 +76,13 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
         if (!matchesPlacement(observed, expected, { final: false })) {
           if (!EMPTY.has(observed.name) && !resumableSlab(observed, expected)) throw new Error(`Block changed at ${position}; refusing to overwrite ${observed.name}.`);
           if (expected.properties?.half === 'upper') { deferred.push(index); continue; }
+          const phase=Math.floor(expected.y/BUILD_PHASE_HEIGHT);
+          if(ensureMaterials?.preparePhase && !preparedPhases.has(phase)){
+            checkpoint.phase='preparing section supplies';update('building');
+            await companionPerformance.measure('section supplies',()=>ensureMaterials.preparePhase(phasePlacements(pending.filter(value=>placements[value].y>=phase*BUILD_PHASE_HEIGHT),placements),signal));
+            preparedPhases.add(phase);signal.throwIfAborted();
+          }
+          if(scaffolds && expected.y>=4)await scaffolds.build('access',origin.y+expected.y-2);
           if (!placementSupport(bot, position, expected) && scaffolds) await scaffolds.build('brace');
           if (!placementSupport(bot, position, expected)) { deferred.push(index); continue; }
           const requirement = blockItem(expected, dataFor(bot.version));
@@ -112,7 +120,7 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
             if (reference?.name !== support.reference.name || reference?.stateId !== support.reference.stateId) throw new Error('Placement support changed while aiming.');
             if (occupied(bot, position, height) || (height === 2 && !EMPTY.has(bot.blockAt(position.offset(0, 1, 0))?.name))) throw new Error('Placement space changed while aiming.');
           };
-          await abortableWait(scopedSignal => placeAdaptedBlock(bot, expected, position, support, scopedSignal, checkSpace), signal, bot);
+          await companionPerformance.measure('block placement',()=>abortableWait(scopedSignal => placeAdaptedBlock(bot, expected, position, support, scopedSignal, checkSpace), signal, bot));
           signal.throwIfAborted();
           // A block update can precede its inventory packet. Flush before the
           // next demand/reservation decision, particularly the last item in a stack.

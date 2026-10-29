@@ -267,6 +267,9 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
             </button>
           }
         >
+          <h3>Where time goes</h3>
+          <p className="note">Measured locally since this service started. Timings can overlap; they are not token costs. P95 uses the latest 100 samples per stage.</p>
+          {state.performance?.length ? <div className="table-scroll"><table><thead><tr><th>Stage</th><th>Last</th><th>Median</th><th>P95</th><th>Runs / failures</th></tr></thead><tbody>{state.performance.map(row => <tr key={row.stage}><td>{row.stage}</td><td>{(row.lastMs/1000).toFixed(2)}s</td><td>{(row.medianMs/1000).toFixed(2)}s</td><td>{(row.p95Ms/1000).toFixed(2)}s</td><td>{row.count} / {row.failures}</td></tr>)}</tbody></table></div> : <p className="quiet-empty">No timing samples yet. Talk or run a task to measure it.</p>}
           {diagnostics ? (
             <pre className="diagnostic-output">
               {JSON.stringify(diagnostics, null, 2)}

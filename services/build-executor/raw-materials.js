@@ -7,6 +7,8 @@ import { equipFastestTool, waitForMiningFooting } from '../../src/mining.js';
 import { confirmInventory } from '../skill-executor/items.js';
 import { CONSTRUCTION_LIMITS, vector } from './construction-plan.js';
 import { digConstructionBlock, abortableWait } from './site.js';
+import { requestMaterial } from '../resource-ledger/material-requests.js';
+import { companionPerformance } from '../companion-runtime/performance.js';
 
 export const RAW_BUILD_SOURCES = Object.freeze({ oak_log: ['oak_log'], spruce_log: ['spruce_log'], birch_log: ['birch_log'], cobblestone: ['stone', 'cobblestone'], dirt: ['dirt'], sand: ['sand'] });
 const SOIL = new Set(['grass_block', 'dirt', 'coarse_dirt', 'podzol', 'rooted_dirt', 'mycelium']);
@@ -62,7 +64,7 @@ export function rawTargets(bot, store, project, name, count) {
   return [];
 }
 
-export function createRawGatherer({ project, bot, store, save }) {
+export function createRawGatherer({ project, bot, store, save, teammate }) {
   const allowance = (name, temporary) => {
     if (temporary || project.construction.policy.takeOverShares) return CONSTRUCTION_LIMITS.gatherBatch;
     const latest = store.get('projects').find(value => value.id === project.id) ?? project;
@@ -86,14 +88,18 @@ export function createRawGatherer({ project, bot, store, save }) {
       ledger.rawIntent = null; save(project);
     }
     const count = Math.min(needed, allowance(name, temporary), CONSTRUCTION_LIMITS.gatherBatch);
-    if (count <= 0) throw new Error(`${name} is covered by your assigned share. Report a deposit, adjust the split or prepare a plan that lets the companion cover remaining common materials.`);
+    if (count <= 0) throw requestMaterial({ store, project, teammate, item:name, count:needed, available:stock(bot,name), reason:'This is covered by your assigned share. Report a deposit or change the split if you want me to gather it.' });
     if (bot.inventory.emptySlotCount() < 2) throw new Error('Construction supply trip needs two free inventory slots. Put away unrelated cargo and resume.');
     const worksite = vector(project.construction.origin);
     // Descend using the saved access ramp before searching/mining ground-level
     // resources. Never dig the platform under the bot to get down.
     if (bot.entity.position.y > worksite.y + 1) await navigateWithRecovery(bot, worksite.offset(-3, 0, -2), 1, signal);
     const before = stock(bot, name), targets = rawTargets(bot, store, project, name, count);
-    if (!targets.length) throw new Error(`No safe observed source for ${name} within 64 blocks of this worksite. Saved construction can resume after supplies or a suitable mining area are available.`);
+    if (!targets.length) throw requestMaterial({ store, project, teammate, item:name, count:needed, available:stock(bot,name), reason:'I cannot see a safe source within 64 blocks of this worksite. I saved the construction checkpoint.' });
+    const family = name.endsWith('_log') ? 'axe' : name === 'cobblestone' ? 'pickaxe' : 'shovel';
+    // The chest service enforces the user's per-item permissions and excludes
+    // rare, named, enchanted and nearly broken replacement tools.
+    if (teammate) await teammate.withdraw([{ name:`iron_${family}`, count:1 }],signal);
     project.construction.phase = `gathering ${name}`; save(project);
     const sources = [];
     try {
@@ -105,7 +111,7 @@ export function createRawGatherer({ project, bot, store, save }) {
         requireSafeConstructionTrip(bot, signal);
         const actual = bot.blockAt(target.position);
         if (actual?.name !== target.name || actual.position.y < Math.floor(bot.entity.position.y)) continue;
-        await waitForMiningFooting(bot, signal); await equipFastestTool(bot, actual, signal);
+        await waitForMiningFooting(bot, signal); await equipFastestTool(bot, actual, signal, { minimumDurability:16 });
         const held = bot.heldItem, durability = bot.registry.itemsByName[held?.name]?.maxDurability;
         if (durability && durability - (held.durabilityUsed ?? 0) < 16) throw new Error('My tool is nearly worn out. Restock a replacement before resuming construction.');
         if (name.endsWith('_log') && !held?.name.endsWith('_axe')) throw new Error('Automatic construction gathering needs an axe for trees.');
@@ -120,7 +126,7 @@ export function createRawGatherer({ project, bot, store, save }) {
         signal.throwIfAborted();
         if (store.settings().realmId !== ledger.realmId || bot.game.dimension !== ledger.dimension || allowance(name, temporary) <= 0 || protectedResourcePosition(store, project, actual.position) || (!name.endsWith('_log') && !inArea(actual.position, miningArea(store, project)))) throw new Error('Construction resource permission changed before digging.');
         project.construction.rawIntent = { name, sourceName: actual.name, temporary, position: { x: actual.position.x, y: actual.position.y, z: actual.position.z }, before: stock(bot, name) }; save(project);
-        await digConstructionBlock(bot, actual, signal);
+        await companionPerformance.measure('mining', () => digConstructionBlock(bot, actual, signal));
         if (bot.blockAt(actual.position)?.name === actual.name) throw new Error('The server did not confirm resource removal.');
         sources.push(actual.position);
         const minedKey = temporary ? 'supportMined' : 'mined';

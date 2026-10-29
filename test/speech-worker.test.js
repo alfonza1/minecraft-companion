@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import {createSpeechWorker} from '../services/voice/speech-worker.js';
 
 const fixture=`const rl=require('node:readline').createInterface({input:process.stdin});console.log(JSON.stringify({ready:true}));rl.on('line',line=>{const value=JSON.parse(line);const wav=Buffer.alloc(52);wav.write('RIFF');wav.writeUInt32LE(44,4);wav.write('WAVE',8);wav.writeUInt32LE(process.pid,44);setTimeout(()=>console.log(JSON.stringify({audio:wav.toString('base64')})),value.text==='slow'?1000:10);});`;
+
+test('active-session speech retention avoids the idle cold start but can release on pause',async t=>{
+  const worker=createSpeechWorker({command:process.execPath,args:['-e',fixture],idleMs:30});t.after(()=>worker.close());
+  worker.keepWarm(true);await worker.request({text:'first'});await new Promise(resolve=>setTimeout(resolve,120));assert.equal(worker.running,true);
+  worker.keepWarm(false);await worker.close();assert.equal(worker.running,false);
+});
 test('local speech reuses its process for consecutive replies and releases it on close',async t=>{
   const worker=createSpeechWorker({command:process.execPath,args:['-e',fixture]});t.after(()=>worker.close());
   const first=await worker.request({text:'first'}),second=await worker.request({text:'second'});

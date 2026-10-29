@@ -15,6 +15,9 @@ print(json.dumps({'ready': True}), flush=True)
 for line in sys.stdin:
     try:
         request = json.loads(line)
+        if request.get('mode') == 'warmup' and whisper is None:
+            from faster_whisper import WhisperModel
+            whisper = WhisperModel('tiny.en', device='cpu', compute_type='int8', cpu_threads=2, num_workers=1, download_root=str(model_directory()), local_files_only=True)
         if request.get('mode') == 'transcribe':
             recording = base64.b64decode(request['audio'], validate=True)
             if len(recording) > 12 * 1024 * 1024:
