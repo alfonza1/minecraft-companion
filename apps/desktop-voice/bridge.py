@@ -10,6 +10,7 @@ import json
 import threading
 import time
 import urllib.request
+import urllib.error
 import urllib.parse
 import uuid
 import wave
@@ -143,6 +144,13 @@ def main():
                 return
             stage = 'speaking'
             play_text(text, token)
+        except urllib.error.HTTPError as error:
+            if token == generation[0]:
+                try:
+                    code = json.loads(error.read(8192)).get('code')
+                except Exception:
+                    code = None
+                emit_status('error', {'INPUT_TOKEN_BUDGET': 'token_budget', 'MODEL_REQUEST_LIMIT': 'request_limit'}.get(code, stage) if isinstance(code, str) else stage)
         except Exception:
             if token == generation[0]:
                 emit_status('error', stage)

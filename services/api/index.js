@@ -29,7 +29,8 @@ import { createModelCatalog } from '../agent-orchestrator/models.js';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const runningSourceFingerprint = await sourceFingerprint(root);
 const hotkeySchema = z.unknown().transform((value, context) => { try { return normalizeHotkey(value); } catch (error) { context.addIssue({ code: 'custom', message: error.message }); return z.NEVER; } });
-const voiceSettings = z.object({ enabled: z.boolean().optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional(), pushToTalk: hotkeySchema.optional(), ttsVoice: z.enum(voiceCatalog.map(voice => voice.id)).optional() }).strict();
+const desktopDevice = z.object({name:z.string().min(1).max(300),hostapi:z.number().int().min(0).max(100)}).strict().nullable();
+const voiceSettings = z.object({ enabled: z.boolean().optional(), desktopEnabled:z.boolean().optional(), desktopInputDevice:desktopDevice.optional(), desktopOutputDevice:desktopDevice.optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional(), pushToTalk: hotkeySchema.optional(), ttsVoice: z.enum(voiceCatalog.map(voice => voice.id)).optional() }).strict();
 const miningZoneSchema = z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800), radius: z.number().int().min(1).max(32) }).strict();
 export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode']).optional(), providerModels: z.object({ claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
 
@@ -93,7 +94,7 @@ export async function createApp(options = {}) {
   app.setErrorHandler((error, request, reply) => {
     const status = error instanceof z.ZodError ? 400 : error.statusCode || (/must|requires|choose|already|unsupported|invalid|cannot|select|connect|resume|active|paused|companion/i.test(error.message) ? 409 : 500);
     const message = error instanceof z.ZodError ? error.issues.map(issue => `${issue.path.join('.') || 'input'}: ${issue.message}`).join('; ') : error.message;
-    reply.code(Math.min(Math.max(status, 400), 599)).send({ error: message.slice(0, 1500) });
+    reply.code(Math.min(Math.max(status, 400), 599)).send({ error: message.slice(0, 1500), ...(['INPUT_TOKEN_BUDGET','MODEL_REQUEST_LIMIT'].includes(error.code) ? { code:error.code } : {}) });
   });
   await app.register(websocket, { options: { maxPayload: 1024 } });
   await app.register(multipart, { limits: { fileSize: 24 * 1024 * 1024, files: 1, fields: 5, parts: 6 } });
@@ -134,6 +135,11 @@ export async function createApp(options = {}) {
     return { text: await orchestrator.respond(text) };
   });
   app.post('/api/conversation/cancel', async () => { await orchestrator?.cancelInference(); return { cancelled: true }; });
+  app.post('/api/usage/renew-budget', async request => {
+    z.object({}).strict().parse(request.body);
+    if (!orchestrator) throw new Error('Conversation service unavailable.');
+    return orchestrator.renewTokenBudget();
+  });
   registerTeammateRoutes(app, { ...context, getOrchestrator: () => orchestrator });
   app.post('/api/memories', async request => {
     const value = z.object({ label: z.string().trim().min(1).max(100), value: z.string().trim().min(1).max(3000) }).strict().parse(request.body);
@@ -157,10 +163,10 @@ export async function createApp(options = {}) {
     catch { return reply.code(404).send({ error: 'Texture unavailable.' }); }
   });
   if (!options.skipExtensions) {
-    voiceModule = await import('../voice/index.js');
+    voiceModule ??= await import('../voice/index.js');
     voiceModule.registerVoiceRoutes(app, context);
     const { createOrchestrator, getCodexStatus } = await import('../agent-orchestrator/index.js');
-    orchestrator = createOrchestrator(context);
+    orchestrator = createOrchestrator({...context,request:options.modelRequest});
     context.orchestrator = orchestrator;
     runtime.modelCancel = options => orchestrator.cancel(options); runtime.audioStop = () => voiceModule.cancelSpeech(); runtime.fullAudioStop = () => voiceModule.stopVoice();
     runtime.on('conversation', text => orchestrator.respond(text).catch(error => runtime.log('error', error.message)));

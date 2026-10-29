@@ -5,6 +5,7 @@ import io
 import json
 import threading
 import unittest
+import urllib.error
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -53,6 +54,8 @@ class BridgeTests(unittest.TestCase):
                 return json.dumps({'text': transcript}).encode()
             if route == '/api/conversation':
                 finished.set()
+                if fail == 'budget':
+                    raise urllib.error.HTTPError('http://127.0.0.1',409,'Conflict',None,io.BytesIO(b'{"code":"INPUT_TOKEN_BUDGET","error":"private fixture"}'))
                 if fail == 'thinking':
                     raise RuntimeError('private fixture must never appear in status')
                 return b'{"text":""}'
@@ -93,9 +96,9 @@ class BridgeTests(unittest.TestCase):
             self.assertNotIn('/api/conversation', calls)
 
     def test_transcription_and_model_errors_are_visible_without_private_data(self):
-        for stage in ['transcribing', 'thinking']:
+        for stage in ['transcribing', 'thinking', 'budget']:
             events, _ = self.run_bridge(fail=stage)
-            self.assertIn({'phase': 'error', 'code': stage}, events)
+            self.assertIn({'phase': 'error', 'code': 'token_budget' if stage == 'budget' else stage}, events)
 
 
 if __name__ == '__main__':

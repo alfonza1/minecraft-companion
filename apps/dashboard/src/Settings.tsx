@@ -191,7 +191,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               />
             </label>
             <label className="field-label">
-              Input token limit
+              Input tokens per budget
               <input
                 type="number"
                 min="0"
@@ -207,6 +207,8 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               />
             </label>
           </div>
+          <p className="note">Current local budget: {(state.usage.inputBudgetUsed ?? state.usage.inputTokens).toLocaleString()} / {state.settings.maxInputTokens.toLocaleString()} reported input tokens. This is an app spending guard, separate from your account limits. Renewing starts another budget at the same limit and preserves lifetime usage.</p>
+          <button className="button" disabled={Boolean(state.ai?.modelState?.active)} onClick={() => attempt(mutate('/usage/renew-budget', {}))}>Start new token budget</button>
           <div className="usage-box">
             <div>
               <span>Requests</span>
@@ -464,10 +466,19 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
       name: string;
       max_input_channels: number;
       max_output_channels: number;
+      hostapi: number;
     }[]
   >([]);
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
+  const inputPreference=state.settings.voice.desktopInputDevice;
+  const outputPreference=state.settings.voice.desktopOutputDevice;
+  const deviceValue=(preference:typeof inputPreference)=>preference ? String(devices.find(device=>device.name===preference.name&&device.hostapi===preference.hostapi)?.id ?? 'saved') : '';
+  useEffect(()=>{void api('/voice/devices').then(setDevices).catch(error=>setError(error.message));},[]);
+  async function saveDevice(field:'desktopInputDevice'|'desktopOutputDevice',id:string){
+    setBusy(true);setError('');
+    const device=devices.find(value=>String(value.id)===id);
+    try {await mutate('/settings',{voice:{[field]:device?{name:device.name,hostapi:device.hostapi}:null}});}
+    catch(error){setError((error as Error).message);}finally{setBusy(false);}
+  }
   useEffect(() => { if (state.voice.desktop) setRunning(state.voice.desktop.running); }, [state.voice.desktop?.running]);
   useEffect(() => {
     const browserEnabled = () => setRunning(false);
@@ -485,8 +496,6 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
       if (!running) window.dispatchEvent(new Event("companion-native-voice"));
       const result = await api("/voice/desktop", {
         enabled: !running,
-        ...(input ? { inputDevice: Number(input) } : {}),
-        ...(output ? { outputDevice: Number(output) } : {}),
       });
       setRunning(
         Boolean(result.desktop?.running ?? result.running ?? !running),
@@ -502,10 +511,10 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
       <div>
         <h3>Talk while Minecraft is focused</h3>
         <p>
-          The desktop audio bridge listens only while you hold {hotkey}. Enabling it
-          gives this app microphone access outside the browser.
+          Desktop voice starts automatically when you connect or resume. Hold {hotkey} to speak from any app. Pause and disconnect stop capture; your choices stay saved.
         </p>
       </div>
+      <label className="toggle-row"><span>Automatically enable desktop push to talk</span><input type="checkbox" checked={state.settings.voice.desktopEnabled!==false} disabled={busy} onChange={event=>{if(event.target.checked)window.dispatchEvent(new Event('companion-native-voice'));attempt(mutate('/settings',{voice:{desktopEnabled:event.target.checked}}));}} /></label>
       <PushToTalkSetting state={state} mutate={mutate} onStopped={() => setRunning(false)} />
       <button
         className="text-button"
@@ -523,29 +532,31 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
         <>
           <SettingSelect
             label="Desktop microphone"
-            value={input}
+            value={deviceValue(inputPreference)}
             options={{
               "": "System default",
+              ...(inputPreference&&deviceValue(inputPreference)==='saved'?{saved:`${inputPreference.name} · unavailable`}:{}),
               ...Object.fromEntries(
                 devices
                   .filter((d) => d.max_input_channels > 0)
                   .map((d) => [String(d.id), d.name]),
               ),
             }}
-            onChange={setInput}
+            onChange={value=>void saveDevice('desktopInputDevice',value)}
           />
           <SettingSelect
             label="Desktop speakers"
-            value={output}
+            value={deviceValue(outputPreference)}
             options={{
               "": "System default",
+              ...(outputPreference&&deviceValue(outputPreference)==='saved'?{saved:`${outputPreference.name} · unavailable`}:{}),
               ...Object.fromEntries(
                 devices
                   .filter((d) => d.max_output_channels > 0)
                   .map((d) => [String(d.id), d.name]),
               ),
             }}
-            onChange={setOutput}
+            onChange={value=>void saveDevice('desktopOutputDevice',value)}
           />
         </>
       ) : null}

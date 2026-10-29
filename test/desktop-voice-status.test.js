@@ -39,7 +39,7 @@ test('real desktop capture loop orders cancellation and reports failures using s
   assert.match(result.stderr,/Ran 3 tests/);assert.match(result.stderr,/OK/);
 });
 
-test('actual desktop worker reports an invalid microphone through the API without opening capture', async t => {
+test('desktop API rejects a nonexistent microphone without opening capture', async t => {
   if (process.platform !== 'win32' || process.env.COMPANION_TEST_LOCAL_SPEECH !== '1') { t.skip('Opt-in Windows local speech test.');return; }
   const directory=await mkdtemp(join(tmpdir(),'companion-desktop-worker-'));
   const app=await createApp({store:new Store(directory),skipExtensions:true,voiceModule});
@@ -47,11 +47,9 @@ test('actual desktop worker reports an invalid microphone through the API withou
   t.after(async()=>{await app.close();await rm(directory,{recursive:true,force:true});});
   await app.companion.runtime.control('plan');
   const start=await app.inject({method:'POST',url:'/api/voice/desktop',payload:{enabled:true,inputDevice:1000}});
-  assert.equal(start.statusCode,200);assert.equal(start.json().desktop.phase,'starting');
-  const deadline=Date.now()+10_000;
-  while(voiceModule.getVoiceStatus().desktop.running && Date.now()<deadline) await new Promise(resolve=>setTimeout(resolve,25));
+  assert.equal(start.statusCode,400);assert.match(start.json().error,/connected desktop audio/);
   const state=(await app.inject('/api/state')).json();
-  assert.equal(state.voice.desktop.running,false);assert.match(state.voice.desktop.error,/microphone/);
+  assert.equal(state.voice.desktop.running,false);
   assert.doesNotMatch(JSON.stringify(state.voice),/Traceback|PortAudio/);
   assert.equal(state.usage.requests,0);
   await app.companion.runtime.control('pause');

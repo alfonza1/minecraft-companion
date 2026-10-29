@@ -111,6 +111,15 @@ export function createOrchestrator({runtime,store,publish,modelCatalog,providerR
   let quickPending = false;
   const timestamps = [];
   const usage = {requests:0,inputTokens:0,outputTokens:0,cachedInputTokens:0,billingCost:null,...(store.get('usage')?.find(v => v.id === 'total') ?? {})};
+  let inputBudget = store.get('usageBudgets').find(value => value.id === 'input') || { baseline: 0, renewedAt: null };
+  const budgetUsed = () => Math.max(0, usage.inputTokens - inputBudget.baseline);
+  function checkLimits(settings) {
+    const hourly = timestamps.length >= (settings.maxRequestsPerHour ?? 30);
+    const tokens = budgetUsed() >= (settings.maxInputTokens ?? 100_000);
+    if (!hourly && !tokens) return;
+    const error = new Error(hourly ? 'Hourly model request limit reached. Wait or change Requests per hour in Settings.' : 'Local input-token budget reached. In Settings → AI models & reasoning, select Start new token budget to continue. Account status appears separately.');
+    error.code = hourly ? 'MODEL_REQUEST_LIMIT' : 'INPUT_TOKEN_BUDGET'; error.statusCode = 409; throw error;
+  }
   const modelState = { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null };
   function modelStarted(model, purpose, provider = 'codex') { modelState.active = { provider, model: model || null, purpose, startedAt: new Date().toISOString() }; publish(); }
   function modelCompleted(model, purpose, provider = 'codex') {
@@ -142,8 +151,7 @@ export function createOrchestrator({runtime,store,publish,modelCatalog,providerR
     const selection = modelSelection(settings);
     const now = Date.now();
     while (timestamps[0] < now - 3_600_000) timestamps.shift();
-    if (timestamps.length >= (settings.maxRequestsPerHour ?? 30)) throw new Error('Hourly model request limit reached.');
-    if (usage.inputTokens >= (settings.maxInputTokens ?? 100_000)) throw new Error('Configured input-token budget reached.');
+    checkLimits(settings);
     controller = new AbortController();
     const signal = controller.signal;
     saveMessage('user',text);
@@ -166,14 +174,17 @@ export function createOrchestrator({runtime,store,publish,modelCatalog,providerR
       publish(); return plan.reply;
     } finally { controller = null; modelState.active = null; publish(); }
   }
-  return {usage,modelState,cancel,cancelInference,schedule,close:cancel,async designBlueprint({description,version,references=[]}){
+  return {get usage(){return {...usage,inputBudgetUsed:budgetUsed(),inputBudgetRenewedAt:inputBudget.renewedAt};},renewTokenBudget(){
+    if(active)throw new Error('Wait for the current model request or cancel it before renewing the budget.');
+    inputBudget={id:'input',baseline:usage.inputTokens,renewedAt:new Date().toISOString()};store.put('usageBudgets',inputBudget);publish();return this.usage;
+  },modelState,cancel,cancelInference,schedule,close:cancel,async designBlueprint({description,version,references=[]}){
     if(typeof description!=='string'||description.trim().length<8||description.length>4000)throw new Error('Describe your building in 8–4000 characters.');
     if(typeof version!=='string'||!/^\d+\.\d+(\.\d+)?$/.test(version))throw new Error('Choose a supported Minecraft version.');
     if(!Array.isArray(references)||references.length>12||JSON.stringify(references).length>12_000)throw new Error('Reference summaries exceed the analysis limit.');
     gate();if(store.settings().lowTokenMode)throw new Error('Low token mode disables new AI blueprint designs. Turn it off in Settings, or import a blueprint or schematic locally.');
     if(active)throw new Error('Wait for the current model request or cancel it first.');
     const settings=store.settings(),now=Date.now();while(timestamps[0]<now-3_600_000)timestamps.shift();
-    if(timestamps.length>=(settings.maxRequestsPerHour??30)||usage.inputTokens>=(settings.maxInputTokens??100_000))throw new Error('Configured model usage limit reached.');
+    checkLimits(settings);
     controller=new AbortController();const signal=controller.signal;timestamps.push(now);usage.requests++;store.put('usage',{id:'total',...usage});publish();
     const selection = modelSelection(settings);
     modelStarted(selection.model, 'blueprint', selection.provider);

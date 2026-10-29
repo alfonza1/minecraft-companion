@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,rm,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {chromium} from 'playwright';
+import {createApp} from '../../../services/api/index.js';
+import {Store} from '../../../services/memory/store.js';
+import * as voice from '../../../services/voice/index.js';
+
+const directory=await mkdtemp(join(tmpdir(),'companion-voice-persist-ui-')),store=new Store(directory);
+store.put('usage',{id:'total',requests:5,inputTokens:102452,outputTokens:270,cachedInputTokens:0,billingCost:null});
+const devices=[{id:1,name:'Fixture microphone',hostapi:0,max_input_channels:1,max_output_channels:0},{id:11,name:'Fixture headphones',hostapi:1,max_input_channels:0,max_output_channels:2}];
+let starts=0,modelCalls=0;
+const module={...voice,getVoiceStatus:()=>({...voice.getVoiceStatus(),available:true}),checkVoice:async()=>module.getVoiceStatus(),registerVoiceRoutes(app,context){voice.registerVoiceRoutes(app,{...context,desktopDevices:async()=>devices,launchDesktop:(_settings,signal,receive)=>new Promise((_resolve,reject)=>{starts++;receive('{"phase":"ready"}\n');signal.addEventListener('abort',()=>reject(signal.reason),{once:true});})});}};
+const app=await createApp({store,voiceModule:module,modelCatalog:{get:async()=>({models:[],defaultModel:null}),close:async()=>{}},modelRequest:async()=>{modelCalls++;return {plan:{reply:'Hey, I can hear you.',intent:'casual',actions:[]},usage:{input_tokens:12,output_tokens:8}};}});
+await app.listen({host:'127.0.0.1',port:0});
+const browser=await chromium.launch({headless:true});
+try{
+  const page=await browser.newPage({viewport:{width:1440,height:1100},reducedMotion:'reduce'}),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>{window.__COMPANION_DESKTOP__={updatesPending:false};window.micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.micRequests++;throw new Error('No physical microphone in this fixture');};});
+  await page.goto(`http://127.0.0.1:${app.server.address().port}`);
+  const settings=()=>page.getByRole('navigation').getByRole('button',{name:'Settings',exact:true}).click();
+  await settings();const auto=page.getByRole('checkbox',{name:'Automatically enable desktop push to talk'});await auto.waitFor();assert.equal(await auto.isChecked(),true);
+  await page.getByRole('combobox',{name:'Desktop microphone',exact:true}).selectOption('1');
+  await page.getByRole('combobox',{name:'Desktop speakers',exact:true}).selectOption('11');
+  await page.waitForFunction(async()=>(await (await fetch('/api/state')).json()).settings.voice.desktopOutputDevice?.name==='Fixture headphones');
+  await page.reload();await settings();
+  await page.getByRole('combobox',{name:'Desktop speakers',exact:true}).waitFor();assert.equal(await page.getByRole('combobox',{name:'Desktop speakers',exact:true}).inputValue(),'11');
+  assert.equal(await page.getByRole('combobox',{name:'Desktop microphone',exact:true}).inputValue(),'1');
+  assert.equal(starts,0,'Disconnected settings never capture audio');
+  app.companion.runtime.state='ACTIVE';app.companion.runtime.connection.status='connected';app.companion.runtime.emit('connected');app.companion.publish();
+  await page.locator('.voice-dock').getByText('Desktop push to talk ready').waitFor();assert.equal(starts,1);
+  app.companion.runtime.state='PAUSED';app.companion.runtime.emit('pause');app.companion.publish();
+  await page.waitForFunction(async()=>!(await (await fetch('/api/state')).json()).voice.desktop.running);
+  app.companion.runtime.state='ACTIVE';app.companion.runtime.emit('resume');app.companion.publish();
+  await page.locator('.voice-dock').getByText('Desktop push to talk ready').waitFor();assert.equal(starts,2);
+  await page.getByRole('checkbox',{name:'Automatically enable desktop push to talk'}).click();
+  await page.waitForFunction(async()=>!(await (await fetch('/api/state')).json()).voice.desktop.running);
+  await page.reload();await settings();assert.equal(await page.getByRole('checkbox',{name:'Automatically enable desktop push to talk'}).isChecked(),false);
+  const blocked=await page.evaluate(async()=>{const response=await fetch('/api/conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Hello my friend'})});return {status:response.status,body:await response.json()};});
+  assert.equal(blocked.status,409);assert.equal(blocked.body.code,'INPUT_TOKEN_BUDGET');assert.equal(modelCalls,0);
+  await page.getByRole('button',{name:'Start new token budget',exact:true}).click();
+  await page.waitForFunction(async()=>(await (await fetch('/api/state')).json()).usage.inputBudgetUsed===0);
+  assert.equal(store.get('usage')[0].inputTokens,102452);
+  const reply=await page.evaluate(async()=>{const response=await fetch('/api/conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Hello my friend'})});return {status:response.status,body:await response.json()};});
+  assert.equal(reply.status,200);assert.equal(modelCalls,1);assert.equal(store.get('usage')[0].inputTokens,102464);
+  const evidence=join(process.cwd(),'.git/verification/voice-persistence');await mkdir(evidence,{recursive:true});
+  for(const width of [1440,390]){await page.setViewportSize({width,height:1100});assert.equal(await page.locator('body').evaluate(element=>element.scrollWidth>innerWidth),false);await page.screenshot({path:join(evidence,`settings-${width}.png`),fullPage:true});await page.locator('.native-voice').screenshot({path:join(evidence,`desktop-audio-${width}.png`)});}
+  assert.equal(await page.evaluate(()=>window.micRequests),0);assert.deepEqual(errors,[]);
+  await writeFile(join(evidence,'results.json'),JSON.stringify({passed:true,at:new Date().toISOString(),errors,scope:'Real API/SQLite/WebSocket and built UI. Explicit device, connected-event and worker fixtures verify saved default/on/off/devices, active resume, budget error code, renewal and preserved usage. One explicit fake model response, zero external model requests or physical microphone/Realm connections.'},null,2));
+  console.log('Voice persistence, automatic active-session restore and real token-budget recovery UI passed.');
+}finally{await browser.close();await app.close();await rm(directory,{recursive:true,force:true});}

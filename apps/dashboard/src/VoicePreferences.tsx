@@ -9,14 +9,15 @@ import { configureAudioOutput } from '../../desktop-voice/audio-output.js';
 export function PushToTalkSetting({ state, mutate, onStopped }: { state: CompanionState; mutate: Mutate; onStopped: () => void }) {
   const [capturing, setCapturing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [stopping, setStopping] = useState(false);
+  const saving=useRef(false);
   const save = async (binding: PushToTalkBinding) => {
-    setCapturing(false); setBusy(true); setError('');
+    if(saving.current)return;saving.current=true;setBusy(true); setError('');
     try {
-      await api('/voice/desktop', { enabled: false }); onStopped(); window.dispatchEvent(new Event('companion-native-voice'));
+      window.dispatchEvent(new Event('companion-native-voice'));
       await mutate('/settings', { voice: { pushToTalk: binding } });
     }
     catch (error) { setError((error as Error).message); }
-    finally { setBusy(false); }
+    finally {saving.current=false;setCapturing(false);setBusy(false);}
   };
   useEffect(() => {
     if (!capturing) return;
@@ -34,11 +35,11 @@ export function PushToTalkSetting({ state, mutate, onStopped }: { state: Compani
       if (binding) void save(binding);
     };
     window.addEventListener('keydown', key, true); window.addEventListener('pointerdown', mouse, true);
-    return () => { window.removeEventListener('keydown', key, true); window.removeEventListener('pointerdown', mouse, true); };
+    return () => { window.removeEventListener('keydown', key, true); window.removeEventListener('pointerdown', mouse, true);void api('/voice/desktop/suspend',{suspended:false}).catch(()=>{}); };
   }, [capturing, mutate]);
   async function begin() {
     setBusy(true); setStopping(true); setError('');
-    try { await api('/voice/desktop', { enabled: false }); onStopped(); window.dispatchEvent(new Event('companion-native-voice')); setCapturing(true); }
+    try { await api('/voice/desktop/suspend', { suspended:true }); onStopped(); window.dispatchEvent(new Event('companion-native-voice')); setCapturing(true); }
     catch (error) { setError((error as Error).message); }
     finally { setBusy(false); setStopping(false); }
   }
@@ -48,7 +49,7 @@ export function PushToTalkSetting({ state, mutate, onStopped }: { state: Compani
       <button className="button" disabled={busy} onClick={() => void begin()}><Keyboard size={15} />{capturing ? 'Press a key or Mouse 4/5…' : stopping ? 'Stopping capture…' : busy ? 'Saving…' : 'Change key'}</button>
       {capturing ? <button className="text-button" onClick={() => setCapturing(false)}>Cancel</button> : <button className="text-button" disabled={busy} onClick={() => void save(DEFAULT_PUSH_TO_TALK)}>Reset to F8</button>}
     </div>
-    <p className="note">Ctrl, Alt and Shift combinations are supported. Escape cancels. Pick a shortcut Minecraft is not using; the game still receives the key. Changing it stops capture—enable voice again afterward.</p>
+    <p className="note">Ctrl, Alt and Shift combinations are supported. Escape cancels. Pick a shortcut Minecraft is not using; the game still receives the key. Capture pauses while choosing a key, then restores your saved desktop voice setting.</p>
     {capturing ? <p role="status">Waiting for your shortcut…</p> : null}
     {error ? <p className="inline-error" role="alert">{error}</p> : null}
   </div>;

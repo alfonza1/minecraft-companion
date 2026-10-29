@@ -111,6 +111,8 @@ export interface CompanionState {
     at: string;
   }[];
   usage: {
+    inputBudgetUsed?: number;
+    inputBudgetRenewedAt?: string | null;
     requests: number;
     inputTokens: number;
     outputTokens: number;
@@ -135,6 +137,9 @@ export interface CompanionState {
     maxInputTokens: number;
     voice: {
       enabled: boolean;
+      desktopEnabled?: boolean;
+      desktopInputDevice?: {name:string;hostapi:number} | null;
+      desktopOutputDevice?: {name:string;hostapi:number} | null;
       handsFree: boolean;
       speed: number;
       volume: number;

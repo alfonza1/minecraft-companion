@@ -14,6 +14,22 @@ test('ordinary conversation never executes game tools and records real usage',as
   const f=fixture(async()=>({plan:{reply:'Java has static types.',intent:'general',actions:[]},usage:{input_tokens:12,output_tokens:6,cached_input_tokens:2}}));
   assert.equal(await f.orchestrator.respond('Java or Python?'),'Java has static types.');assert.deepEqual(f.tools,[]);assert.equal(f.orchestrator.usage.inputTokens,12);assert.equal(f.orchestrator.usage.billingCost,null);
 });
+
+test('local token budget can be renewed without deleting lifetime usage or bypassing hourly limits',async()=>{
+  let calls=0;
+  const request=async()=>{calls++;return {plan:{reply:'Hey.',intent:'casual',actions:[]},usage:{input_tokens:1001,output_tokens:4}};};
+  const f=fixture(request);
+  await f.orchestrator.respond('Hello friend');
+  await assert.rejects(f.orchestrator.respond('Tell me a joke'),error=>error.code==='INPUT_TOKEN_BUDGET'&&/Start new token budget/.test(error.message));
+  assert.equal(calls,1);f.orchestrator.renewTokenBudget();
+  assert.equal(f.orchestrator.usage.inputBudgetUsed,0);assert.equal(f.orchestrator.usage.inputTokens,1001);
+  await f.orchestrator.respond('Tell me a joke');assert.equal(calls,2);
+  const restored=createOrchestrator({runtime:f.runtime,store:f.store,publish:()=>{},request});
+  assert.equal(restored.usage.inputBudgetUsed,1001);assert.equal(restored.usage.inputTokens,2002);
+  f.orchestrator.renewTokenBudget();await f.orchestrator.respond('Another joke');f.orchestrator.renewTokenBudget();
+  await assert.rejects(f.orchestrator.respond('One more joke'),error=>error.code==='MODEL_REQUEST_LIMIT');assert.equal(calls,3);
+  await restored.close();await f.orchestrator.close();
+});
 test('pause prevents any model request',async()=>{
   let calls=0;const f=fixture(async()=>{calls++;});f.pause();await assert.rejects(f.orchestrator.respond('Hello'),/Resume/);assert.equal(calls,0);
 });
