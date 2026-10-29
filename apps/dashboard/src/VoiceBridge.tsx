@@ -5,6 +5,7 @@ import type { CompanionState } from "../../../packages/shared-types";
 import { useVoice } from "../../desktop-voice/useVoice";
 import { attempt, type Mutate } from "./shared";
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
+import { desktopVoiceLabel } from './desktop-voice-status';
 export default function VoiceBridge({
   state,
   mutate,
@@ -23,6 +24,9 @@ export default function VoiceBridge({
     },
   });
   const active = ["ACTIVE", "BUSY"].includes(state.state);
+  const desktop = state.voice.desktop;
+  const nativeRunning = Boolean(desktop?.running);
+  const desktopApp = Boolean(window.__COMPANION_DESKTOP__);
   const lastNotice = useRef(state.conversation.at(-1)?.id);
   useEffect(() => {
     const newest = state.conversation.at(-1);
@@ -47,13 +51,20 @@ export default function VoiceBridge({
       setError((error as Error).message);
     }
   }
+  async function enableDesktopVoice() {
+    setError('');
+    try {
+      window.dispatchEvent(new Event('companion-native-voice'));
+      await api('/voice/desktop', {enabled:true});
+    } catch (error) { setError((error as Error).message); }
+  }
   return (
-    <div className={`voice-dock ${voice.listening ? "listening" : ""}`}>
+    <div className={`voice-dock ${voice.listening || (nativeRunning && desktop?.phase === 'listening') ? "listening" : ""}`}>
       <div className="voice-dock-status">
         <AudioLines size={19} />
         <div>
           <strong>
-            {voice.listening
+            {nativeRunning ? desktopVoiceLabel(desktop) : voice.listening
               ? "Listening…"
               : voice.speaking
                 ? "Companion speaking"
@@ -62,19 +73,27 @@ export default function VoiceBridge({
                   : "Your voice, across the whole Realm"}
           </strong>
           <small>
-            {error ||
+            {error || desktop?.error ||
               (!active
                 ? "Start your companion to enable voice."
+                : nativeRunning
+                  ? `Hold ${formatHotkey(state.settings.voice.pushToTalk)}, speak, then release. Works while Minecraft or another app is focused.`
                 : voice.enabled
                   ? state.settings.voice.handsFree
                     ? "Hands-free · Speak naturally"
                     : `Push to talk · Hold ${formatHotkey(state.settings.voice.pushToTalk)} or the microphone button`
-                  : "Microphone stays off until you enable it.")}
+                  : desktopApp
+                    ? "Enable desktop voice to talk while Minecraft or another app is focused."
+                    : "Browser voice needs this window focused. Use desktop voice in Settings while gaming.")}
           </small>
         </div>
       </div>
       <div className="voice-dock-controls">
-        {voice.enabled ? (
+        {nativeRunning ? (
+          <button className="button" aria-label="Disable desktop voice" onClick={() => attempt(api('/voice/desktop', {enabled:false}))}>
+            <Power size={15} /> Disable desktop voice
+          </button>
+        ) : voice.enabled ? (
           <>
             <button
               className="button"
@@ -133,10 +152,10 @@ export default function VoiceBridge({
           <button
             className="button"
             disabled={!active || !state.voice.available}
-            onClick={() => attempt(enableBrowserVoice())}
+            onClick={() => attempt(desktopApp ? enableDesktopVoice() : enableBrowserVoice())}
           >
             <Mic size={15} />
-            Enable voice
+            {desktopApp ? 'Enable desktop voice' : 'Enable voice'}
           </button>
         )}
       </div>

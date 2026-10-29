@@ -7,6 +7,7 @@ import voices from './voices.json' with { type: 'json' };
 import { DEFAULT_PUSH_TO_TALK, normalizeHotkey, formatHotkey } from '../../packages/shared-types/hotkeys.js';
 import { z } from 'zod';
 import { createPreviewCache } from './preview-cache.js';
+import { createDesktopStatus } from './desktop-status.js';
 
 const voiceIdSchema=z.enum(voices.map(voice=>voice.id));
 const previewSchema=z.object({voiceId:voiceIdSchema.optional(),speed:z.number().min(0.5).max(2).optional()}).strict();
@@ -23,6 +24,7 @@ let piperReady=false;
 let kokoroReady=false;
 let configuredBinding=DEFAULT_PUSH_TO_TALK;
 let desktop = null;
+let desktopError = null;
 const previewCache = createPreviewCache({
   directory: path.join(dataRoot, 'voice-previews'),
   async identify(voiceId) {
@@ -43,7 +45,7 @@ export async function prepareVoicePreviews(onProgress = () => {}) {
   for (const voice of installed) { const result = await withVoiceJob(signal => previewCache.get(voice.id, signal)); onProgress({ voice: voice.id, cached: result.cached }); }
 }
 export function getVoiceStatus() {
-  return {available:ready,status:pending.size ? 'processing' : ready ? 'ready' : 'setup-required',error:lastError,stt:'faster-whisper tiny.en (local CPU int8)',tts:kokoroReady?'Kokoro (local full-precision neural voices)':piperReady?'Piper LJ Speech (local neural voice)':process.platform === 'win32' ? 'Windows SAPI (local fallback; neural voice not installed)' : 'unavailable',recordingsStored:false,desktop:{running:!!desktop,hotkey:formatHotkey(configuredBinding),binding:configuredBinding,mode:'push-to-talk'}};
+  return {available:ready,status:pending.size ? 'processing' : ready ? 'ready' : 'setup-required',error:lastError,stt:'faster-whisper tiny.en (local CPU int8)',tts:kokoroReady?'Kokoro (local full-precision neural voices)':piperReady?'Piper LJ Speech (local neural voice)':process.platform === 'win32' ? 'Windows SAPI (local fallback; neural voice not installed)' : 'unavailable',recordingsStored:false,desktop:{running:!!desktop,hotkey:formatHotkey(configuredBinding),binding:configuredBinding,mode:'push-to-talk',...(desktop?.status.snapshot() ?? {phase:'off',error:desktopError})}};
 }
 export async function updateVoiceSettings(settings) {
   const binding=normalizeHotkey(settings.pushToTalk);
@@ -89,7 +91,7 @@ export function registerVoiceRoutes(app,{runtime,publish,store}) {
   app.get('/api/voice/devices',async() => {const {stdout}=await runProcess(python,[path.join(root,'worker.py'),'devices'],{timeout:20_000});return JSON.parse(stdout);});
   app.post('/api/voice/desktop',async(request,reply) => {
     const settings=desktopSchema.parse(request.body);
-    if(settings.enabled===false){await stopVoice();return getVoiceStatus();}
+    if(settings.enabled===false){await stopVoice();desktopError=null;return getVoiceStatus();}
     gate();
     if(desktop)return reply.code(409).send({error:'Desktop voice bridge is already running.'});
     if(process.platform!=='win32')return reply.code(400).send({error:'Native desktop push-to-talk currently supports Windows only.'});
@@ -100,7 +102,9 @@ export function registerVoiceRoutes(app,{runtime,publish,store}) {
       if(value!==undefined)args.push(flag,String(value));
     }
     const controller=new AbortController();
-    desktop={controller,promise:runProcess(python,args,{signal:controller.signal,timeout:12*60*60*1000}).catch(error=>{if(error.name!=='AbortError')lastError=error.message;}).finally(()=>{desktop=null;publish();})};
+    const status=createDesktopStatus(publish);
+    desktopError=null;
+    desktop={controller,status,promise:runProcess(python,args,{signal:controller.signal,onStdout:chunk=>status.receive(chunk),timeout:12*60*60*1000}).catch(error=>{if(error.name!=='AbortError')desktopError='Desktop microphone stopped. Check its permissions and device selection, then enable desktop voice again.';}).finally(()=>{desktop=null;publish();})};
     publish();return getVoiceStatus();
   });
   app.post('/api/voice/cancel',async() => {await cancelSpeech();return {stopped:true};});

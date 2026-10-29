@@ -20,6 +20,8 @@ For Minecraft in the foreground, choose **Push-to-talk key → Change key**, the
 
 Pause and stop abort the actual backend processes and wait for exit. `/api/voice/cancel` cancels inference; `stopVoice()` additionally closes native capture. Mic recording remains opt-in; paused browser capture stops all media tracks.
 
+In the taskbar app, the main **Enable desktop voice** button starts the global bridge directly; it does not require the window to stay focused. Browser voice remains a separate, focused-window option. The dashboard and Settings show observed bridge phases (opening microphone, ready, listening, transcribing, thinking, speaking) and actionable failures for short holds, empty transcription, model errors and audio output. Status messages contain only fixed metadata, never recordings or transcripts. Desktop pressing cancels earlier speech/model work, and the new utterance waits for that cancellation before starting transcription, preventing a delayed interrupt from cancelling its own reply. The cancellation requests use five-second timeouts. Pause/stop/disconnect still require voice to be explicitly enabled again.
+
 ## Licenses and sources
 
 - faster-whisper: MIT, https://github.com/SYSTRAN/faster-whisper

@@ -144,6 +144,6 @@ export interface CompanionState {
       ttsVoice?: string;
     };
   };
-  voice: { available: boolean; status: string; error: string | null; desktop?: { running: boolean; hotkey: string; mode: string } };
+  voice: { available: boolean; status: string; error: string | null; desktop?: { running: boolean; hotkey: string; mode: string; phase?: string; error?: string | null } };
   logs: { at: string; level: string; message: string }[];
 }

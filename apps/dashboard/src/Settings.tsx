@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import PrivateAccountActions from './PrivateAccountActions';
 import ModelSettings from './ModelSettings';
 import LowTokenMode from './LowTokenMode';
+import { desktopVoiceLabel } from './desktop-voice-status';
 import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 import type { CompanionState } from "../../../packages/shared-types";
@@ -556,8 +557,8 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
         <Mic size={14} />
         {running ? 'Disable desktop voice' : 'Enable desktop voice'}
       </button>
-      {running ? <Badge tone="green">{hotkey} push to talk enabled</Badge> : null}
-      {error ? <p className="inline-error">{error}</p> : null}
+      {running ? <Badge tone={state.voice.desktop?.error ? "muted" : "green"}>{hotkey} · {desktopVoiceLabel(state.voice.desktop)}</Badge> : null}
+      {error || state.voice.desktop?.error || state.voice.error ? <p className="inline-error">{error || state.voice.desktop?.error || state.voice.error}</p> : null}
     </div>
   );
 }

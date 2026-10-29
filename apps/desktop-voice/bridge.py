@@ -23,11 +23,16 @@ RATE = 16000
 MAX_SAMPLES = RATE * 30
 
 
-def api(route, body=None, content_type='application/json'):
+def api(route, body=None, content_type='application/json', timeout=180):
     payload = json.dumps(body).encode() if isinstance(body, dict) else body
     req = urllib.request.Request(BASE + route, data=payload, headers={'Origin': BASE, 'Content-Type': content_type})
-    with urllib.request.urlopen(req, timeout=180) as result:
+    with urllib.request.urlopen(req, timeout=timeout) as result:
         return result.read()
+
+
+def emit_status(phase, code=None):
+    # Fixed metadata only: no audio, transcripts, prompts or credentials.
+    print(json.dumps({'phase': phase, **({'code': code} if code else {})}), flush=True)
 
 
 def main():
@@ -51,6 +56,8 @@ def main():
     armed = False
     audio_busy = threading.Lock()
     poll_busy = threading.Lock()
+    cancel_busy = threading.Lock()
+    cancellation = [None]
     last_notice = [None]
 
     def play_text(text, token):
@@ -68,8 +75,11 @@ def main():
             with wave.open(io.BytesIO(speech), 'rb') as source:
                 samples = np.frombuffer(source.readframes(source.getnframes()), dtype=np.int16)
                 samples = samples.reshape(-1, source.getnchannels())
+                emit_status('speaking')
                 sd.play(samples.astype(np.float32) / 32768 * settings.get('volume', .8), source.getframerate(), device=args.output_device)
                 sd.wait()
+                if token == generation[0]:
+                    emit_status('ready')
         finally:
             audio_busy.release()
 
@@ -90,15 +100,24 @@ def main():
         finally:
             poll_busy.release()
 
-    def cancel_remote():
-        for endpoint in ['/api/voice/cancel', '/api/conversation/cancel']:
-            try:
-                api(endpoint, {})
-            except Exception:
-                pass
+    def cancel_remote(token):
+        with cancel_busy:
+            for endpoint in ['/api/voice/cancel', '/api/conversation/cancel']:
+                if token != generation[0]:
+                    return
+                try:
+                    api(endpoint, {}, timeout=5)
+                except Exception:
+                    pass
 
-    def converse(samples, token):
+    def converse(samples, token, cancel_thread):
+        stage = 'transcribing'
         try:
+            # A late barge-in cancellation must never cancel this new utterance.
+            cancel_thread.join()
+            if token != generation[0]:
+                return
+            emit_status('transcribing')
             wav = io.BytesIO()
             with wave.open(wav, 'wb') as out:
                 out.setnchannels(1)
@@ -108,18 +127,25 @@ def main():
             boundary = uuid.uuid4().hex
             body = (f'--{boundary}\r\nContent-Disposition: form-data; name="audio"; filename="utterance.wav"\r\nContent-Type: audio/wav\r\n\r\n'.encode() + wav.getvalue() + f'\r\n--{boundary}--\r\n'.encode())
             transcript = json.loads(api('/api/voice/transcribe', body, f'multipart/form-data; boundary={boundary}'))['text']
-            if not transcript or token != generation[0]:
+            if token != generation[0]:
                 return
+            if not transcript:
+                emit_status('error', 'silence')
+                return
+            stage = 'thinking'
+            emit_status('thinking')
             result = json.loads(api('/api/conversation', {'text': transcript}))
             if token != generation[0]:
                 return
             text = result.get('reply', result.get('text'))
             if not text:
+                emit_status('error', 'thinking')
                 return
+            stage = 'speaking'
             play_text(text, token)
-        except Exception as error:
-            # No transcript/audio content is logged.
-            print(json.dumps({'type': 'error', 'message': str(error)}), flush=True)
+        except Exception:
+            if token == generation[0]:
+                emit_status('error', stage)
 
     def capture(indata, _frames, _timing, _status):
         if held and len(frames) * 512 < MAX_SAMPLES:
@@ -127,7 +153,7 @@ def main():
 
     try:
         with sd.InputStream(samplerate=RATE, channels=1, dtype='int16', blocksize=512, device=args.input_device, callback=capture):
-            print(json.dumps({'type': 'ready', 'binding': binding, 'mode': 'push-to-talk'}), flush=True)
+            emit_status('ready')
             next_update = 0
             while True:
                 pressed = binding_pressed(binding, lambda key: bool(ctypes.windll.user32.GetAsyncKeyState(key) & 0x8000))
@@ -136,20 +162,27 @@ def main():
                 if pressed and not held and armed:
                     generation[0] += 1
                     sd.stop()
-                    threading.Thread(target=cancel_remote, daemon=True).start()
+                    cancellation[0] = threading.Thread(target=cancel_remote, args=(generation[0],), daemon=True)
+                    cancellation[0].start()
                     frames.clear()
                     held = True
+                    emit_status('listening')
                 elif held and not pressed:
                     held = False
                     if len(frames) >= 8:
                         samples = np.concatenate(frames).reshape(-1).copy()
-                        threading.Thread(target=converse, args=(samples, generation[0]), daemon=True).start()
+                        threading.Thread(target=converse, args=(samples, generation[0], cancellation[0]), daemon=True).start()
+                    else:
+                        emit_status('error', 'short')
                     frames.clear()
                 if time.monotonic() >= next_update:
                     next_update = time.monotonic() + 2
                     if poll_busy.acquire(blocking=False):
                         threading.Thread(target=check_updates, daemon=True).start()
                 time.sleep(.025)
+    except Exception:
+        emit_status('error', 'microphone')
+        raise
     finally:
         sd.stop()
 
