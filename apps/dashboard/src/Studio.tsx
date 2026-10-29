@@ -2,6 +2,7 @@ import { MODEL_PROVIDERS } from '../../../packages/shared-types/providers';
 import YouTubeOptions from './YouTubeOptions';
 import SelectedReference from './SelectedReference';
 import SourceAnalysis from './SourceAnalysis';
+import AutomaticConstruction from './AutomaticConstruction';
 import {
   Box,
   Check,
@@ -35,9 +36,14 @@ export default function Studio({ state, mutate, busy }: Common) {
   const [localError, setLocalError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [origin, setOrigin] = useState({ x: 0, y: 64, z: 0 });
+  const [automaticReady, setAutomaticReady] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const project =
     state.projects.find((p) => p.id === selected) || state.projects[0];
+  useEffect(() => {
+    const savedOrigin = project?.checkpoint?.origin ?? project?.construction?.origin;
+    if (savedOrigin) setOrigin(savedOrigin);
+  }, [project?.id]);
   const previewBlueprint = useMemo(
     () => project?.blueprint,
     [project?.id, project?.revision],
@@ -385,7 +391,7 @@ export default function Studio({ state, mutate, busy }: Common) {
                 Approve the current design before any construction. Existing
                 blocks are protected; occupied placements stop for review.
               </p>
-              <p className="note">The builder can refill from approved supply chests and craft with unreserved ingredients it carries. Approve chest items in Companion → Routines &amp; supplies. Missing raw materials or safe access pause the build at its checkpoint.</p>
+              <p className="note">The builder refills from approved supply chests. A prepared automatic worksite can also gather common raw materials and construct temporary access. Unsafe or unsupported work preserves a checkpoint.</p>
               {project.compatibility?.limitation ? (
                 <p className="note">{project.compatibility.limitation}</p>
               ) : null}
@@ -428,11 +434,15 @@ export default function Studio({ state, mutate, busy }: Common) {
                   </label>
                 ))}
               </div>
+              <AutomaticConstruction key={project.id} project={project} origin={origin} state={state} mutate={mutate} busy={busy} onReadyChange={setAutomaticReady} />
               <button
                 className="button primary full"
                 disabled={
                   busy ||
                   !project.blueprint ||
+                  (!project.construction && !project.checkpoint) ||
+                  (project.construction && !automaticReady) ||
+                  (project.construction && ['x', 'y', 'z'].some(axis => project.construction.origin[axis] !== origin[axis as keyof typeof origin])) ||
                   project.compatibility?.supported === false ||
                   project.approvedRevision !== project.revision ||
                   !["ACTIVE", "BUSY"].includes(state.state)

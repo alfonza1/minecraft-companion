@@ -58,15 +58,37 @@ hinges and axes; neighbour-derived stair shapes/fence connections are checked
 in the final world pass. Doors wait until the shell finishes for access. Double
 slabs resume from an observed half without double-counting items. Existing
 conflicts and occupied/unloaded positions remain protected. No excavation or
-server commands are used. Automatic scaffolding and destructive repair remain
-unavailable; the user must provide reachable supports and access.
+server commands are used for placement. Optional saved automatic worksite plans
+add grounded ramps, perimeter access and shaped-placement braces. Only confirmed
+temporary blocks are cleaned up; unacknowledged/replaced blocks stop for inspection.
+Plans are scoped to revision/hash/site/Realm/dimension and cannot be discarded
+while ownership or mining intents remain unresolved. Destructive repair stays disabled.
 
 Build supplies reserve available inventory in batches, withdraw allowed items
 from approved chests within64blocks, and craft from unreserved owned ingredients
 using real recipe yields. Wood conversions produce the needed plank batches;
-rare/named/enchanted ingredients are protected. Automatic raw gathering and
-furnace/stonecutter workflows are not part of this build controller. Missing
-supplies block with an actionable checkpoint. Placement uses zero model calls.
+rare/named/enchanted ingredients are protected. Optional raw supply trips gather
+oak/spruce/birch logs and approved-area cobblestone/dirt/sand within64blocks.
+Recipe recursion uses actual yields; an extra four-plank workbench can be built
+at the reviewed site. Shares, starting contributions and mined quantities constrain
+gathering unless covering the user's remainder was enabled. Worksite supplies use
+separate ledgers. Pickup totals are historical, never substituted for inventory.
+Furnace/stonecutter production, arbitrary supplies and tool replacement are not
+implemented. Unsafe conditions or missing sources stop at a checkpoint.
+Placement and supply execution use zero model calls.
+
+`POST /api/projects/:id/construction-plan` takes `{origin,policy}`. Policy fields:
+`scaffolding`, `gatherMaterials`, `takeOverShares`, `scaffoldMaterial` (dirt/cobblestone).
+Preparing inspects without modifying the world; starting the approved project
+executes its saved plan. `{origin,cleanupOnly:true}` on the existing build endpoint
+removes recorded scaffolds independently. Limits live in
+`services/build-executor/construction-plan.js`:32×16×32,512scaffolds,64block radius,
+16raw items per batch. Nonwood mining requires the current Realm/dimension's
+approved mining work area; known project footprints and bases are excluded.
+
+`node scripts/test-native-game.mjs --automatic-build` tests actual temporary
+construction/cleanup, raw gathering, recursive crafting, workbench creation,
+interruption/resume and a tall enclosed house in a disposable local survival world.
 
 `node scripts/test-native-game.mjs --building-only` exercises nine scenarios
 against a disposable localhost official26.3 survival server, including all four

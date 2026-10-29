@@ -8,16 +8,18 @@ import { splitAssignments, updateUserProgress, reconcileAssignments, reconcilePr
 import { archiveReference, parseSchematic, privateDataDir, REFERENCE_LIMITS, youtubeReference } from '../reference-ingestion/index.js';
 import { constructionCompatibility, executeBuild, validateOrigin } from '../build-executor/index.js';
 import { createBuildSupplies, remainingMaterials } from '../build-executor/supplies.js';
+import { assertConstructionEditable, prepareConstruction, constructionPolicy } from '../build-executor/construction-plan.js';
 import {assistedAssignments} from '../resource-ledger/acquisition.js';
 import {registerAnalysisRoutes} from '../reference-ingestion/analysis-routes.js';
 
 export { validateBlueprint, blueprintHash, calculateMaterials };
 
 export function reviseProject(project, input) {
+  assertConstructionEditable(project);
   const blueprint = validateBlueprint(input);
   if (blueprint.version !== project.version) throw new Error('Blueprint version must match its project. Create a new project to change Minecraft version.');
   const materials = calculateMaterials(blueprint);
-  return { ...project, blueprint, revision: project.revision + 1, approvedRevision: null, approvedHash: null, materials, assignments: splitAssignments(materials.raw, project.aiPercent ?? 50), checkpoint: null, reservations: {}, compatibility: constructionCompatibility(blueprint), status: 'draft', updatedAt: new Date().toISOString() };
+  return { ...project, blueprint, revision: project.revision + 1, approvedRevision: null, approvedHash: null, materials, assignments: splitAssignments(materials.raw, project.aiPercent ?? 50), checkpoint: null, construction: null, reservations: {}, compatibility: constructionCompatibility(blueprint), status: 'draft', updatedAt: new Date().toISOString() };
 }
 
 export function approveProject(project) {
@@ -61,6 +63,7 @@ export function registerBuildRoutes(app, context) {
   app.post('/api/references/search',endpoint(async({body})=>context.orchestrator.searchYouTube(body?.query)));
   app.post('/api/projects/:id/reference-choice',endpoint(async({params,body})=>{
     ensureEditable(params.id);const project=getProject(params.id);
+    assertConstructionEditable(project);
     const search=store.get('referenceSearches').find(value=>value.id===body?.searchId);
     const reference=search?.videos.find(value=>value.id===body?.referenceId);
     if(!reference)throw new Error('Choose a verified result from a recent YouTube search.');
@@ -172,6 +175,17 @@ export function registerBuildRoutes(app, context) {
     put({ ...latest, assignments: reconcileAssignments(latest.assignments, observed?.inventory, observed?.observedAt) });
     return { ...result, material, requested: count, remaining: assignmentNeeds(getProject(project.id).assignments.find((a) => a.material === material)) };
   }));
+  app.post('/api/projects/:id/construction-plan', endpoint(async ({ params, body }) => {
+    ensureEditable(params.id);
+    const project = getProject(params.id), bot = runtime.bot;
+    if (!runtime.isActive() || runtime.snapshot().state === 'BUSY' || !bot?.entity) throw new Error('Connect and resume an idle companion at the build site to prepare automatic construction.');
+    if (bot.companionTransport?.projected || runtime.snapshot().world?.inventoryExact === false) throw new Error('Automatic worksite planning requires confirmed native world and inventory data.');
+    if (project.approvedRevision !== project.revision || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the blueprint before preparing its worksite plan.');
+    if (project.version !== bot.version) throw new Error('Project and connected Minecraft versions must match.');
+    const origin = validateOrigin(body?.origin), policy = constructionPolicy.parse(body?.policy);
+    const construction = prepareConstruction(project, origin, bot, store.settings().realmId, policy);
+    return put({ ...project, construction });
+  }));
   async function startBuild(projectId, body) {
     if (runtime.bot?.companionTransport?.projected) throw new Error('Exact construction is disabled on translated connections. Use a natively supported server version.');
     if (runtime.snapshot().world?.inventoryExact === false) throw new Error('Wait for server inventory confirmation before construction.');
@@ -187,9 +201,10 @@ export function registerBuildRoutes(app, context) {
     project.reservations = reservations;
     put(project);
     inFlight.add(project.id);
-    const save = p => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null });
+    const save = p => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, construction: p.construction, status: p.status, reservations: p.reservations, error: null });
     const ensureMaterials = createBuildSupplies({ project, origin, bot: runtime.bot, store, teammate: runtime.teammate, save });
-    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, realmId:store.settings().realmId, signal, save, publish, ensureMaterials }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
+    const cleanupOnly = body.cleanupOnly === true;
+    const job = runtime.runJob(`${cleanupOnly ? 'scaffold cleanup' : 'build'}:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, realmId:store.settings().realmId, signal, save, publish, ensureMaterials, cleanupOnly }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash, cleanupOnly } });
     // The long-running task is owned by the runtime, not the HTTP connection.
     // Frontend aborts cannot masquerade as backend task cancellation.
     void job.catch((error) => {

@@ -98,3 +98,11 @@ test('resupply cancellation stops before crafting or reporting readiness', async
   await assert.rejects(ensure(f.project.blueprint.blocks[0], 1, controller.signal), /Paused/);
   assert.equal(crafted, false);
 });
+
+test('temporary supply allowance does not include blueprint demand for the same material', async () => {
+  const f = supplyFixture(), calls = [];
+  f.project.blueprint = blueprint([{ x: 0, y: 0, z: 0, name: 'cobblestone' }]);
+  const ensure = createBuildSupplies({ ...f, origin, save() {}, teammate: { withdraw: async values => calls.push(values) } });
+  await assert.rejects(ensure({ name: 'cobblestone' }, 1, new AbortController().signal, { temporaryDemand: 3 }), /could not cover/);
+  assert.deepEqual(calls, [[{ name: 'cobblestone', count: 3 }]], 'The blueprint block must not be acquired under the extra worksite allowance');
+});

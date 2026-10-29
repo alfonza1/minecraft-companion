@@ -1,5 +1,51 @@
 # Verification evidence
 
+## Automatic worksite and construction supplies — 2026-10-29
+
+Saved worksite plans provide grounded ramps, perimeter platforms, placement
+braces, acknowledged scaffold ownership, cleanup, bounded raw supply trips,
+common recipe recursion and a four-plank workbench when needed. Actual inventory
+and server block packets drive progress; client-predicted mining air does not
+confirm removal. Execution makes no model requests. Worksite extras are accounted
+separately from blueprint demand and shared-resource assignments.
+
+The official localhost26.3 survival fixture covers elevated access/cleanup,
+real logs→workbench→stairs, approved-area dirt/stone gathering with persisted
+scaffold interruption/resume, and a58-placement enclosed house with46temporary
+blocks removed. The house case supplies its building items; raw gathering is
+exercised by the separate construction cases. This is not evidence of unlimited
+unattended tutorial-house building or construction on the user's Realm.
+
+The automated suite passed242/242 checks with zero skips, including real local
+neural speech. TypeScript and the production dashboard build passed; the existing
+lazy Three.js chunk-size warning remains. The9existing native building cases and17native gameplay regressions passed,
+including server-confirmed crafting, real inventory, handoff, temporary-help
+resume and reconnect. Headless browser checks use the real API/SQLite with an
+isolated read-only world fixture: planning persists, unsaved options disable
+Start, disconnect gates hold, and1440/390layouts have no errors or overflow.
+Desktop/mobile screenshots were inspected. No physical device or Realm actions
+are performed by these tests.
+
+Failures fixed during testing/review: cardinal descent configuration trapped
+the bot on ordinary one-block steps; buried stone crowded approved surface
+sources out of the search limit; closed low platforms could trap a bot inside
+the worksite; dirt naturally grew grass; temporary-material demand could absorb
+blueprint demand; client mining prediction was insufficient confirmation;
+moving/merging drops required live following instead of stale pickup destinations.
+Only continuously observed dirt→grass transitions retain ownership. Unexpected
+changes, or grass discovered after an observation gap, remain protected.
+
+Limits remain explicit: clear bounded worksites, common observed sources,
+approved mining area, safe daylight/health/food, usable tools and inventory room.
+No furnace/stonecutter manufacturing, terrain clearing, destructive repair,
+rare-material supply chain or guarantee of access to every interior/roof.
+Not every brace/layout/material variant has a gameplay fixture.
+
+Evidence: `.git/automatic-build-results.json`, `.git/automatic-house-results.json`,
+`.git/building-game-results.json`, `.git/native-game-results.json`,
+`.git/hackers-lair/verification.json`, `.git/verification/building-ui/` and
+`.git/verification/automatic-build-review.json`. Earlier sections are historical.
+
 ## Local construction controllers — 2026-10-29
 
 Implemented dry stairs/slabs, paired closed doors, log/pillar axes, fences/panes,

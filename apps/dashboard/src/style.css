@@ -1269,6 +1269,7 @@ footer > span {
 }
 .studio-bottom {
   display: grid;
+  align-items: start;
   grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
   gap: 20px;
 }

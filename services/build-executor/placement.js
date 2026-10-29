@@ -62,7 +62,7 @@ export function constructionCompatibility(blueprint) {
     }
   }
   return { supported: unsupported.length === 0, unsupported: [...new Set(unsupported)], issues,
-    limitation: 'Supports inert cubes, dry stairs/slabs, paired closed doors, oriented logs/pillars, fences and glass panes. Uses approved supply chests and owned crafting ingredients. Requires reachable supports/access; automatic scaffolding, excavation and destructive repair are not enabled.' };
+    limitation: 'Supports inert cubes, dry stairs/slabs, paired closed doors, oriented logs/pillars, fences and glass panes. A prepared automatic worksite can add temporary access and braces, gather common raw materials and craft supplies. Terrain clearing, unsupported decorations and destructive repairs remain disabled.' };
 }
 
 export function placementSupport(bot, position, expected = { name: 'stone' }) {
@@ -80,7 +80,7 @@ export function placementSupport(bot, position, expected = { name: 'stone' }) {
   return null;
 }
 
-export async function placeAdaptedBlock(bot, expected, position, support, signal, checkSpace = () => {}) {
+export async function placeAdaptedBlock(bot, expected, position, support, signal, checkSpace = () => {}, onSent = () => {}) {
   signal.throwIfAborted();
   const kind = placementKind(expected, bot.version), properties = expected.properties ?? {};
   if (kind === 'cube' && typeof bot._genericPlace !== 'function') return bot.placeBlock(support.reference, support.face);
@@ -106,6 +106,7 @@ export async function placeAdaptedBlock(bot, expected, position, support, signal
   // Pinned Mineflayer's placeBlock waits for a type change, which cannot confirm
   // two slabs merging. Keep its packet encoder, own state confirmation here.
   await bot._genericPlace(support.reference, face, { delta, forceLook: 'ignore', swingArm: 'right' });
+  onSent();
   const deadline = Date.now() + CONFIRM_TIMEOUT_MS;
   while (Date.now() < deadline) {
     signal.throwIfAborted();
