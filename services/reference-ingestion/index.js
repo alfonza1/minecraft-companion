@@ -49,11 +49,11 @@ export function youtubeId(input) {
   return id;
 }
 
-export async function youtubeReference(input, fetcher = fetch) {
+export async function youtubeReference(input, fetcher = fetch, signal) {
   const id = youtubeId(input);
   const url = `https://www.youtube.com/watch?v=${id}`;
   const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
-  const response = await fetcher(endpoint, { signal: AbortSignal.timeout(8000), redirect: 'error' });
+  const response = await fetcher(endpoint, { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000), redirect: 'error' });
   if (!response.ok) throw new Error(`YouTube metadata unavailable (${response.status}). Upload permitted screenshots or your own video instead.`);
   if (Number(response.headers.get('content-length')) > 65_536) throw new Error('YouTube metadata response exceeded the limit.');
   let body = '';

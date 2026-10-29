@@ -10,6 +10,21 @@ function fixture(request) {
   let active=true;const tools=[];const runtime=Object.assign(new EventEmitter(),{isActive:()=>active,snapshot:()=>({world:null}),execute:async(tool,args)=>{tools.push({tool,args});return {success:true};},cancelTask:async()=>{tools.push('cancel');}});
   return {orchestrator:createOrchestrator({runtime,store,publish:()=>{},request}),runtime,store,tools,pause:()=>{active=false;}};
 }
+
+test('separate conversation model shares current context and escalates gameplay to the work model',async()=>{
+  const calls=[];
+  const f=fixture(async(prompt,options)=>{calls.push({context:JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1)),options});return {model:options.model,usage:{input_tokens:5},plan:{reply:'Got it.',intent:calls.length===1?'casual':'minecraft_action',actions:calls.length===1?[]:[{tool:'chop_tree',args:{count:1}}]}};});
+  f.store.settings=()=>({model:'work-model',separateConversationModel:true,conversationModels:{codex:'chat-model'},maxRequestsPerHour:10,inputTokenLimitEnabled:false});
+  f.store.put('memories',{id:'base',label:'Base',value:'River cottage'});
+  f.runtime.snapshot=()=>({world:{health:18,inventory:[{name:'oak_log',count:9}]},currentTask:{label:'Gathering stone'}});
+  await f.orchestrator.respond('How is it going?');
+  await f.orchestrator.respond('We could use some more timber');
+  assert.deepEqual(calls.map(c=>c.options.model),['chat-model','chat-model','work-model']);
+  for(const call of calls){assert.equal(call.context.world.health,18);assert.equal(call.context.currentTask.label,'Gathering stone');assert.equal(call.context.memory[0].value,'River cottage');}
+  assert.deepEqual(calls[1].context,calls[2].context);assert.equal(calls[0].options.fastResponses,true);assert.equal(calls[2].options.fastResponses,false);
+  assert.equal(f.orchestrator.usage.requests,3);assert.equal(f.orchestrator.usage.inputTokens,15);
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(f.tools.length,1);await f.orchestrator.close();
+});
 test('ordinary conversation never executes game tools and records real usage',async()=>{
   const f=fixture(async()=>({plan:{reply:'Java has static types.',intent:'general',actions:[]},usage:{input_tokens:12,output_tokens:6,cached_input_tokens:2}}));
   assert.equal(await f.orchestrator.respond('Java or Python?'),'Java has static types.');assert.deepEqual(f.tools,[]);assert.equal(f.orchestrator.usage.inputTokens,12);assert.equal(f.orchestrator.usage.billingCost,null);

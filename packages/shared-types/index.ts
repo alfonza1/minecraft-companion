@@ -104,6 +104,7 @@ export interface CompanionState {
   };
   tasks: any[];
   projects: Project[];
+  referenceSearches?:{id:string;query:string;styles:string;at:string;videos:{id:string;videoId:string;title:string;author:string;url:string;thumbnail:string;reason:string}[]}[];
   memories: { id: string; label: string; value: string }[];
   conversation: {
     id: string;
@@ -136,6 +137,8 @@ export interface CompanionState {
     providerModels?: { claude?: string; opencode?: string };
     lowTokenMode?: boolean;
     fastResponses?:boolean;
+    separateConversationModel?:boolean;
+    conversationModels?:{codex?:string;claude?:string;opencode?:string};
     maxRequestsPerHour: number;
     maxInputTokens: number;
     inputTokenLimitEnabled?: boolean;

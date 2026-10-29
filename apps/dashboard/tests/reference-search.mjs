@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {chromium} from 'playwright';
+import {createApp} from '../../../services/api/index.js';
+import {Store} from '../../../services/memory/store.js';
+const directory=await mkdtemp(join(tmpdir(),'companion-reference-ui-')),store=new Store(directory);
+let unavailable=true,searches=0,designs=0;
+const videos=[{id:'fixture-video',videoId:'2ToE3wGcbso',title:'Minecraft: Small Medieval Cottage — a deliberately long tutorial title for responsive layout verification',author:'Fixture author',url:'https://www.youtube.com/watch?v=2ToE3wGcbso',thumbnail:'https://i.ytimg.com/vi/2ToE3wGcbso/hqdefault.jpg',reason:'A compact natural cottage with a stone foundation. Test provider result, not live search.',type:'youtube'}];
+for(const [index,id] of ['zGfYhB95XY4','L9YaJyNwldI'].entries())videos.push({...videos[0],id:`fixture-${index}`,videoId:id,title:`Alternate cottage option ${index+2} — test fixture`,url:`https://www.youtube.com/watch?v=${id}`,thumbnail:`https://i.ytimg.com/vi/${id}/hqdefault.jpg`});
+const app=await createApp({store,searchRequest:async()=>{searches++;if(unavailable)throw new Error('Test search unavailable. Try again.');return {data:{videos},model:'fixture-work',usage:{input_tokens:12}};},verifyVideos:async()=>videos,designRequest:async({version})=>{designs++;return {model:'fixture-work',usage:{input_tokens:10},blueprint:{version,dimensions:{x:3,y:3,z:1},blocks:[...Array.from({length:8},(_,i)=>({x:i%3,y:Math.floor(i/3),z:0,name:'oak_planks',properties:{},section:'walls'})),{x:2,y:2,z:0,name:'quartz_block',properties:{},section:'detail'}],uncertainties:['The video was not analyzed; these are fixture design blocks.']}};}});
+await app.listen({host:'127.0.0.1',port:0});const browser=await chromium.launch({headless:true});
+const output='.git/verification/reference-search-ui',evidence={at:new Date().toISOString(),passed:false,errors:[],scope:'Headless browser, real localhost API and isolated SQLite. Explicit search/design provider fixtures test workflow, failure states, persistence and responsive layout. Actual Codex/YouTube search and generation are recorded separately in reference-search/live.json and design.json. No Realm or microphone.'};
+try{
+  const page=await browser.newPage({viewport:{width:1440,height:1100},reducedMotion:'reduce'});page.on('pageerror',error=>evidence.errors.push(error.message));
+  await page.goto(`http://127.0.0.1:${app.server.address().port}`);await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'Find on YouTube',exact:true}).isDisabled(),true);
+  await page.getByRole('button',{name:'Start planning offline',exact:true}).click();
+  await page.getByRole('button',{name:'Find on YouTube',exact:true}).click();
+  await page.locator('.inline-error[role="alert"]').filter({hasText:'Test search unavailable'}).waitFor();unavailable=false;
+  await page.getByRole('button',{name:'Find on YouTube',exact:true}).click();
+  await page.getByRole('heading',{name:videos[0].title,exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Choose reference',exact:true}).count(),3);
+  await page.getByRole('button',{name:'Choose reference',exact:true}).first().click();
+  await page.getByText('Chosen reference: '+videos[0].title,{exact:true}).waitFor();
+  assert.equal(store.get('projects')[0].selectedReference.referenceId,videos[0].id);
+  await page.getByRole('button',{name:'Generate inspired design + shared plan',exact:true}).click();
+  await page.getByText('9 block placements',{exact:true}).waitFor();assert.equal(designs,1);assert.equal(store.get('projects')[0].approvedRevision,null);
+  assert.equal(store.get('projects')[0].assignments.find(row=>row.material==='oak_log').aiRequired,1);
+  assert.equal(store.get('projects')[0].assignments.find(row=>row.material==='quartz').aiRequired,0);
+  assert.equal(await page.getByRole('button',{name:'Start construction',exact:true}).isDisabled(),true);
+  await mkdir(output,{recursive:true});
+  for(const width of [1440,390]){await page.setViewportSize({width,height:1100});await page.screenshot({path:join(output,`studio-${width}.png`),fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
+  await page.getByRole('navigation').getByRole('button',{name:'Shared tasks',exact:true}).click();
+  await page.getByText('Recommended for you:',{exact:true}).waitFor();
+  await page.screenshot({path:join(output,'assignments-390.png'),fullPage:true});
+  await page.reload();await page.getByRole('navigation').getByRole('button',{name:'Build studio',exact:true}).click();await page.getByText('Chosen reference: '+videos[0].title,{exact:true}).waitFor();
+  assert.equal(searches,2);assert.equal(designs,1);assert.deepEqual(evidence.errors,[]);evidence.passed=true;
+}finally{await mkdir(output,{recursive:true});await writeFile(join(output,'results.json'),JSON.stringify(evidence,null,2));await browser.close();await app.close();await rm(directory,{recursive:true,force:true});}
+console.log(evidence);

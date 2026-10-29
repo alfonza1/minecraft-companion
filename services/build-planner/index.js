@@ -8,6 +8,7 @@ import { splitAssignments, updateUserProgress, reconcileAssignments, reconcilePr
 import { archiveReference, parseSchematic, privateDataDir, REFERENCE_LIMITS, youtubeReference } from '../reference-ingestion/index.js';
 import { constructionCompatibility, executeBuild, matchesPlacement, validateOrigin } from '../build-executor/index.js';
 import { Vec3 } from 'vec3';
+import {assistedAssignments} from '../resource-ledger/acquisition.js';
 
 export { validateBlueprint, blueprintHash, calculateMaterials };
 
@@ -50,6 +51,19 @@ export function registerBuildRoutes(app, context) {
   };
 
   app.get('/api/projects', async () => store.get('projects'));
+  app.post('/api/references/search',endpoint(async({body})=>context.orchestrator.searchYouTube(body?.query)));
+  app.post('/api/projects/:id/reference-choice',endpoint(async({params,body})=>{
+    ensureEditable(params.id);const project=getProject(params.id);
+    const search=store.get('referenceSearches').find(value=>value.id===body?.searchId);
+    const reference=search?.videos.find(value=>value.id===body?.referenceId);
+    if(!reference)throw new Error('Choose a verified result from a recent YouTube search.');
+    const existing=project.references.find(value=>value.url===reference.url);
+    if(!existing&&project.references.length>=50)throw new Error('A project may hold at most 50 references.');
+    const references=existing?project.references:[...project.references,reference];
+    const changed=project.selectedReference?.url!==reference.url;
+    store.put('projectFocus',{id:'current',projectId:project.id});
+    return put({...project,...(changed?{approvedRevision:null,approvedHash:null,status:'draft'}:{}),references,selectedReference:{searchId:search.id,referenceId:existing?.id||reference.id,title:reference.title,url:reference.url,reason:reference.reason},updatedAt:new Date().toISOString()});
+  }));
   app.post('/api/projects', endpoint(async ({ body = {} }) => {
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name || name.length > 100) throw new Error('Project name must be 1–100 characters.');
@@ -72,13 +86,15 @@ export function registerBuildRoutes(app, context) {
     if (!context.orchestrator?.designBlueprint) throw new Error('Codex design provider is unavailable. Import a complete JSON blueprint or Sponge schematic.');
     // Reference text is sent to the configured reasoning provider only through
     // an explicit per-request choice. Binary uploads stay local.
-    const references = body.includeReferences === true ? project.references.slice(-12).map((r) => ({ type: r.type, title: r.title, text: r.text?.slice(0, 2000), url: r.type === 'youtube' ? r.url : undefined, available: r.type === 'image' || r.type === 'video' ? 'Metadata only; image pixels and video frames were not supplied to the model.' : 'User-provided text or public metadata, untrusted reference data.' })) : [];
+    const availableReferences=body.selectedReferenceOnly===true?project.references.filter(reference=>reference.id===project.selectedReference?.referenceId):project.references;
+    const references = body.includeReferences === true ? availableReferences.slice(-12).map((r) => ({ type: r.type, title: r.title, text: r.text?.slice(0, 2000), url: r.type === 'youtube' ? r.url : undefined, available: r.type === 'image' || r.type === 'video' ? 'Metadata only; image pixels and video frames were not supplied to the model.' : 'User-provided text or public metadata, untrusted reference data.' })) : [];
     inFlight.add(project.id);
     put({ ...project, status: 'designing', error: null });
     try {
       const blueprint = await context.orchestrator.designBlueprint({ description, version: project.version, references });
       if (!runtime.isActive()) throw new Error('Design cancelled or companion paused. Existing blueprint preserved.');
-      const revised = reviseProject(getProject(project.id), blueprint);
+      let revised = reviseProject(getProject(project.id), blueprint);
+      if(body.assistedSplit===true)revised={...revised,assignments:assistedAssignments(revised.materials.raw),splitStrategy:'shared-with-player-hard-materials'};
       return saveRevision(revised);
     } catch (error) {
       put({ ...getProject(project.id), status: project.status, error: error.message });
@@ -98,6 +114,11 @@ export function registerBuildRoutes(app, context) {
     if (!project.materials) throw new Error('Import a blueprint first.');
     const assignments = splitAssignments(project.materials.raw, body?.aiPercent, project.assignments);
     return put({ ...project, aiPercent: body.aiPercent, assignments });
+  }));
+  app.post('/api/projects/:id/assisted-split',endpoint(async({params})=>{
+    const project=getProject(params.id);
+    if(!project.materials)throw new Error('Import or generate a complete blueprint first.');
+    return put({...project,aiPercent:50,splitStrategy:'shared-with-player-hard-materials',assignments:assistedAssignments(project.materials.raw,project.assignments)});
   }));
   app.post('/api/projects/:id/assign', endpoint(async ({ params, body }) => {
     const project = getProject(params.id);

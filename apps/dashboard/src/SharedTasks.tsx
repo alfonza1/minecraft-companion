@@ -65,6 +65,8 @@ export default function SharedTasks({ state, mutate, busy }: Common) {
               </button>
             </div>
           </div>
+          <button className="button" disabled={busy||!project.materials} onClick={()=>attempt(mutate(`/projects/${project.id}/assisted-split`,{}))}>50/50 common materials · difficult materials to me</button>
+          <p className="note">The assisted split checks supported skills, not unseen resource availability. You can override any material below. Shared chest stock and your inventory are not automatically counted as gathered contributions.</p>
           {project.assignments?.length ? (
             <div className="assignment-grid">
               {project.assignments.map((a: any) => (
@@ -159,6 +161,7 @@ function Assignment({
           <p>{a.total.toLocaleString()} needed in total</p>
         </div>
       </div>
+      {a.acquisition?<p className="note"><strong>{a.acquisition.difficulty==='player-recommended'?'Recommended for you':'Companion prerequisites'}:</strong> {a.acquisition.reason}</p>:null}
       <div className="assignment-owner">
         <span>
           You <small>Reported by you</small>

@@ -1,4 +1,6 @@
 import { MODEL_PROVIDERS } from '../../../packages/shared-types/providers';
+import YouTubeOptions from './YouTubeOptions';
+import SelectedReference from './SelectedReference';
 import {
   Box,
   Check,
@@ -145,6 +147,7 @@ export default function Studio({ state, mutate, busy }: Common) {
           </button>
         </div>
       ) : null}
+      <YouTubeOptions state={state} mutate={mutate} busy={busy} projectId={project?.id} version={blueprintVersion} onChoose={setSelected}/>
       {!project ? (
         <Panel>
           <Empty icon={Construction} title="Something worth building together">
@@ -221,6 +224,7 @@ export default function Studio({ state, mutate, busy }: Common) {
               </div>
             </Panel>
             <Panel title="Source material" eyebrow="START WITH AN IDEA">
+              <SelectedReference key={project.id+project.selectedReference?.referenceId} project={project} state={state} mutate={mutate} busy={busy}/>
               <div className="segmented full">
                 <button
                   className={sourceTab === "reference" ? "selected" : ""}
@@ -373,6 +377,7 @@ export default function Studio({ state, mutate, busy }: Common) {
               }
             >
               <MaterialTable project={project} />
+              {project.materials?<><button className="button" disabled={busy} onClick={()=>attempt(mutate(`/projects/${project.id}/assisted-split`,{}))}>Split common materials 50/50; give me the difficult ones</button><p className="note">Common materials are split by item count. Materials without a validated acquisition route go to you, so the overall workload may differ from half. Review and change assignments in Shared tasks. No gathering starts before blueprint approval.</p></>:null}
             </Panel>
             <Panel title="Ready to build?" eyebrow="SURVIVAL CONSTRUCTION">
               <p className="note">

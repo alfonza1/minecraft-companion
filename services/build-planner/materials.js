@@ -27,7 +27,8 @@ export function calculateMaterials(blueprint, recipeOverrides = {}, productionCa
     if (ancestors.includes(name)) return false;
     if (plans.has(name)) return true;
     const productionChoices = productionCatalog.recipes.get(name) ?? [];
-    if ((RAW.test(name) || NATURAL.has(name)) && !productionChoices.length) {
+    const naturallyGathered=NATURAL.has(name)&&name!=='charcoal';
+    if (naturallyGathered||((RAW.test(name) || NATURAL.has(name)) && !productionChoices.length)) {
       plans.set(name, null); depths.set(name, 0);
       if (name.endsWith('_ingot')) unresolved.push(`${name}: refined resource prerequisite; ore smelting and fuel are not included in the installed crafting recipe dataset.`);
       return true;

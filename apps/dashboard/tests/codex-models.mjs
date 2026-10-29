@@ -25,8 +25,14 @@ try {
   await selector.selectOption(alternative.id);
   await page.waitForFunction(id => document.querySelector('.model-current code')?.textContent === id, alternative.id);
   assert.equal(store.settings().model, alternative.id);
+  await page.getByLabel('Separate conversation model',{exact:false}).click();
+  await page.getByRole('combobox',{name:'Conversation model',exact:true}).selectOption(catalog.defaultModel);
+  await page.waitForFunction(id=>document.querySelector('select[aria-label="Conversation model"]')?.value===id,catalog.defaultModel);
+  assert.equal(store.settings().conversationModels.codex,catalog.defaultModel);
   await page.reload(); await settings();
   await page.waitForFunction(id => document.querySelector('select[aria-label="Companion model"]')?.value === id && !document.querySelector('select[aria-label="Companion model"]')?.disabled, alternative.id);
+  assert.equal(await page.getByLabel('Separate conversation model',{exact:false}).isChecked(),true);
+  assert.equal(await page.getByRole('combobox',{name:'Conversation model',exact:true}).inputValue(),catalog.defaultModel);
   const account = page.getByRole('heading', { name: 'Minecraft account', exact: true }).locator('xpath=ancestor::section[1]'), codex = page.getByRole('heading', { name: 'AI models & reasoning', exact: true }).locator('xpath=ancestor::section[1]');
   const first = await account.boundingBox(), second = await codex.boundingBox();
   assert.ok(Math.abs(first.x - second.x) < 2); assert.ok(second.y - first.y - first.height >= 0 && second.y - first.y - first.height < 36, 'Codex must directly follow account settings without audio-panel whitespace.');

@@ -28,13 +28,19 @@ test('provider choices migrate existing Codex settings and keep each model indep
     assert.equal((await post({ provider: 'claude', providerModels: { claude: 'sonnet' } })).statusCode, 200);
     assert.equal((await post({ provider: 'opencode', providerModels: { opencode: 'fixture/local' } })).statusCode, 200);
     assert.deepEqual(store.settings().providerModels, { claude: 'sonnet', opencode: 'fixture/local' });
+    assert.equal((await post({separateConversationModel:true,conversationModels:{claude:'haiku',codex:'gpt-6-luna'}})).statusCode,200);
+    assert.deepEqual(modelSelection(store.settings(),'conversation'),{provider:'opencode',model:'fixture/local'});
+    assert.equal((await post({conversationModels:{opencode:'fixture/chat'}})).statusCode,200);
+    assert.equal(modelSelection(store.settings(),'conversation').model,'fixture/chat');assert.equal(modelSelection(store.settings(),'work').model,'fixture/local');
+    assert.equal(store.settings().conversationModels.claude,'haiku');
+    assert.equal((await post({conversationModels:{codex:'--bad;command'}})).statusCode,400);
     assert.equal((await post({ provider: 'bad' })).statusCode, 400); assert.equal((await post({ providerModels: { claude: '--help;bad' } })).statusCode, 400);
     const response = await app.inject({ url: '/api/ai/opencode/models', headers: { host: '127.0.0.1:4365' } });
     assert.equal(response.statusCode, 200); assert.equal(response.json().defaultModel, 'fixture/local');
     assert.equal(app.companion.snapshot().usage.requests, 0);
     assert.equal(store.get('memories')[0].value, '12,64,12'); assert.equal(store.get('tasks')[0].status, 'saved');
   } finally { await app.close(); }
-  const reopened = new Store(directory); assert.equal(reopened.settings().provider, 'opencode'); assert.equal(reopened.settings().model, 'existing-codex'); assert.equal(reopened.settings().providerModels.claude, 'sonnet'); reopened.close(); await rm(directory, { recursive: true, force: true });
+  const reopened = new Store(directory); assert.equal(reopened.settings().provider, 'opencode'); assert.equal(reopened.settings().model, 'existing-codex'); assert.equal(reopened.settings().providerModels.claude, 'sonnet');assert.equal(reopened.settings().conversationModels.claude,'haiku');assert.equal(reopened.settings().conversationModels.codex,'gpt-6-luna'); reopened.close(); await rm(directory, { recursive: true, force: true });
 });
 
 test('external catalogs coalesce, cache and filter unsafe IDs without claiming verified account access', async () => {

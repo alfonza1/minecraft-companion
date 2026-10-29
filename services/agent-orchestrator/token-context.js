@@ -14,13 +14,14 @@ function relevant(records, message, fields, count) {
     .sort((a, b) => b.score - a.score || b.index - a.index).slice(0, count).map(value => value.record);
 }
 
-export function compactConversationContext({ message, recent, memory, world, currentTask, savedTasks, teammate, playerName, availableActions }) {
+export function compactConversationContext({ message, recent, memory, project, world, currentTask, savedTasks, teammate, playerName, availableActions }) {
   const previous = recent.at(-1)?.role === 'user' && recent.at(-1).text === message.slice(0, 2000) ? recent.slice(0, -1) : recent;
   const entities = world?.nearbyEntities || [];
   const threats = entities.filter(entity => HOSTILE.test(entity.name));
   const nearby = [...entities].sort((a, b) => Number(HOSTILE.test(b.name)) - Number(HOSTILE.test(a.name)) || a.distance - b.distance).slice(0, limits.nearbyEntities);
   return {
     message,
+    project:project?{...project,assignments:project.assignments?.slice(0,12),uncertainties:project.uncertainties?.slice(0,3)}:null,
     recent: previous.slice(-limits.messages).map(value => ({ role: value.role, text: value.text.slice(0, limits.messageCharacters) })),
     memory: relevant(memory, message, ['label', 'value'], limits.memories).map(value => ({ label: String(value.label || '').slice(0, 100), value: String(value.value || '').slice(0, limits.memoryCharacters) })),
     world: world ? { observedAt: world.observedAt, provenance: world.provenance, inventoryExact: world.inventoryExact, dimension: world.dimension, position: point(world.position), health: world.health, food: world.food, oxygen: world.oxygen,

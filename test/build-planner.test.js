@@ -76,6 +76,16 @@ test('production catalogs resolve tags safely and reject mismatched source versi
   assert.equal(catalog.size, 0);
 });
 
+test('natural gathering wins over circular stone and cobblestone production routes',()=>{
+  const catalog={source:{kind:'fixture'},recipes:new Map([
+    ['cobblestone',[{yield:1,ingredients:[{name:'stone',count:1}],method:'stonecutting'}]],
+    ['stone',[{yield:1,ingredients:[{name:'cobblestone',count:1}],method:'smelting',cookingTicks:200}]],
+  ])};
+  const result=calculateMaterials(design([{x:0,y:0,z:0,name:'cobblestone'},{x:1,y:0,z:0,name:'stone'}]),{},catalog);
+  assert.deepEqual(result.raw.map(({name,quantity})=>({name,quantity})),[{name:'cobblestone',quantity:2}]);
+  assert.equal(result.fuel.cookingTicks,200);assert.equal(result.steps.length,1);
+});
+
 test('revisions invalidate approval and checkpoints; approval hash detects subsequent mutation', () => {
   const first = reviseProject({ id: 'p', version, revision: 0 }, design());
   const approved = approveProject(first);
