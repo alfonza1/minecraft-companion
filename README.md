@@ -134,7 +134,7 @@ node scripts/test-companion-live.mjs --codex
 
 See [verification](docs/VERIFICATION.md), [phase checklist](docs/IMPLEMENTATION.md), [build APIs](services/build-planner/README.md) and [contracts](docs/INTERFACES.md). Tests distinguish doubles, real parsers, actual process/audio/provider calls and local survival gameplay. Official1.21.5 and native26.3 vanilla crafting passed with actual inventory transactions. The private test JRE is outside Minecraft and never changes system Java/PATH. Passive licensed26.3 Realm login is separately verified; Realm crafting/gathering/construction remain untested.
 
-Unfinished requested scope includes advanced cave/branch mining, creating/expanding farms, general furnace production workflows and trading, armor optimization, guard coordination, Nether/End progression, unrestricted strategic initiative, open-ended voice project reassignment, full-video coverage/local caption alignment, general terrain preparation/repair, unrestricted building supply chains, player inventory companion, streaming speech, alternative STT settings, conversation summarization and full project import. See [current capabilities and limitations](docs/CAPABILITIES.md). These are bounded implemented slices, not all eight completed phases.
+Unfinished requested scope includes advanced cave/branch mining, creating/expanding farms, general furnace production workflows and trading, armor optimization, guard coordination, Nether/End progression, unrestricted strategic initiative, open-ended voice project reassignment, full-video coverage/local caption alignment, general terrain preparation/repair, unrestricted building supply chains, player inventory companion, provider-token speech streaming, alternative STT settings, conversation summarization and full project import. See [current capabilities and limitations](docs/CAPABILITIES.md). These are bounded implemented slices, not all eight completed phases.
 
 The API binds **127.0.0.1 only**, with host/origin checks for HTTP/WebSockets. Remote access/authentication are unavailable. No public ports, purchases, paid accounts or sensitive system changes were made. Paper/RCON/skins/plugin workflows remain offline upstream tools and are not used for Realms. Original [Mineness README](docs/UPSTREAM.md), LICENSE and NOTICE retain attribution. Minecraft is a Mojang/Microsoft product; no affiliation is implied.
 
@@ -159,3 +159,26 @@ Alternatively, upload permitted PNG/JPEG/WebP images or MP4/WebM video and use y
 Both routes produce source evidence with measurements, visible/spoken/inferred observations, timestamps, source-reported materials and unresolved details. Review it before reconstruction. Codex turns that evidence into box operations that expand into the actual blueprint, up to50,000placements,128blocks per axis and262,144cells volume. It preserves identified geometry/palette and reports unsupported states instead of replacing them to fit the builder. Hidden details require review; exact quantities describe only the saved blueprint. Assisted gathering shares are computed afterward; construction remains separately approval-gated.
 
 Pause/Stop joins decoding/Codex cancellation. Google uses tracked background interaction IDs, explicit remote cancellation and deletion after retrieval/cancellation. Failed cleanup remains visible and blocks another Google analysis until resolved. A connection failure before Google returns a job ID cannot prove whether remote work started; inspect the Google account before retrying. Provider retention/data-use policies still apply. Keys are DPAPI-encrypted under private provider-secrets and excluded from settings/state/export responses.
+
+
+## Faster work and difficult materials
+
+Construction prepares a bounded section supply batch, groups nearby placements by height/material,
+crafts several recipe repetitions per workbench session, and adds access scaffolds as higher layers
+need them. It checks usable tools and can withdraw plain replacements from explicitly approved
+chests. Actual server placement, inventory and mining confirmations remain required.
+
+Say **“get another stack of oak logs”**, **“keep building”**, or **“find bamboo”** for deterministic
+commands. Temporary requests continue to use the existing resume-after-help setting.
+Difficult or unavailable materials produce a spoken request and a persistent card in **Shared tasks**.
+The assisted split defaults biome-specific and unsupported supplies to you. An explicit search checks
+safe loaded Overworld surface terrain, saves an observed location and returns. It does not guarantee
+a distant jungle or automatically harvest an unapproved source. Temporary dirt/cobblestone platforms
+need no bamboo; the Minecraft scaffolding item does need bamboo and string.
+
+Speech weights warm at activation and remain loaded while active, trading some RAM for lower latency.
+Both desktop PTT and browser voice play sentence-sized audio while subsequent sentences synthesize.
+Pause/Stop cancels actual synthesis and releases the worker. The AI's validated response must arrive
+before speech starts; this is not provider-token streaming or instant thinking.
+**Settings → Diagnostics → Where time goes** shows measured stage timings without model calls or
+invented costs. See [limits, tuning and evidence](docs/SPEED-IMPLEMENTATION.md).
