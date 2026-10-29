@@ -173,6 +173,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
         <Panel title="AI models & reasoning" eyebrow="THINK WHEN IT MATTERS">
           <ModelSettings state={state} mutate={mutate} />
           <LowTokenMode state={state} mutate={mutate} />
+          <label className="toggle-row"><span>Limit input tokens<small>Optional local cap. Off by default; provider limits still apply.</small></span><input type="checkbox" checked={state.settings.inputTokenLimitEnabled===true} onChange={event=>attempt(mutate('/settings',{inputTokenLimitEnabled:event.target.checked}))} /></label>
           <div className="two-inputs">
             <label className="field-label">
               Requests per hour
@@ -197,6 +198,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
                 min="0"
                 step="1000"
                 value={state.settings.maxInputTokens}
+                disabled={state.settings.inputTokenLimitEnabled!==true}
                 onChange={(e) =>
                   attempt(
                     mutate("/settings", {
@@ -207,8 +209,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               />
             </label>
           </div>
-          <p className="note">Current local budget: {(state.usage.inputBudgetUsed ?? state.usage.inputTokens).toLocaleString()} / {state.settings.maxInputTokens.toLocaleString()} reported input tokens. This is an app spending guard, separate from your account limits. Renewing starts another budget at the same limit and preserves lifetime usage.</p>
-          <button className="button" disabled={Boolean(state.ai?.modelState?.active)} onClick={() => attempt(mutate('/usage/renew-budget', {}))}>Start new token budget</button>
+          {state.settings.inputTokenLimitEnabled===true ? <><p className="note">Current local budget: {(state.usage.inputBudgetUsed ?? state.usage.inputTokens).toLocaleString()} / {state.settings.maxInputTokens.toLocaleString()} reported input tokens. Renewing starts another budget at the same limit and preserves lifetime usage.</p><button className="button" disabled={Boolean(state.ai?.modelState?.active)} onClick={() => attempt(mutate('/usage/renew-budget', {}))}>Start new token budget</button></> : <p className="note" role="status">No local token cap. Usage is still tracked. The separate hourly request limit and your provider’s account limits still apply.</p>}
           <div className="usage-box">
             <div>
               <span>Requests</span>

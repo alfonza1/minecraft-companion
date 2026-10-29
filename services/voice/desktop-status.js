@@ -12,9 +12,14 @@ const ERRORS = {
 
 export function createDesktopStatus(onChange = () => {}) {
   let value = { phase: 'starting', error: null };
+  let errorCode = null;
   let remainder = '';
   return {
     snapshot: () => ({ ...value }),
+    clearError(code) {
+      if (value.phase !== 'error' || (code && code !== errorCode)) return;
+      value = {phase:'ready',error:null};errorCode=null;onChange();
+    },
     receive(chunk) {
       remainder += chunk;
       if (remainder.length > 8192) { remainder = ''; return; }
@@ -23,6 +28,7 @@ export function createDesktopStatus(onChange = () => {}) {
         let event; try { event = JSON.parse(line); } catch { continue; }
         if (!event || typeof event !== 'object' || !PHASES.has(event.phase)) continue;
         const error = typeof event.code === 'string' && Object.hasOwn(ERRORS,event.code) ? ERRORS[event.code] : 'Desktop voice failed. Disable and enable it to retry.';
+        errorCode = event.phase === 'error' ? event.code : null;
         value = { phase: event.phase, error: event.phase === 'error' ? error : null };
         onChange();
       }

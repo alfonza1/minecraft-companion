@@ -22,6 +22,8 @@ test('desktop status streams split lines, rejects untrusted fields and keeps err
   status.receive('invalid\nnull\n{"phase":"unknown"}\n');assert.equal(updates,2);
   status.receive('{"phase":"error","code":"constructor"}\n');assert.equal(typeof status.snapshot().error,'string');
   status.receive('{"phase":"ready"}\n');assert.equal(status.snapshot().error,null);
+  status.receive('{"phase":"error","code":"silence"}\n');status.clearError('token_budget');assert.equal(status.snapshot().phase,'error');
+  status.receive('{"phase":"error","code":"token_budget"}\n');status.clearError('token_budget');assert.equal(status.snapshot().phase,'ready');assert.equal(status.snapshot().error,null);
 });
 
 test('worker status is delivered before process exit and cancellation still waits for exit', async () => {

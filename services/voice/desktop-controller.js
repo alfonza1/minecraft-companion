@@ -40,7 +40,7 @@ export function createDesktopController({runtime,store,publish,launch,supported=
     sync,stop,
     async update(){const next=signature();if(next===previous)return;previous=next;await sync({restart:true});},
     async suspend(value){suspended=value;await sync();},
-    clearError(){error=null;},
+    clearError(code){if(!code)error=null;worker?.status.clearError(code);},
     async close(){closed=true;for(const event of ['connected','resume'])runtime.off(event,activate);for(const event of ['pause','stop','disconnect'])runtime.off(event,deactivate);await stop();},
   };
 }

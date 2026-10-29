@@ -135,6 +135,7 @@ export interface CompanionState {
     lowTokenMode?: boolean;
     maxRequestsPerHour: number;
     maxInputTokens: number;
+    inputTokenLimitEnabled?: boolean;
     voice: {
       enabled: boolean;
       desktopEnabled?: boolean;

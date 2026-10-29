@@ -8,6 +8,7 @@ import {Store} from '../../../services/memory/store.js';
 import * as voice from '../../../services/voice/index.js';
 
 const directory=await mkdtemp(join(tmpdir(),'companion-voice-persist-ui-')),store=new Store(directory);
+assert.equal(store.settings().inputTokenLimitEnabled,false);store.updateSettings({inputTokenLimitEnabled:true});
 store.put('usage',{id:'total',requests:5,inputTokens:102452,outputTokens:270,cachedInputTokens:0,billingCost:null});
 const devices=[{id:1,name:'Fixture microphone',hostapi:0,max_input_channels:1,max_output_channels:0},{id:11,name:'Fixture headphones',hostapi:1,max_input_channels:0,max_output_channels:2}];
 let starts=0,modelCalls=0;
@@ -45,6 +46,12 @@ try{
   assert.equal(store.get('usage')[0].inputTokens,102452);
   const reply=await page.evaluate(async()=>{const response=await fetch('/api/conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Hello my friend'})});return {status:response.status,body:await response.json()};});
   assert.equal(reply.status,200);assert.equal(modelCalls,1);assert.equal(store.get('usage')[0].inputTokens,102464);
+  await page.getByRole('checkbox',{name:/Limit input tokens/}).click();
+  await page.getByRole('status').filter({hasText:'No local token cap.'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Start new token budget',exact:true}).count(),0);
+  await page.reload();await settings();assert.equal(await page.getByRole('checkbox',{name:/Limit input tokens/}).isChecked(),false);
+  const uncapped=await page.evaluate(async()=>{await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({maxInputTokens:1})});const response=await fetch('/api/conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Hello again my friend'})});return response.status;});
+  assert.equal(uncapped,200);assert.equal(modelCalls,2);assert.equal(store.get('usage')[0].inputTokens,102476);
   const evidence=join(process.cwd(),'.git/verification/voice-persistence');await mkdir(evidence,{recursive:true});
   for(const width of [1440,390]){await page.setViewportSize({width,height:1100});assert.equal(await page.locator('body').evaluate(element=>element.scrollWidth>innerWidth),false);await page.screenshot({path:join(evidence,`settings-${width}.png`),fullPage:true});await page.locator('.native-voice').screenshot({path:join(evidence,`desktop-audio-${width}.png`)});}
   assert.equal(await page.evaluate(()=>window.micRequests),0);assert.deepEqual(errors,[]);

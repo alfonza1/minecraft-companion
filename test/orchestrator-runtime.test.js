@@ -30,6 +30,29 @@ test('local token budget can be renewed without deleting lifetime usage or bypas
   await assert.rejects(f.orchestrator.respond('One more joke'),error=>error.code==='MODEL_REQUEST_LIMIT');assert.equal(calls,3);
   await restored.close();await f.orchestrator.close();
 });
+
+test('disabled token cap allows conversations beyond the saved budget and still records usage',async()=>{
+  let calls=0;let enabled=false;
+  const f=fixture(async()=>{calls++;return {plan:{reply:'Hey.',intent:'casual',actions:[]},usage:{input_tokens:1001,output_tokens:4}};});
+  f.store.settings=()=>({maxRequestsPerHour:3,maxInputTokens:1,inputTokenLimitEnabled:enabled});
+  await f.orchestrator.respond('Hello friend');await f.orchestrator.respond('Tell me a joke');
+  assert.equal(calls,2);assert.equal(f.orchestrator.usage.inputTokens,2002);assert.equal(f.orchestrator.usage.inputBudgetUsed,2002);
+  enabled=true;await assert.rejects(f.orchestrator.respond('One more joke'),error=>error.code==='INPUT_TOKEN_BUDGET');
+  enabled=false;await f.orchestrator.respond('One more joke');assert.equal(calls,3);
+  await assert.rejects(f.orchestrator.respond('And another'),error=>error.code==='MODEL_REQUEST_LIMIT');
+  await f.orchestrator.close();
+});
+
+test('disabled token cap also applies to blueprint generation',async()=>{
+  const f=fixture(async()=>({plan:{reply:'Hey.',intent:'casual',actions:[]},usage:{input_tokens:1001}}));
+  f.store.settings=()=>({maxRequestsPerHour:30,maxInputTokens:1,inputTokenLimitEnabled:false});
+  await f.orchestrator.respond('Hello friend');
+  let designs=0;
+  const designer=createOrchestrator({store:f.store,runtime:f.runtime,publish:()=>{},designRequest:async()=>{designs++;return {blueprint:{version:'1.21.4',dimensions:{x:1,y:1,z:1},blocks:[{x:0,y:0,z:0,name:'stone',properties:{},section:'foundation'}],uncertainties:[]},usage:{input_tokens:10}};}});
+  assert.equal((await designer.designBlueprint({description:'A tiny stone foundation',version:'1.21.4'})).blocks.length,1);
+  assert.equal(designs,1);assert.equal(designer.usage.inputTokens,1011);
+  await designer.close();await f.orchestrator.close();
+});
 test('pause prevents any model request',async()=>{
   let calls=0;const f=fixture(async()=>{calls++;});f.pause();await assert.rejects(f.orchestrator.respond('Hello'),/Resume/);assert.equal(calls,0);
 });

@@ -115,7 +115,7 @@ export function createOrchestrator({runtime,store,publish,modelCatalog,providerR
   const budgetUsed = () => Math.max(0, usage.inputTokens - inputBudget.baseline);
   function checkLimits(settings) {
     const hourly = timestamps.length >= (settings.maxRequestsPerHour ?? 30);
-    const tokens = budgetUsed() >= (settings.maxInputTokens ?? 100_000);
+    const tokens = settings.inputTokenLimitEnabled !== false && budgetUsed() >= (settings.maxInputTokens ?? 100_000);
     if (!hourly && !tokens) return;
     const error = new Error(hourly ? 'Hourly model request limit reached. Wait or change Requests per hour in Settings.' : 'Local input-token budget reached. In Settings → AI models & reasoning, select Start new token budget to continue. Account status appears separately.');
     error.code = hourly ? 'MODEL_REQUEST_LIMIT' : 'INPUT_TOKEN_BUDGET'; error.statusCode = 409; throw error;

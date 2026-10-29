@@ -54,6 +54,7 @@ export async function updateVoiceSettings(settings) {
 export function voiceOptions() { return voices.map(voice=>({...voice,available:voice.provider==='kokoro'?kokoroReady:voice.provider==='piper'?piperReady:kokoroReady||piperReady||process.platform==='win32'})); }
 export async function cancelSpeech() {await Promise.all([...pending].map(job=>{job.controller.abort();return job.promise.catch(()=>{});}));}
 export async function stopVoice() {await Promise.all([cancelSpeech(),desktopController?.stop()]);}
+export function clearTokenBudgetError() {desktopController?.clearError('token_budget');}
 async function listDesktopDevices(signal) {
   const {stdout}=await runProcess(python,[path.join(root,'worker.py'),'devices'],{signal,timeout:20_000});return JSON.parse(stdout);
 }
