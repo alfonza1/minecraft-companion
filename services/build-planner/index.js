@@ -6,8 +6,8 @@ import { validateBlueprint, blueprintHash } from './blueprint.js';
 import { calculateMaterials } from './materials.js';
 import { splitAssignments, updateUserProgress, reconcileAssignments, reconcileProjectInventory, reserveMaterials, assignmentNeeds } from '../resource-ledger/index.js';
 import { archiveReference, parseSchematic, privateDataDir, REFERENCE_LIMITS, youtubeReference } from '../reference-ingestion/index.js';
-import { constructionCompatibility, executeBuild, matchesPlacement, validateOrigin } from '../build-executor/index.js';
-import { Vec3 } from 'vec3';
+import { constructionCompatibility, executeBuild, validateOrigin } from '../build-executor/index.js';
+import { createBuildSupplies, remainingMaterials } from '../build-executor/supplies.js';
 import {assistedAssignments} from '../resource-ledger/acquisition.js';
 import {registerAnalysisRoutes} from '../reference-ingestion/analysis-routes.js';
 
@@ -28,6 +28,11 @@ export function approveProject(project) {
 export function registerBuildRoutes(app, context) {
   const { store, runtime, publish } = context;
   const directory = context.dataDir ?? privateDataDir();
+  // Compatibility is derived capability metadata, not blueprint content. Refresh
+  // old saved projects without invalidating the user's approved design/hash.
+  for (const project of store.get('projects')) if (project.blueprint) {
+    store.put('projects', { ...project, compatibility: constructionCompatibility(project.blueprint) });
+  }
   const inFlight = new Set();
   const getProject = (id) => {
     const project = store.get('projects').find((p) => p.id === id);
@@ -52,7 +57,7 @@ export function registerBuildRoutes(app, context) {
   };
   registerAnalysisRoutes(app,{...context,dataDir:directory},{getProject,ensureEditable,put,saveRevision,inFlight,reviseProject});
 
-  app.get('/api/projects', async () => store.get('projects'));
+  app.get('/api/projects', async () => store.get('projects').map(project => project.blueprint ? { ...project, compatibility: constructionCompatibility(project.blueprint) } : project));
   app.post('/api/references/search',endpoint(async({body})=>context.orchestrator.searchYouTube(body?.query)));
   app.post('/api/projects/:id/reference-choice',endpoint(async({params,body})=>{
     ensureEditable(params.id);const project=getProject(params.id);
@@ -178,16 +183,13 @@ export function registerBuildRoutes(app, context) {
     if (project.approvedRevision !== project.revision || !project.blueprint || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the current blueprint before starting.');
     const compatibility = constructionCompatibility(project.blueprint);
     if (!compatibility.supported) throw new Error(`${compatibility.limitation} Unsupported: ${compatibility.unsupported.join(', ')}.`);
-    const remaining = new Map();
-    const base = new Vec3(origin.x, origin.y, origin.z);
-    for (const block of project.blueprint.blocks) {
-      if (!matchesPlacement(runtime.bot?.blockAt(base.offset(block.x, block.y, block.z)), block)) remaining.set(block.name, (remaining.get(block.name) ?? 0) + 1);
-    }
-    const reservations = reserveMaterials(store.get('projects'), project.id, [...remaining].map(([name, quantity]) => ({ name, quantity })), runtime.bot?.inventory.items() ?? []);
+    const reservations = reserveMaterials(store.get('projects'), project.id, remainingMaterials(project.blueprint, runtime.bot, origin), runtime.bot?.inventory.items() ?? [], { partial: true });
     project.reservations = reservations;
     put(project);
     inFlight.add(project.id);
-    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, realmId:store.settings().realmId, signal, save: (p) => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null }), publish }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
+    const save = p => store.put('projects', { ...getProject(p.id), checkpoint: p.checkpoint, status: p.status, reservations: p.reservations, error: null });
+    const ensureMaterials = createBuildSupplies({ project, origin, bot: runtime.bot, store, teammate: runtime.teammate, save });
+    const job = runtime.runJob(`build:${project.name}`, (signal) => executeBuild({ project, origin, bot: runtime.bot, realmId:store.settings().realmId, signal, save, publish, ensureMaterials }), { tool: 'resume_build', args: { projectId, origin, expectedRevision: project.revision, expectedHash: project.approvedHash } });
     // The long-running task is owned by the runtime, not the HTTP connection.
     // Frontend aborts cannot masquerade as backend task cancellation.
     void job.catch((error) => {

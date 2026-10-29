@@ -385,6 +385,7 @@ export default function Studio({ state, mutate, busy }: Common) {
                 Approve the current design before any construction. Existing
                 blocks are protected; occupied placements stop for review.
               </p>
+              <p className="note">The builder can refill from approved supply chests and craft with unreserved ingredients it carries. Approve chest items in Companion → Routines &amp; supplies. Missing raw materials or safe access pause the build at its checkpoint.</p>
               {project.compatibility?.limitation ? (
                 <p className="note">{project.compatibility.limitation}</p>
               ) : null}
@@ -394,6 +395,7 @@ export default function Studio({ state, mutate, busy }: Common) {
                   {project.compatibility.unsupported.map(human).join(", ")}
                 </p>
               ) : null}
+              {project.compatibility?.issues?.map((issue: string) => <p className="inline-error" key={issue}>{issue}</p>)}
               <div className="data-row">
                 <span>Blueprint revision</span>
                 <strong>{project.revision || "—"}</strong>
@@ -462,21 +464,25 @@ export default function Studio({ state, mutate, busy }: Common) {
 }
 
 function MaterialTable({ project }: { project: Project }) {
-  const [raw, setRaw] = useState(false);
-  const rows = raw ? project.materials?.raw : project.materials?.placed;
+  const [view, setView] = useState<'placed' | 'craftedItems' | 'raw'>('craftedItems');
+  const rows = project.materials?.[view];
   return (
     <>
       <div className="segmented compact">
         <button
-          className={!raw ? "selected" : ""}
-          onClick={() => setRaw(false)}
+          className={view === 'placed' ? "selected" : ""}
+          onClick={() => setView('placed')}
         >
           Placed blocks
         </button>
-        <button className={raw ? "selected" : ""} onClick={() => setRaw(true)}>
+        <button className={view === 'craftedItems' ? "selected" : ""} onClick={() => setView('craftedItems')}>
+          Inventory items
+        </button>
+        <button className={view === 'raw' ? "selected" : ""} onClick={() => setView('raw')}>
           Raw ingredients
         </button>
       </div>
+      <p className="note">{view === 'craftedItems' ? 'Items needed to place this design. One door creates two block halves; a double slab consumes two slab items. Crafting surplus and temporary supplies are separate.' : view === 'placed' ? 'Occupied positions in the blueprint, including both door halves. Switch to Inventory items for quantities to bring.' : 'Raw inputs from the saved recipe plan. Unresolved fuel and temporary supplies are separate.'}</p>
       {rows?.length ? (
         <div className="table-scroll">
           <table>

@@ -52,13 +52,26 @@ the dependency's silent air fallback. MCEdit and Litematica are explicitly
 unsupported. Air, block entities, container contents and entities do not authorize
 clearing or imply materials.
 
-Construction currently handles inert full cubes only. It refuses conflicting
-terrain, unsupported special states, unloaded sites, inaccessible placement,
-occupied spaces and unsafe support. It never clears terrain or generates server
-commands. Each placement is confirmed from observed world blocks before a
-checkpoint is saved, and the complete design is reverified before completion.
-Every resume rechecks previously saved progress. Scaffolding, oriented blocks,
-automatic resupply and destructive repairs still require tested implementations.
+Construction supports inert cubes, dry stairs/slabs, paired closed doors,
+oriented logs/pillars, fences and panes. Placement uses actual facing, halves,
+hinges and axes; neighbour-derived stair shapes/fence connections are checked
+in the final world pass. Doors wait until the shell finishes for access. Double
+slabs resume from an observed half without double-counting items. Existing
+conflicts and occupied/unloaded positions remain protected. No excavation or
+server commands are used. Automatic scaffolding and destructive repair remain
+unavailable; the user must provide reachable supports and access.
+
+Build supplies reserve available inventory in batches, withdraw allowed items
+from approved chests within64blocks, and craft from unreserved owned ingredients
+using real recipe yields. Wood conversions produce the needed plank batches;
+rare/named/enchanted ingredients are protected. Automatic raw gathering and
+furnace/stonecutter workflows are not part of this build controller. Missing
+supplies block with an actionable checkpoint. Placement uses zero model calls.
+
+`node scripts/test-native-game.mjs --building-only` exercises nine scenarios
+against a disposable localhost official26.3 survival server, including all four
+stair/door headings, both halves/hinges, slab consumption/resume, chest resupply,
+crafting and a complete small house. It does not join or modify the user's Realm.
 
 Validation: `node --test test/build-*.test.js`. Tests include real NBT parser
 round trips, actual local vanilla production recipes when installed, API

@@ -21,6 +21,7 @@ import Fastify from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { registerBuildRoutes } from '../services/build-planner/index.js';
 import {survivalFixtureChecks} from './survival-fixture-checks.mjs';
+import {buildingFixtureChecks} from './building-fixture-checks.mjs';
 const cache = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/test-runtime-modern');
 const manifest = JSON.parse((await readFile(path.join(cache,'runtime.json'),'utf8')).replace(/^\uFEFF/,''));
 const SERVER_SHA1 = '33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c';
@@ -40,7 +41,7 @@ if (process.argv.includes('--check-runtime')) { console.log('Verified private Ja
 assert.equal(nativeProtocol.installed, true, 'Run npm run setup:native first.');
 const directory = await mkdtemp(path.join(os.tmpdir(),'companion-native-'));
 const logs=[],results=[], errors=[]; let child,runtime,store,recipient,exitPromise,exited=false,failed=false;
-const EXPECTED_CHECKS = process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
+const EXPECTED_CHECKS = process.argv.includes('--building-only')?9:process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate, label, timeout = 30000) {
   const started = Date.now();
@@ -79,7 +80,10 @@ try {
  const teammate = new TeammateService({ runtime, store, publish() {} });
  const orchestrator = createOrchestrator({ runtime, store, publish() {}, request: async () => { throw new Error('Native fixture must not request a model.'); } });
  runtime.modelCancel = options => orchestrator.cancel(options);
- if(process.argv.includes('--survival-only')){
+ if(process.argv.includes('--building-only')){
+  const api=Fastify();await registerBuildRoutes(api,{runtime,store,publish(){},orchestrator,dataDir:store.directory});
+  try{await buildingFixtureChecks({check,command,until,runtime,store,teammate,api});}finally{await api.close();}
+ }else if(process.argv.includes('--survival-only')){
   const api=Fastify();await registerBuildRoutes(api,{runtime,store,publish(){},orchestrator,dataDir:store.directory});
   try{await survivalFixtureChecks({check,command,until,runtime,store,teammate,orchestrator});}finally{await api.close();}
  }else{
@@ -210,7 +214,7 @@ finally {
   }
   store?.close(); clearTimeout(timeout);
   const passed = !failed && exited && results.length === EXPECTED_CHECKS;
-  await writeFile(process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
+  await writeFile(process.argv.includes('--building-only')?'.git/building-game-results.json':process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
     at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1,
     clientVersion: '26.3', protocol: 777, translated: false, lockHash: nativeProtocol.lockHash,
     scope: 'Disposable localhost-only official 26.3 survival server; no Microsoft authentication or Realm gameplay claimed.',

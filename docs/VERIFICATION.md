@@ -1,5 +1,33 @@
 # Verification evidence
 
+## Local construction controllers — 2026-10-29
+
+Implemented dry stairs/slabs, paired closed doors, log/pillar axes, fences/panes,
+support-dependency passes, doors-last access, safe working-position reuse and
+approved-chest/owned-recipe restocking. Execution makes zero model requests.
+Pauses stop before new placement packets; timeouts cancel the local placement
+continuation. Final completion compares every requested property with observed
+world state, including neighbour-derived shapes/connections. Inventory is
+confirmed after placement before supply/reservation decisions.
+
+- Automated suite:225/225 passed with local neural speech enabled; typecheck and production dashboard build passed. Existing lazy Three.js chunk-size warning remains.
+- Official localhost26.3 survival building suite:9/9 passed. Covers8stair direction/half combinations,3slab types and exact item consumption,8door direction/hinge combinations with both halves,3log axes, fence/pane connections, pause/resume between double-slab halves, real approved-chest withdrawal, real logs-to-stairs crafting, and a complete34-placement house with shell/window/stair roof/door and persistent interruption/resume.
+- Existing native gameplay regression suite:17/17 passed, including gathering, crafting, temporary-help resume, handoff, death recovery and disconnect/reconnect. These fixtures use no model requests.
+- Headless dashboard:real API and SQLite, saved compatibility refreshed without changing approval, unsupported/offline construction gates, resupply guidance and1440/390layouts passed; screenshots inspected, zero browser errors.
+- Evidence: `.git/building-game-results.json`, `.git/native-game-results.json`, `.git/hackers-lair/verification.json`, `.git/verification/building-ui/` and `.git/verification/building-review.json`.
+
+Failures found and fixed: forced look returns before the physics packet is sent,
+so oriented placement now waits two physics ticks; block confirmation may arrive
+before inventory confirmation, so restocking no longer acts on stale item counts.
+Recipe yields determine plank batches instead of a rough conversion multiplier.
+
+Limitations: no automatic scaffolding, terrain clearing, destructive repair or
+raw gathering during construction. Access/support still needs player preparation.
+Not every material variant or corner/hinge layout has a gameplay fixture; final
+state verification fails closed. No arbitrary YouTube-house reproduction or
+construction on the user's Realm was tested. Private Java/server fixtures exited
+and their disposable worlds were removed. Older sections below are historical.
+
 Workstation sessions: 2026-10-27–28, Windows11, Node24.18.1, Python3.12.10. Automated gameplay tests use isolated local worlds. Real Realm connection checks are passive; no gathering, construction or destructive experiments were run there. No Microsoft password or physical microphone was used by tests. This is a functional foundation with explicit unverified scope.
 
 ## Configurable push-to-talk and free local voice choices

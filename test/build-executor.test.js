@@ -25,11 +25,13 @@ function fixture(blocks = [{ x: 0, y: 0, z: 0, name: 'oak_planks' }]) {
 
 test('survival placement saves completion only after observed server block confirmation', async () => {
   const { args, bot, saved } = fixture();
+  let walks = 0; bot.pathfinder.goto = async () => walks++;
   const result = await executeBuild(args);
   assert.equal(result.status, 'complete');
   assert.equal(bot.placed, 1);
   assert.deepEqual(saved.at(-1).checkpoint.verified, [0]);
   assert.equal(saved.at(-1).reservations.oak_planks, 0);
+  assert.equal(walks, 0, 'An already safe working position needs no pathfinding request');
 });
 
 test('world conflicts and unloaded regions stop before any placement', async () => {
@@ -70,7 +72,7 @@ test('unconfirmed placement and target changing while approaching remain unverif
 });
 
 test('special block states and mutated or moved approved plans are refused', async () => {
-  const f = fixture([{ x: 0, y: 0, z: 0, name: 'oak_stairs', properties: { facing: 'east' } }]);
+  const f = fixture([{ x: 0, y: 0, z: 0, name: 'oak_stairs', properties: { facing: 'east', waterlogged: 'true' } }]);
   assert.equal(constructionCompatibility(f.project.blueprint).supported, false);
   await assert.rejects(executeBuild(f.args), /Unsupported: oak_stairs/);
   const g = fixture(); g.project.blueprint.blocks[0].name = 'diamond_block';

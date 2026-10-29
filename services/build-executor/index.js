@@ -1,12 +1,13 @@
 import { Vec3 } from 'vec3';
 import pathfinder from 'mineflayer-pathfinder';
-import { dataFor, hasValidatedNativeMaterial } from '../../packages/minecraft-data/index.js';
 import { blueprintHash } from '../build-planner/blueprint.js';
+import { EMPTY, fullCube, placementSupport, matchesPlacement, resumableSlab, placementKind, constructionCompatibility, placeAdaptedBlock } from './placement.js';
+import { blockItem } from '../build-planner/blueprint.js';
+import { dataFor } from '../../packages/minecraft-data/index.js';
+import { confirmInventory } from '../skill-executor/items.js';
+export { placementSupport, matchesPlacement, constructionCompatibility } from './placement.js';
 
 const { goals } = pathfinder;
-const FACES = [new Vec3(0, 1, 0), new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(0, -1, 0)];
-const EMPTY = new Set(['air', 'cave_air', 'void_air']);
-const INTERACTIVE = /(?:chest|furnace|crafting_table|enchanting_table|anvil|barrel|loom|cartography_table|stonecutter|smithing_table|note_block|jukebox|respawn_anchor|shulker_box|bee_nest|beehive)$/;
 export const BUILD_PLACEMENT_TIMEOUT_MS = 10_000;
 
 export function validateOrigin(origin) {
@@ -15,34 +16,35 @@ export function validateOrigin(origin) {
   return { x: origin.x, y: origin.y, z: origin.z };
 }
 
-export function placementSupport(bot, position) {
-  for (const face of FACES) {
-    const reference = bot.blockAt(position.minus(face));
-    if (reference && reference.boundingBox === 'block' && !INTERACTIVE.test(reference.name) && reference.shapes?.some((s) => s.every((n, i) => n === (i < 3 ? 0 : 1)))) return { reference, face };
+function occupied(bot, position, height = 1) {
+  return [bot.entity, ...Object.values(bot.entities ?? {})].some(entity => entity?.position &&
+    Math.abs(entity.position.x - position.x - 0.5) < 0.8 && Math.abs(entity.position.z - position.z - 0.5) < 0.8 &&
+    entity.position.y < position.y + height && entity.position.y + (entity.height ?? 1.8) > position.y);
+}
+
+async function approach(bot, position, signal, height) {
+  // Reuse a safe working position instead of running A* for every adjacent block.
+  if (bot.entity.position.distanceTo(position) <= 4 && !occupied(bot, position, height)) return;
+  const candidates = [];
+  for (let y = -2; y <= 1; y++) for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) {
+    const feet = position.offset(x, y, z);
+    if (Math.abs(x) + Math.abs(z) < 2 || feet.offset(0.5, 0, 0.5).distanceTo(position) > 4) continue;
+    if (!fullCube(bot.blockAt(feet.offset(0, -1, 0))) || !EMPTY.has(bot.blockAt(feet)?.name) || !EMPTY.has(bot.blockAt(feet.offset(0, 1, 0))?.name)) continue;
+    candidates.push(feet);
   }
-  return null;
-}
-
-export function matchesPlacement(observed, expected) {
-  if (!observed || observed.name !== expected.name) return false;
-  const properties = observed.getProperties?.() ?? {};
-  return Object.entries(expected.properties ?? {}).every(([key, value]) => String(properties[key]) === String(value));
-}
-
-export function constructionCompatibility(blueprint) {
-  const data = dataFor(blueprint.version);
-  const unsupported = [...new Set(blueprint.blocks.filter((block) => {
-    const definition = data.blocksByName[block.name];
-    const shapeId = data.blockCollisionShapes?.blocks?.[block.name];
-    const shape = data.blockCollisionShapes?.shapes?.[shapeId];
-    const cube = Array.isArray(shape) && shape.length === 1 && shape[0].every((n, i) => n === (i < 3 ? 0 : 1));
-    return !hasValidatedNativeMaterial(blueprint.version, block.name) || !data.itemsByName[block.name] || !cube || definition.boundingBox !== 'block' || definition.states?.length || definition.material === 'plant' || INTERACTIVE.test(block.name) || ['sand', 'red_sand', 'gravel', 'dragon_egg', 'tnt'].includes(block.name) || block.name.endsWith('_concrete_powder');
-  }).map((b) => b.name))];
-  return { supported: unsupported.length === 0, unsupported, limitation: 'Survival placement currently supports inert, full cubes. Oriented/multiblock/gravity/interactive blocks require a tested placement adapter. No excavation, scaffolding or inventory resupply is automatic.' };
+  candidates.sort((a, b) => a.distanceTo(bot.entity.position) - b.distanceTo(bot.entity.position));
+  for (const feet of candidates.slice(0, 3)) {
+    try {
+      await abortableWait(() => bot.pathfinder.goto(new goals.GoalBlock(feet.x, feet.y, feet.z)), signal, bot);
+      if (bot.entity.position.distanceTo(position) <= 4 && !occupied(bot, position, height)) return;
+    } catch (error) { signal.throwIfAborted(); }
+  }
+  throw new Error('Cannot reach a safe working position. Add a walkway or scaffolding and resume.');
 }
 
 function abortableWait(operation, signal, bot) {
   signal.throwIfAborted();
+  const scoped = new AbortController();
   return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (error, result) => {
@@ -52,14 +54,15 @@ function abortableWait(operation, signal, bot) {
       signal.removeEventListener('abort', aborted);
       error ? reject(error) : resolve(result);
     };
-    const aborted = () => { bot.pathfinder?.stop(); bot.pathfinder?.setGoal(null); finish(signal.reason ?? new Error('Build cancelled.')); };
-    const timeout = setTimeout(() => { bot.pathfinder?.stop(); bot.pathfinder?.setGoal(null); finish(new Error('Placement/navigation timed out; checkpoint preserved.')); }, BUILD_PLACEMENT_TIMEOUT_MS);
+    const stop = error => { scoped.abort(error); bot.pathfinder?.stop(); bot.pathfinder?.setGoal(null); finish(error); };
+    const aborted = () => stop(signal.reason ?? new Error('Build cancelled.'));
+    const timeout = setTimeout(() => stop(new Error('Placement/navigation timed out; checkpoint preserved.')), BUILD_PLACEMENT_TIMEOUT_MS);
     signal.addEventListener('abort', aborted, { once: true });
-    Promise.resolve().then(() => { signal.throwIfAborted(); return operation(); }).then((result) => finish(null, result), (error) => finish(error));
+    Promise.resolve().then(() => { scoped.signal.throwIfAborted(); return operation(scoped.signal); }).then((result) => finish(null, result), (error) => finish(error));
   });
 }
 
-export async function executeBuild({ project, origin, bot, signal, save, publish = () => {}, realmId }) {
+export async function executeBuild({ project, origin, bot, signal, save, publish = () => {}, realmId, ensureMaterials }) {
   validateOrigin(origin);
   if(project.checkpoint?.realmId!==undefined&&project.checkpoint.realmId!==realmId)throw new Error('This build checkpoint belongs to another Realm.');
   if (!project.blueprint || project.approvedRevision !== project.revision || project.approvedHash !== blueprintHash(project.blueprint)) throw new Error('Approve the current blueprint revision before construction.');
@@ -77,7 +80,7 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
   for (const expected of placements) {
     const observed = bot.blockAt(base.offset(expected.x, expected.y, expected.z));
     if (!observed) throw new Error('Build area is not fully observed. Move close enough to load it, then retry.');
-    if (!EMPTY.has(observed.name) && !matchesPlacement(observed, expected)) throw new Error(`Existing ${observed.name} at ${observed.position} conflicts with the design. Clearing requires separate player approval and is not automatic.`);
+    if (!EMPTY.has(observed.name) && !matchesPlacement(observed, expected, { final: false }) && !resumableSlab(observed, expected)) throw new Error(`Existing ${observed.name} at ${observed.position} conflicts with the design. Clearing requires separate player approval and is not automatic.`);
   }
   const checkpoint = { origin, dimension, ...(realmId===undefined?{}:{realmId}), revision: project.revision, verified: [], status: 'building', updatedAt: new Date().toISOString() };
   const update = (status, reason) => {
@@ -91,38 +94,75 @@ export async function executeBuild({ project, origin, bot, signal, save, publish
   };
   update('building');
   try {
-    for (let index = 0; index < placements.length; index++) {
-      signal.throwIfAborted();
-      const expected = placements[index];
-      const position = base.offset(expected.x, expected.y, expected.z);
-      let observed = bot.blockAt(position);
-      if (!observed) throw new Error('Section unloaded; it cannot be marked verified.');
-      if (!matchesPlacement(observed, expected)) {
-        if (!EMPTY.has(observed.name)) throw new Error(`Block changed at ${position}; refusing to overwrite ${observed.name}.`);
-        const item = bot.inventory.items().find((candidate) => candidate.name === expected.name);
-        if (!item) throw new Error(`Need ${expected.name} in the bot inventory. Resupply and resume.`);
-        await abortableWait(() => bot.pathfinder.goto(new goals.GoalNear(position.x, position.y, position.z, 3)), signal, bot);
+    let pending = placements.map((_, index) => index);
+    while (pending.length) {
+      let progress = false;
+      const deferred = [];
+      const shellPending = pending.some(index => !placements[index].name.endsWith('_door'));
+      for (const index of pending) {
         signal.throwIfAborted();
-        if (bot.entity.position.distanceTo(position) > 4.5) throw new Error('Cannot reach placement without scaffolding.');
-        const occupant = Object.values(bot.entities ?? {}).find((entity) => entity.position && entity.type === 'player' && Math.abs(entity.position.x - position.x - 0.5) < 0.8 && Math.abs(entity.position.z - position.z - 0.5) < 0.8 && entity.position.y < position.y + 1 && entity.position.y + (entity.height ?? 1.8) > position.y);
-        const self = bot.entity.position;
-        if (occupant || (Math.abs(self.x - position.x - 0.5) < 0.8 && Math.abs(self.z - position.z - 0.5) < 0.8 && self.y < position.y + 1 && self.y + 1.8 > position.y)) throw new Error('A player occupies the placement space. Move clear and resume.');
-        const support = placementSupport(bot, position);
-        if (!support) throw new Error(`No safe full-cube support at ${position}. Scaffolding needs a separate tested plan.`);
-        await abortableWait(() => bot.equip(item, 'hand'), signal, bot);
-        signal.throwIfAborted();
-        // Recheck after every awaited operation; a pause or another player may
-        // have changed the target during navigation/equipping.
-        observed = bot.blockAt(position);
-        if (!observed || !EMPTY.has(observed.name)) throw new Error('Placement target changed during approach; revalidate before resuming.');
-        await abortableWait(() => { signal.throwIfAborted(); return bot.placeBlock(support.reference, support.face); }, signal, bot);
-        signal.throwIfAborted();
-        observed = bot.blockAt(position);
-        if (!matchesPlacement(observed, expected)) throw new Error(`Server did not confirm ${expected.name} at ${position}. Section remains unverified.`);
-        if (project.reservations?.[expected.name]) project.reservations[expected.name]--;
+        const expected = placements[index];
+        const position = base.offset(expected.x, expected.y, expected.z);
+        // Keep doorways open for access until the shell/roof is finished.
+        if (expected.name.endsWith('_door') && shellPending) { deferred.push(index); continue; }
+        let observed = bot.blockAt(position);
+        if (!observed) throw new Error('Section unloaded; it cannot be marked verified.');
+        if (!matchesPlacement(observed, expected, { final: false })) {
+          if (!EMPTY.has(observed.name) && !resumableSlab(observed, expected)) throw new Error(`Block changed at ${position}; refusing to overwrite ${observed.name}.`);
+          if (expected.properties?.half === 'upper') { deferred.push(index); continue; }
+          if (!placementSupport(bot, position, expected)) { deferred.push(index); continue; }
+          const requirement = blockItem(expected, dataFor(bot.version));
+          const needed = resumableSlab(observed, expected) ? 1 : requirement.quantity;
+          if (ensureMaterials) {
+            checkpoint.phase = 'materials'; update('building');
+            await ensureMaterials(expected, needed, signal);
+            signal.throwIfAborted();
+          }
+          const usable = bot.inventory.items().filter(candidate => candidate.name === requirement.name && !candidate.customName && !candidate.enchants?.length);
+          const owned = usable.reduce((sum, item) => sum + item.count, 0);
+          if (owned < needed) throw new Error(`Need ${needed} ${requirement.name} in the bot inventory. Check approved supply chests or hand over materials, then resume.`);
+          const item = usable[0];
+          checkpoint.phase = 'placing'; update('building');
+          const height = placementKind(expected, bot.version) === 'door' ? 2 : 1;
+          await approach(bot, position, signal, height);
+          signal.throwIfAborted();
+          if (bot.entity.position.distanceTo(position) > 4.5) throw new Error('Cannot reach placement without scaffolding.');
+          if (occupied(bot, position, height)) throw new Error('An entity occupies the placement space. Move clear and resume.');
+          let support = placementSupport(bot, position, expected);
+          if (!support) throw new Error(`No safe full-cube support at ${position}. Scaffolding needs a separate tested plan.`);
+          await abortableWait(() => bot.equip(item, 'hand'), signal, bot);
+          signal.throwIfAborted();
+          // Recheck after every awaited operation; a pause or another player may
+          // have changed the target during navigation/equipping.
+          observed = bot.blockAt(position);
+          if (!observed || (!EMPTY.has(observed.name) && !resumableSlab(observed, expected))) throw new Error('Placement target changed during approach; revalidate before resuming.');
+          support = placementSupport(bot, position, expected);
+          if (!support || occupied(bot, position, height)) throw new Error('Placement support or occupied space changed during approach. Resume after inspection.');
+          if (height === 2 && !EMPTY.has(bot.blockAt(position.offset(0, 1, 0))?.name)) throw new Error('Door upper space changed; refusing to replace it.');
+          const checkSpace = () => {
+            const current = bot.blockAt(position);
+            if (!current || (!EMPTY.has(current.name) && !(support.merge && resumableSlab(current, expected)))) throw new Error('Placement target changed while aiming.');
+            const reference = bot.blockAt(support.reference.position);
+            if (reference?.name !== support.reference.name || reference?.stateId !== support.reference.stateId) throw new Error('Placement support changed while aiming.');
+            if (occupied(bot, position, height) || (height === 2 && !EMPTY.has(bot.blockAt(position.offset(0, 1, 0))?.name))) throw new Error('Placement space changed while aiming.');
+          };
+          await abortableWait(scopedSignal => placeAdaptedBlock(bot, expected, position, support, scopedSignal, checkSpace), signal, bot);
+          signal.throwIfAborted();
+          // A block update can precede its inventory packet. Flush before the
+          // next demand/reservation decision, particularly the last item in a stack.
+          if (bot._syncWindow && bot.supportFeature?.('stateIdUsed')) await confirmInventory(bot);
+          signal.throwIfAborted();
+          observed = bot.blockAt(position);
+          if (project.reservations?.[requirement.name]) project.reservations[requirement.name]--;
+          if (resumableSlab(observed, expected)) { deferred.push(index); progress = true; update('building'); continue; }
+          if (!matchesPlacement(observed, expected, { final: false })) throw new Error(`Server did not confirm ${expected.name} at ${position}. Section remains unverified.`);
+        }
+        if (matchesPlacement(bot.blockAt(position), expected)) checkpoint.verified.push(index);
+        progress = true;
+        update('building');
       }
-      checkpoint.verified.push(index);
-      update('building');
+      if (!progress) throw new Error(`No reachable placement support for ${placements[deferred[0]].name}. Add the required support or scaffolding and resume; existing structures are protected.`);
+      pending = deferred;
     }
     // A prior verified placement might have been removed while we built later
     // rows. Completion is based on a fresh pass through observed world state.

@@ -43,7 +43,7 @@ export function reconcileProjectInventory(projects, inventory, observedAt) {
   return projects.map((project) => allocated.get(project.id));
 }
 
-export function reserveMaterials(projects, projectId, required, inventory) {
+export function reserveMaterials(projects, projectId, required, inventory, { partial = false } = {}) {
   const counts = inventoryCounts(inventory);
   const reserved = {};
   for (const p of projects) {
@@ -53,8 +53,8 @@ export function reserveMaterials(projects, projectId, required, inventory) {
   const result = {};
   for (const { name, quantity } of required) {
     const available = Math.max(0, (counts[name] ?? 0) - (reserved[name] ?? 0));
-    if (available < quantity) throw new Error(`${name}: need ${quantity}, available ${available} after other project reservations.`);
-    result[name] = quantity;
+    if (!partial && available < quantity) throw new Error(`${name}: need ${quantity}, available ${available} after other project reservations.`);
+    result[name] = Math.min(quantity, available);
   }
   return result;
 }

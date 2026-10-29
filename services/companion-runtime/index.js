@@ -244,7 +244,7 @@ export class CompanionRuntime extends EventEmitter {
     }
   }
   trackOperations(bot) {
-    for (const [object, method] of [[bot.pathfinder, 'goto'], ...['dig', 'equip', 'unequip', 'placeBlock', 'craft', 'consume', 'lookAt', 'toss', 'clickWindow', 'activateBlock'].map(method => [bot, method])]) {
+    for (const [object, method] of [[bot.pathfinder, 'goto'], ...['dig', 'equip', 'unequip', 'placeBlock', '_genericPlace', 'craft', 'consume', 'look', 'lookAt', 'toss', 'clickWindow', 'activateBlock'].map(method => [bot, method])]) {
       if (typeof object?.[method] !== 'function') continue;
       const original = object[method].bind(object);
       object[method] = (...args) => {
