@@ -126,7 +126,9 @@ export class CompanionRuntime extends EventEmitter {
       bot.physics.playerHalfWidth = 0.30001; bot.physics.playerHeight = 1.80001;
       const movement = new Movements(bot);
       movement.canDig = false; movement.allow1by1towers = false; movement.allowParkour = false;
-      movement.allowSprinting = canSprint(bot, this.store.settings()); movement.maxDropDown = 1; movement.allowFreeMotion = false;
+      // Pathfinder measures feet-to-landing-block, including the floor itself:
+      // 2 permits a single-block descent; 1 traps the bot on ordinary steps.
+      movement.allowSprinting = canSprint(bot, this.store.settings()); movement.maxDropDown = 2; movement.infiniteLiquidDropdownDistance = false; movement.allowFreeMotion = false;
       movement.scafoldingBlocks = []; movement.liquidCost = 100;
       bot.pathfinder.setMovements(movement); bot.collectBlock.movements = null;
       this.connection = { ...this.connection, status: 'connected', username: bot.username, version: bot.version, serverVersion: bot.companionTransport?.serverVersion || bot.version, transport: bot.companionTransport?.kind || 'native', projected: Boolean(bot.companionTransport?.projected), error: null, errorCode: null };
