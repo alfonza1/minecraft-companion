@@ -8,6 +8,7 @@ import { DEFAULT_PUSH_TO_TALK, normalizeHotkey, formatHotkey } from '../../packa
 import { z } from 'zod';
 import { createPreviewCache } from './preview-cache.js';
 import { createDesktopController, resolveDesktopDevice } from './desktop-controller.js';
+import {createSpeechWorker} from './speech-worker.js';
 
 const voiceIdSchema=z.enum(voices.map(voice=>voice.id));
 const previewSchema=z.object({voiceId:voiceIdSchema.optional(),speed:z.number().min(0.5).max(2).optional()}).strict();
@@ -17,6 +18,7 @@ const desktopSchema=z.object({enabled:z.boolean(),inputDevice:z.number().int().m
 const root = path.dirname(fileURLToPath(import.meta.url));
 const dataRoot = path.join(process.env.LOCALAPPDATA ?? os.tmpdir(),'MinecraftCompanion');
 const python = path.join(dataRoot,'voice-venv',process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+const speechWorker=createSpeechWorker({command:python,args:[path.join(root,'resident.py')]});
 const pending = new Set();
 let lastError = null;
 let ready = false;
@@ -31,7 +33,7 @@ const previewCache = createPreviewCache({
     const selected = voiceOptions().find(value => value.id === voice);
     if (!selected?.available) throw new Error('Choose an installed local voice.');
     const modelFiles = voice.startsWith('kokoro:') ? ['kokoro/kokoro-v1.0.onnx', 'kokoro/voices-v1.0.bin'] : voice.startsWith('piper:') ? ['piper/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx', 'piper/en/en_US/ljspeech/high/en_US-ljspeech-high.onnx.json'] : [];
-    const sources = [path.join(root, 'worker.py'), path.join(root, 'voices.json'), ...modelFiles.map(file => path.join(dataRoot, 'voice-models', file))];
+    const sources = [path.join(root, 'worker.py'), path.join(root,'resident.py'), path.join(root, 'voices.json'), ...modelFiles.map(file => path.join(dataRoot, 'voice-models', file))];
     const signature = await Promise.all(sources.map(async file => { const value = await stat(file); return [file, value.size, value.mtimeMs]; }));
     return { voice, signature };
   },
@@ -53,8 +55,12 @@ export async function updateVoiceSettings(settings) {
 }
 export function voiceOptions() { return voices.map(voice=>({...voice,available:voice.provider==='kokoro'?kokoroReady:voice.provider==='piper'?piperReady:kokoroReady||piperReady||process.platform==='win32'})); }
 export async function cancelSpeech() {await Promise.all([...pending].map(job=>{job.controller.abort();return job.promise.catch(()=>{});}));}
-export async function stopVoice() {await Promise.all([cancelSpeech(),desktopController?.stop()]);}
+export async function stopVoice() {await Promise.all([cancelSpeech(),desktopController?.stop(),speechWorker.close()]);}
 export function clearTokenBudgetError() {desktopController?.clearError('token_budget');}
+export function transcribeAudio(audio,signal){
+  if(!Buffer.isBuffer(audio)||!audio.length||audio.length>12*1024*1024)throw new Error('Audio must be a nonempty recording of at most 12 MiB.');
+  return speechWorker.request({mode:'transcribe',audio:audio.toString('base64')},signal);
+}
 async function listDesktopDevices(signal) {
   const {stdout}=await runProcess(python,[path.join(root,'worker.py'),'devices'],{signal,timeout:20_000});return JSON.parse(stdout);
 }
@@ -75,13 +81,13 @@ export async function synthesize(text,speed=1,signal,voiceId='auto') {
   const selected=voiceOptions().find(voice=>voice.id===voiceId);
   if(!selected)throw new Error('Unknown local voice. Choose one from the voice list.');
   if(!selected.available)throw new Error('This local voice is not installed. Run speech setup, or choose an installed voice.');
+  if(kokoroReady||piperReady)return speechWorker.request({text,speed,voice:voiceId},signal);
   await mkdir(dataRoot,{recursive:true});
   const temp=await mkdtemp(path.join(dataRoot,'speech-'));
   try {
     const input=path.join(temp,'text.txt'),output=path.join(temp,'speech.wav');
     await writeFile(input,text,'utf8');
-    if(kokoroReady||piperReady)await runProcess(python,[path.join(root,'worker.py'),'synthesize','--input',input,'--output',output,'--speed',String(speed),'--voice',voiceId],{signal,timeout:60_000});
-    else await runProcess('powershell.exe',['-NoProfile','-NonInteractive','-File',path.join(root,'sapi.ps1'),'-TextFile',input,'-OutputFile',output,'-Speed',String(speed)],{signal,timeout:60_000});
+    await runProcess('powershell.exe',['-NoProfile','-NonInteractive','-File',path.join(root,'sapi.ps1'),'-TextFile',input,'-OutputFile',output,'-Speed',String(speed)],{signal,timeout:60_000});
     return await readFile(output);
   } finally {await rm(temp,{recursive:true,force:true});}
 }
@@ -98,7 +104,7 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     }
     return runProcess(python,args,{signal,onStdout,timeout:12*60*60*1000});
   })});
-  const cancelOnPause=()=>{void cancelSpeech();};
+  const cancelOnPause=()=>{void Promise.all([cancelSpeech(),speechWorker.close()]);};
   for(const event of ['pause','stop','disconnect'])runtime.on(event,cancelOnPause);
   app.get('/api/voice/status',async() => checkVoice());
   app.get('/api/voice/options',async()=>voiceOptions());
@@ -136,8 +142,8 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     gate();
     return withVoiceJob(async signal => {
       try {
-        const {stdout}=await runProcess(python,[path.join(root,'worker.py'),'transcribe','--input','-'],{input:audio,signal,timeout:90_000});
-        signal.throwIfAborted();gate();return JSON.parse(stdout);
+        const transcript=await transcribeAudio(audio,signal);
+        signal.throwIfAborted();gate();return transcript;
       } catch(error) {lastError=error.name==='AbortError'?null:error.message;throw error;}
       finally {publish();}
     });
@@ -158,5 +164,5 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
     return reply.type('audio/wav').header('Cache-Control','no-store').header('X-Companion-Preview-Cache',cached?'hit':'miss').header('X-Companion-Preview-Speed',String(speed)).send(audio);
   });
   app.addHook('onListen',async()=>{await desktopController.sync();});
-  app.addHook('onClose',async()=>{for(const event of ['pause','stop','disconnect'])runtime.off(event,cancelOnPause);await Promise.all([desktopController.close(),cancelSpeech()]);});
+  app.addHook('onClose',async()=>{for(const event of ['pause','stop','disconnect'])runtime.off(event,cancelOnPause);await Promise.all([desktopController.close(),cancelSpeech(),speechWorker.close()]);});
 }

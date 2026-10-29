@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {checkVoice,synthesize} from '../services/voice/index.js';
+import {checkVoice,synthesize,stopVoice} from '../services/voice/index.js';
 import {runProcess} from '../services/agent-orchestrator/process.js';
 
-test('installed local neural TTS -> WAV -> local STT, without microphone or recording files',{skip:process.env.COMPANION_TEST_LOCAL_SPEECH!=='1',timeout:60_000},async()=>{
+test('installed local neural TTS -> WAV -> local STT, without microphone or recording files',{skip:process.env.COMPANION_TEST_LOCAL_SPEECH!=='1',timeout:60_000},async t=>{
+  t.after(stopVoice);
   const status=await checkVoice();assert.equal(status.available,true);assert.match(status.tts,/Kokoro|Piper/);
   const wav=await synthesize('Yo, I found a pretty good cave over here.');assert.equal(wav.subarray(0,4).toString(),'RIFF');
   const python=path.join(process.env.LOCALAPPDATA,'MinecraftCompanion','voice-venv','Scripts/python.exe');

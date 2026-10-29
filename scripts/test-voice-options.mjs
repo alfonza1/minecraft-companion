@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { checkVoice, voiceOptions, synthesize } from '../services/voice/index.js';
+import { checkVoice, voiceOptions, synthesize, stopVoice } from '../services/voice/index.js';
 
 await checkVoice();
 const results=[],signatures=new Set();
@@ -20,3 +20,5 @@ for(const voice of voiceOptions().filter(voice=>voice.available&&voice.provider!
 assert.ok(results.filter(result=>result.provider==='kokoro').length>=8);
 await mkdir('.git/verification/voice-options',{recursive:true});
 await writeFile('.git/verification/voice-options/results.json',JSON.stringify({passed:true,at:new Date().toISOString(),results,scope:'Actual local CPU synthesis for every offered installed neural voice. Synthetic fixed sample text; no microphone, saved audio recordings, paid API or model requests. Audio validity/distinctness does not establish subjective voice preference.'},null,2));
+
+await stopVoice();
