@@ -156,3 +156,28 @@ wood collection, chest crafting/placement, real diamond deposits, full-storage e
 low-hill food scouting, self-crafted axe, actual meat pickup and return. Headless
 teamwork UI checks passed at1440/390px with no overflow/page errors. No destructive
 experiments were run against the personal Realm.
+
+
+## Self-sufficient cooking — 2026-10-30
+
+Food searches cook their raw catch automatically. Productive mode prioritizes raw food
+and recoverable owned furnace batches even when the food target is already met. Cooking
+can prepare a wooden pickaxe, gather eight cobblestone from safe exposed Overworld rock,
+craft/place a furnace, and obtain common wood fuel. Coal/charcoal already owned is used
+when sufficient; coal mining is unnecessary. Saved stone observations are retained while
+moving to prepare tools. Fuel yields and stock reservations are checked before loading.
+
+`COOKING_LIMITS`:32-block source observation radius, four scouting steps within48 blocks,
+12 maximum stone removals, eight items per batch. No below-foot excavation; immediate
+Home/spawn, known chests and saved build footprints are protected. Cooking has the same
+four-minute bounded action allowance as independent supply jobs. Inputs and output are
+server-confirmed. Occupied foreign furnaces are skipped; own interrupted jobs resume only
+when phase, Realm/dimension, input/output quantities and fuel match the checkpoint.
+
+Verification:276 automated cases (273 passed,3 optional provider/speech cases skipped),
+typecheck/build and headless teammate UI passed. Isolated official26.3 survival tests
+passed three cooking cases (full preparation from raw meat/wood, pause/resume, busy-foreign
+furnace isolation), one complete hunting-to-cooked-food case, and seven existing survival
+regressions. An initial crop interruption fixture was timing-sensitive under concurrent
+local servers; its sequential rerun passed without farming changes. No destructive
+personal Realm experiment was performed.

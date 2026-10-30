@@ -220,3 +220,25 @@ Evidence: `node scripts/test-native-game.mjs --independence` uses an isolated of
 crafting/placement/deposits, full-chest expansion, and food scouting across a low hill
 with automatic wooden-axe preparation and confirmed meat pickup/return. No personal
 Realm is used for these destructive fixture tests.
+
+
+## Cooking without a setup checklist
+
+Food gathering now cooks its raw catch, and productive mode prioritizes uncooked food
+even when it already carries a full food stack. The Cook button/voice command prepares
+its own prerequisites: a wooden pickaxe if needed, eight cobblestone from safe exposed
+Overworld rock, a crafting table/furnace and fuel. It uses spare coal/charcoal first
+when sufficient, otherwise gathers common wood and crafts planks for fuel. Coal mining
+is not required. All inputs/fuel must be unreserved and unprotected.
+
+Quarrying is limited to12 blocks,32-block observations and four scouting steps within48
+blocks. It avoids digging below its feet, the immediate Home/spawn area, known chests
+and saved build footprints. No unsafe tunneling or terrain clearing. Cooking handles
+up to eight items per batch within a four-minute action budget. Missing safe sources,
+danger or uncertain server inventory stop the job with an actionable reason.
+
+Furnaces are placed on clear observed ground at Home/spawn when known. Occupied foreign
+furnaces are left alone; an interrupted own batch resumes only when its scoped checkpoint,
+input/output and fuel match. Deposits and cooked output use server inventory confirmation.
+A paused furnace may continue smelting on the Minecraft server; resuming recovers its
+matching batch without restarting it or mixing somebody else's work.

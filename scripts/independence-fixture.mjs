@@ -2,7 +2,8 @@ import {huntableAnimals} from '../services/skill-executor/survival.js';
 import assert from 'node:assert/strict';
 import {Vec3} from 'vec3';
 
-export async function independenceChecks({check,command,until,runtime,store,teammate}){
+export async function independenceChecks({check:runCheck,command,until,runtime,store,teammate}){
+  const check=(name,work)=>process.argv.includes('--food-only')&&!name.includes('food search')?Promise.resolve():runCheck(name,work);
   const bot=runtime.bot,count=name=>bot.inventory.items().filter(item=>item.name===name).reduce((n,item)=>n+item.count,0);
   command('time set day');command('gamerule minecraft:advance_time false');command('gamerule minecraft:spawn_mobs false');command('tp NativeFixture 0 -59 0');command('clear NativeFixture');
   await until(()=>bot.entity.position.distanceTo(new Vec3(.5,-59,.5))<1&&!bot.inventory.items().length,'independence reset');
@@ -25,6 +26,7 @@ export async function independenceChecks({check,command,until,runtime,store,team
     const second=store.get('supplyChests').find(value=>value.id!==first.id);
     assert.ok(second.inventory.some(item=>item.name==='diamond'&&item.count===2));return {automaticChests:2,confirmedOverflowDeposit:2};
   });
+  command('fill 12 -59 6 15 -59 8 minecraft:stone');
   await check('food search crosses ordinary slopes crafts its own axe and finds a wild animal',async()=>{
     command('clear NativeFixture');command('give NativeFixture minecraft:oak_log 8');command('tp NativeFixture 40 -59 0');
     // A low hill in front of the bot exercises elevation-changing path nodes.
@@ -37,8 +39,8 @@ export async function independenceChecks({check,command,until,runtime,store,team
     const start=bot.entity.position.clone();let result;try{result=await runtime.execute('find_food',{});}finally{bot.removeListener('physicsTick',observe);}
     if(!result.success)console.error('FOOD_TRACE '+JSON.stringify(trace.slice(0,25)));
 
-    assert.equal(result.success,true,JSON.stringify(result));assert.ok(count('beef')>0||count('cooked_beef')>0,JSON.stringify(result));
-    assert.ok(count('wooden_axe')>0);assert.ok(bot.entity.position.distanceTo(start)<3,'Returns to departure');
-    return {food:count('beef'),preparedOwnAxe:true,returned:true};
+    assert.equal(result.success,true,JSON.stringify(result));assert.ok(count('cooked_beef')>0,JSON.stringify(result));
+    assert.ok(count('wooden_axe')>0);assert.ok(bot.entity.position.distanceTo(new Vec3(0,-59,0))<20,'Finishes cooking at the spawn station');
+    return {cookedFood:count('cooked_beef'),preparedOwnAxe:true,returned:true};
   });
 }

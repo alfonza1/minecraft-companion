@@ -9,8 +9,20 @@ import { navigateWithRecovery } from './navigation.js';
 import { approach,occupied,abortableWait } from '../build-executor/site.js';
 import { EMPTY,fullCube,placeAdaptedBlock } from '../build-executor/placement.js';
 
-const BASIC=/^(chest|crafting_table|stick|bread|wooden_axe|wooden_sword|furnace|[a-z_]+_planks)$/;
+const BASIC=/^(chest|crafting_table|stick|bread|wooden_axe|wooden_pickaxe|wooden_sword|furnace|[a-z_]+_planks)$/;
 export const freeBasic=(service,name)=>service.runtime.bot.inventory.items().some(item=>item.name===name&&(item.customName||item.enchants?.length))?0:Math.max(0,service.runtime.bot.inventory.items().filter(item=>item.name===name&&!item.customName&&!item.enchants?.length).reduce((n,item)=>n+item.count,0)-service.reserved(name));
+export async function commonWoodSpecies(service,signal){
+  const bot=service.runtime.bot;
+  const owned=bot.inventory.items().find(item=>/_(?:log|planks)$/.test(item.name)&&freeBasic(service,item.name)>0);
+  if(owned)return owned.name.replace(/_(?:log|planks)$/,'');
+  const anchor=bot.entity.position.clone(),visited=[];
+  for(let scout=0;scout<3;scout++){
+    signal.throwIfAborted();
+    try{return requireNaturalTree(bot).name.replace('_log','');}
+    catch(error){const next=terrainFrontiers(bot,anchor,16,visited)[0];if(!next)throw error;await navigateWithRecovery(bot,next,0,signal);visited.push(next.toString());}
+  }
+  return requireNaturalTree(bot).name.replace('_log','');
+}
 function outsideBuilds(service,p){
   return !(service.store?.get('projects')??[]).some(project=>{
     const scope=project.construction??project.checkpoint;

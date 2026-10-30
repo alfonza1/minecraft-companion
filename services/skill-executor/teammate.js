@@ -28,7 +28,7 @@ export const DEFAULT_ROUTINES = [
 export const TEAMMATE_ACTIONS = {
   hunt_food:z.object({count:z.number().int().min(1).max(2).default(1)}).strict(),
   tend_farm:z.object({count:z.number().int().min(1).max(8).default(4)}).strict(),
-  cook_food:z.object({count:z.number().int().min(1).max(3).default(2)}).strict(),
+  cook_food:z.object({count:z.number().int().min(1).max(8).default(8)}).strict(),
   explore_nearby:z.object({radius:z.number().int().min(8).max(48).default(24),steps:z.number().int().min(1).max(4).default(3)}).strict(),
   store_surplus:z.object({}).strict(),
   ensure_storage:z.object({}).strict(),

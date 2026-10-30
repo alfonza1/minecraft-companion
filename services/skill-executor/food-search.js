@@ -5,6 +5,7 @@ import {observedTerrainPath,terrainFrontiers} from './terrain.js';
 
 async function visibleFood(service,signal,context){
   const bot=service.runtime.bot;
+  if(bot.inventory.items().some(item=>COOKED[item.name]&&item.count-service.reserved(item.name)>0))return cookFood(service,{count:8},signal);
   if(foodCount(bot)>=8)return {success:true,summary:`Carrying ${foodCount(bot)} food items.`};
   if(bot.inventory.items().some(item=>COOKED[item.name])&&cookingFuel(bot)&&bot.findBlock({matching:bot.registry.blocksByName.furnace.id,maxDistance:16}))return cookFood(service,{count:2},signal);
   if(!context.stockChecked&&service.store.get('supplyChests').some(chest=>chest.approved&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&chest.allowedItems?.some(name=>bot.registry.foodsByName?.[name])&&(!Array.isArray(chest.inventory)||chest.inventory.some(item=>item.count>0&&bot.registry.foodsByName?.[item.name])))){
@@ -49,5 +50,6 @@ export async function findFood(service,signal){
       }
     }
   }
+  if(result?.success&&bot.inventory.items().some(item=>COOKED[item.name]&&item.count-service.reserved(item.name)>0)){const cooked=await cookFood(service,{count:8},signal);return {...result,cooked:cooked.cooked,summary:`${result.summary} ${cooked.summary}`};}
   return result??{success:false,summary:`Searched ${visited.length-1} reachable surface waypoints for food. ${reason??'No eligible wild animals, approved ripe crops or food supplies were found on this route.'}`};
 }

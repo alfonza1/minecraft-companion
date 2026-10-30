@@ -14,7 +14,10 @@ export function chooseIdleWork(service,blocked=new Set()){
   const candidates=[],counts=inventoryCounts(bot),stores=approvedStores(service),surplus=depositPlan(service),valuable=valuableCargo(bot);
   if(prefs.autoDeposit&&surplus.length&&(stores.length||storageAnchor(service)))candidates.push({tool:'store_surplus',args:{},reason:'Putting surplus and valuables away.'});
   if(valuable||bot.inventory.emptySlotCount()<4)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Loot needs safe storage. Use approved deposit storage at Home/Base, or server spawn when no home is set.'};
+  if(bot.inventory.items().some(item=>COOKED[item.name]&&item.count-service.reserved(item.name)>0))candidates.push({tool:'cook_food',args:{count:8},reason:'Preparing fuel and a furnace to cook the raw food.'});
+  if(service.store.get('furnaceJobs').some(job=>['cooking','needs-check'].includes(job.status)&&job.realmId===settings.realmId&&job.dimension===bot.game.dimension))candidates.unshift({tool:'cook_food',args:{count:8},reason:'Recovering my interrupted furnace batch.'});
   if(pendingFarmRepairs(service).length)candidates.push({tool:'tend_farm',args:{count:1},reason:'Replanting a crop interrupted by the previous task.'});
+  if(candidates.some(value=>value.tool==='cook_food')&&!blocked.has('cook_food'))return candidates.find(value=>!blocked.has(value.tool));
   if(bot.food<14||foodCount(bot)<8){
     const raw=bot.inventory.items().some(item=>COOKED[item.name]),log=bot.inventory.items().find(item=>item.name.endsWith('_log')&&item.count>service.reserved(item.name));
     if(raw&&cookingFuel(bot)&&bot.findBlock({matching:bot.registry.blocksByName.furnace.id,maxDistance:16}))candidates.push({tool:'cook_food',args:{count:2},reason:'Cooking owned food.'});
