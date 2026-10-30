@@ -1,3 +1,5 @@
+import {ensureStorage} from './automatic-storage.js';
+import {findFood} from './food-search.js';
 import { storageAnchor } from './storage-policy.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -29,6 +31,7 @@ export const TEAMMATE_ACTIONS = {
   cook_food:z.object({count:z.number().int().min(1).max(3).default(2)}).strict(),
   explore_nearby:z.object({radius:z.number().int().min(8).max(48).default(24),steps:z.number().int().min(1).max(4).default(3)}).strict(),
   store_surplus:z.object({}).strict(),
+  ensure_storage:z.object({}).strict(),
   restock_food:z.object({}).strict(),
   find_food:z.object({}).strict(),
   resume_approved_build:z.object({projectId:z.string().uuid().optional()}).strict(),
@@ -214,6 +217,7 @@ export class TeammateService {
   async execute(name, args, signal) {
     const bot = this.runtime.bot;
     if(name==='find_resource')return findResource(this,args,signal);
+    if(name==='ensure_storage')return ensureStorage(this,signal);
     if(name==='store_surplus')return storeSurplus(this,signal);
     if(name==='tend_farm')return tendFarm(this,args,signal);
     if(name==='hunt_food')return huntFood(this,args,signal);
@@ -225,18 +229,7 @@ export class TeammateService {
       for(const name of supplies){if(foodCount(bot)>=8)break;await this.withdraw([{name,count:(inventoryCounts(bot)[name]||0)+8-foodCount(bot)}],signal);}
       return {success:foodCount(bot)>0,summary:`Checked approved supplies; carrying ${foodCount(bot)} food items.`};
     }
-    if(name==='find_food'){
-      if(foodCount(bot)>=8)return {success:true,summary:`Already carrying ${foodCount(bot)} food items.`};
-      if(bot.inventory.items().some(item=>COOKED[item.name])&&cookingFuel(bot)&&bot.findBlock({matching:bot.registry.blocksByName.furnace.id,maxDistance:16}))return cookFood(this,{count:2},signal);
-      const stock=await this.execute('restock_food',{},signal).catch(error=>{signal.throwIfAborted();return null;});if(stock?.success)return stock;
-      if(matureCrops(this).length){
-        const result=await tendFarm(this,{count:3},signal),table=bot.findBlock({matching:bot.registry.blocksByName.crafting_table.id,maxDistance:16}),recipe=table&&bot.recipesFor(bot.registry.itemsByName.bread.id,null,1,table)[0];
-        if(recipe&&(inventoryCounts(bot).wheat||0)-this.reserved('wheat')>=3){await navigateWithRecovery(bot,table.position,2,signal);await bot.craft(recipe,1,table);await confirmInventory(bot);}
-        return {...result,summary:`${result.summary} Carrying ${foodCount(bot)} food items.`};
-      }
-      if(huntableAnimals(this).length)return huntFood(this,{count:1},signal);
-      return {success:false,summary:'No safe food source is currently visible. Approve a farm or supply chest, or help me reach wild animals.'};
-    }
+    if(name==='find_food')return findFood(this,signal);
     if (name === 'rescue_player') return this.rescue(signal);
     if (name === 'prepare_routine' || name === 'restock_supplies') return this.routine(args.routine, signal);
     if (name === 'recover_items') return this.recover(args.deathId, signal);

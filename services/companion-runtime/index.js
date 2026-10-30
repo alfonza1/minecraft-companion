@@ -303,7 +303,7 @@ export class CompanionRuntime extends EventEmitter {
       if (this.bot?.companionTransport?.projected) throw new Error('Teammate resource actions require a native Minecraft connection.');
       const validated = this.teammate.schemas[name].parse(args);
       return this.runJob(name, async signal => {
-        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal), name === 'find_resource' ? SEARCH_LIMITS.actionMs : undefined);
+        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal), name === 'find_resource' ? SEARCH_LIMITS.actionMs : ['find_food','store_surplus','ensure_storage','explore_nearby'].includes(name) ? 240000 : undefined);
         signal.throwIfAborted(); return result;
       }, { tool: name, args: validated });
     }

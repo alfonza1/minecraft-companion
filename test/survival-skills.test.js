@@ -26,9 +26,9 @@ test('loot plan keeps practical kit and reservations, deposits valuables, and ne
 });
 test('background jobs prioritize storage and cannot ignore unapproved, cross-Realm or missing storage',()=>{
   const f=fixture();f.setInventory([{name:'bread',count:12},{name:'diamond',count:2}]);
-  assert.match(chooseIdleWork(f.service).reason,/storage/);
+  assert.equal(chooseIdleWork(f.service).tool,'store_surplus');
   f.store.put('supplyChests',approved);assert.equal(chooseIdleWork(f.service).tool,'store_surplus');
-  f.store.put('supplyChests',{...approved,realmId:2});assert.equal(chooseIdleWork(f.service).tool,undefined);
+  f.store.put('supplyChests',{...approved,realmId:2});assert.equal(chooseIdleWork(f.service).tool,'store_surplus');
   f.store.put('supplyChests',approved);assert.equal(chooseIdleWork(f.service,new Set(['store_surplus'])).tool,undefined);
 });
 test('unsafe conditions and explicit instructions-only mode prevent background work',()=>{

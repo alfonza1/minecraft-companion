@@ -125,3 +125,34 @@ Validation: six policy cases, existing survival/search checks, full typecheck/bu
 headless teamwork UI, and actual localhost survival deposits of three diamonds at
 confirmed spawn with no Home saved, followed by distant bamboo scouting and return.
 Personal Realm gameplay remains untested for this policy.
+
+
+## Independent startup and food search — 2026-10-30
+
+Live diagnosis showed the teammate active with busy mode on, no edible inventory or
+weapon, and an idle decision that required an already-visible food source. Its old
+scout checked only distant same-height endpoints. Food acquisition now scouts reachable
+surface routes, prioritizes observed eligible prey, resupplies once from actual/unknown
+stock, prepares a workbench/wooden axe from common wood, and collects moving meat drops.
+The idle policy can request food scouting and create Home/spawn storage without a
+pre-existing chest. Ordinary height-changing routes are previewed against loaded terrain
+with excavation/placement/liquid/hazardous-drop paths rejected.
+
+Storage can gather missing wood, craft a workbench and chest, place on clear observed
+ground and expand when approved chests lack capacity. Recipe preparation reconciles
+shared intermediate ingredients and protects named/enchanted/reserved supplies. Blocks
+are not removed to make room, interactive blocks are not used as placement supports,
+and saved project footprints are excluded. New owned chests allow common supply
+withdrawals. Rare items retain the existing withdrawal protections.
+
+Limits:12 automatic chests per area,3 expansion passes per storage job,64-block food
+radius,12 scouting legs and4-minute independent action cap. Path previews use80ms and
+at most128 nodes per candidate. No new model polling, paid service or public port.
+
+Evidence:271 automated cases (268 passed;3 optional live/speech cases skipped), typecheck
+and build passed. All3 independence and7 existing survival regression scenarios passed
+on isolated official26.3 survival worlds, including one-log startup plus natural-tree
+wood collection, chest crafting/placement, real diamond deposits, full-storage expansion,
+low-hill food scouting, self-crafted axe, actual meat pickup and return. Headless
+teamwork UI checks passed at1440/390px with no overflow/page errors. No destructive
+experiments were run against the personal Realm.

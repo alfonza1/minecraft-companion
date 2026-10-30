@@ -1,3 +1,4 @@
+import {independenceChecks} from './independence-fixture.mjs';
 import nativeProtocol from '../services/native-26.3/preload.cjs';
 import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -43,7 +44,7 @@ if (process.argv.includes('--check-runtime')) { console.log('Verified private Ja
 assert.equal(nativeProtocol.installed, true, 'Run npm run setup:native first.');
 const directory = await mkdtemp(path.join(os.tmpdir(),'companion-native-'));
 const logs=[],results=[], errors=[]; let child,runtime,store,recipient,exitPromise,exited=false,failed=false;
-const EXPECTED_CHECKS = process.argv.includes('--speed-only')?2:process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?1:4):process.argv.includes('--building-only')?9:process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
+const EXPECTED_CHECKS = process.argv.includes('--independence')?3:process.argv.includes('--speed-only')?2:process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?1:4):process.argv.includes('--building-only')?9:process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate, label, timeout = 30000) {
   const started = Date.now();
@@ -82,7 +83,9 @@ try {
  const teammate = new TeammateService({ runtime, store, publish() {} });
  const orchestrator = createOrchestrator({ runtime, store, publish() {}, request: async () => { throw new Error('Native fixture must not request a model.'); } });
  runtime.modelCancel = options => orchestrator.cancel(options);
- if(process.argv.includes('--speed-only')){
+ if(process.argv.includes('--independence')){
+  await independenceChecks({check,command,until,runtime,store,teammate});
+ }else if(process.argv.includes('--speed-only')){
   await speedChecks({check,command,until,runtime,store,teammate,logs});
  }else if(process.argv.includes('--automatic-build')){
   await automaticBuildChecks({check,command,until,runtime,store,teammate});
@@ -220,7 +223,7 @@ finally {
   }
   store?.close(); clearTimeout(timeout);
   const passed = !failed && exited && results.length === EXPECTED_CHECKS;
-  await writeFile(process.argv.includes('--speed-only')?'.git/speed-game-results.json':process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?'.git/automatic-house-results.json':'.git/automatic-build-results.json'):process.argv.includes('--building-only')?'.git/building-game-results.json':process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
+  await writeFile(process.argv.includes('--independence')?'.git/independence-game-results.json':process.argv.includes('--speed-only')?'.git/speed-game-results.json':process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?'.git/automatic-house-results.json':'.git/automatic-build-results.json'):process.argv.includes('--building-only')?'.git/building-game-results.json':process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
     at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1,
     clientVersion: '26.3', protocol: 777, translated: false, lockHash: nativeProtocol.lockHash,
     scope: 'Disposable localhost-only official 26.3 survival server; no Microsoft authentication or Realm gameplay claimed.',

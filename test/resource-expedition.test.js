@@ -34,7 +34,7 @@ test('missing home or travel food limits search to nearby terrain and explains p
 
 test('valuable loot without approved storage prevents departure',async()=>{
   const f=fixture();f.setItems([{name:'diamond',count:3},{name:'bread',count:16}]);
-  await assert.rejects(findResource(f.service,{item:'bamboo'},new AbortController().signal,{navigate:f.navigate}),/Approve a nearby chest/);
+  await assert.rejects(findResource(f.service,{item:'bamboo'},new AbortController().signal,{navigate:f.navigate}),/No clear observed chest site|Home\/spawn/);
   assert.equal(f.moves.length,0);
 });
 

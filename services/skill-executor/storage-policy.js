@@ -12,6 +12,7 @@ export function recordServerSpawn(store, realmId, packet, currentDimension) {
 export function storageAnchor(service) {
   const realmId=service.store.settings().realmId,dimension=service.runtime.bot?.game?.dimension;
   if(!dimension)return null;
+  if(service.runtime.connection?.realmId!=null&&service.runtime.connection.realmId!==realmId)return null;
   const locations=service.store.get('locations').filter(place=>place.realmId===realmId&&/^(home|base)$/i.test(place.name));
   const home=locations.find(place=>/^home$/i.test(place.name))??locations[0];
   // A home in another dimension requires returning there, never quietly

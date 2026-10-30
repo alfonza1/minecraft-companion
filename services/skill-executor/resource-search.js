@@ -1,3 +1,4 @@
+import { observedTerrainPath } from './terrain.js';
 import { storageAnchor } from './storage-policy.js';
 import { SEARCH_LIMITS, point, vector, safeSearchSegment, routeDistance } from './search-route.js';
 import { requireSafeWork, valuableCargo, storeSurplus, explorationSteps, foodCount } from './survival.js';
@@ -28,7 +29,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
   };
   async function travel(target, returning=false) {
     scope();
-    if(!safeSearchSegment(bot,bot.entity.position,target))throw new Error('The observed route is unloaded, obstructed or unsafe. I saved my position and need help instead of crossing it blindly.');
+    if(!safeSearchSegment(bot,bot.entity.position,target)&&!observedTerrainPath(bot,vector(target)))throw new Error('The observed route is unloaded, obstructed or unsafe. I saved my position and need help instead of crossing it blindly.');
     const controller=new AbortController(),combined=AbortSignal.any([signal,controller.signal]);
     const halt=()=>{bot.pathfinder?.stop();bot.clearControlStates?.();};
     const timer=setTimeout(()=>controller.abort(new Error('Search route segment timed out.')),SEARCH_LIMITS.segmentMs);
@@ -56,7 +57,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
   let limitation=null;
   if(extended){
     if(!home)limitation='Save Home/Base or reconnect to observe server spawn before I search beyond 64 blocks.';
-    else if(anchor.distanceTo(vector(home.position))>64||!safeSearchSegment(bot,anchor,home.position))limitation='Start the longer search near Home with an observed clear route to it.';
+    else if(anchor.distanceTo(vector(home.position))>64||(!safeSearchSegment(bot,anchor,home.position)&&!observedTerrainPath(bot,vector(home.position))))limitation='Start the longer search near Home with an observed clear route to it.';
     else if(foodCount(bot)<SEARCH_LIMITS.food)limitation='I need at least eight food items for a longer search.';
     else {await travel(home.position);trip.home=point(bot.entity.position.floored());trip.returnTarget=home.kind;trip.route=[trip.home];}
   }
@@ -77,7 +78,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
       found=positions.map(p=>bot.blockAt(p)).find(block=>block&&block.position.distanceTo(origin)<=maxRadius&&bot.canSeeBlock(block));
       if(found||step===steps)break;
       const searchRadius=Math.min(maxRadius,64*Math.pow(2,Math.floor(step/12)));
-      const next=explorationSteps(bot,origin,searchRadius,visited).filter(p=>safeSearchSegment(bot,bot.entity.position,p)).sort((a,b)=>b.distanceTo(origin)-a.distanceTo(origin))[0];
+      const next=explorationSteps(bot,origin,searchRadius,visited).filter(p=>safeSearchSegment(bot,bot.entity.position,p)||observedTerrainPath(bot,p)).sort((a,b)=>b.distanceTo(origin)-a.distanceTo(origin))[0];
       if(!next)break;
       await travel(next);visited.push(next.toString());
     }

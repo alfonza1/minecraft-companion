@@ -19,10 +19,10 @@ export function quickPlan(text, { world, playerName, currentTask, locations = []
     [/^(?:hunt(?: for food)?|get (?:some )?meat|hunt (?:some )?animals)$/,'hunt_food','I’ll look for a safe wild animal.'],
     [/^(?:farm|tend (?:the |our )?farm|harvest (?:the |our )?(?:farm|crops))$/,'tend_farm','I’ll harvest the ripe crops and replant.'],
     [/^(?:cook(?: (?:some |the )?food)?|smelt (?:the )?food)$/,'cook_food','I’ll cook what I own in an empty nearby furnace.'],
-    [/^(?:explore|go exploring|scout(?: (?:the area|nearby))?)$/,'explore_nearby','I’ll check nearby safe surface paths and come back.'],
+    [/^(?:explore|go exploring|(?:go )?(?:look|walk) around|scout(?: (?:the area|nearby))?)$/,'explore_nearby','I’ll check nearby safe surface paths and come back.'],
     [/^(?:store (?:your |the )?(?:loot|items|valuables)|deposit(?: (?:your |the )?(?:loot|items|surplus))?|put (?:your |the )?(?:loot|items|valuables) away)$/,'store_surplus','I’ll put the surplus in approved storage and keep my kit.'],
     [/^(?:resume (?:the )?build|(?:continue|keep|carry on) (?:the )?(?:build|building)|build (?:the )?approved (?:house|project))$/,'resume_approved_build','I’ll check the approved blueprint and saved site, then continue.'],
-    [/^(?:find|get|gather)(?: (?:some|us))? food$/,'find_food','I’ll check safe food sources.'],
+    [/^(?:find|get|gather|look for|check for)(?: (?:some|us))? food$/,'find_food','I’ll check safe food sources.'],
   ])if(pattern.test(message))return {reply,intent:'minecraft_action',actions:[{tool,args:{}}]};
   const search = message.match(/^(?:find|look for|search for|go find|you (?:find|look for)) (?:some |the |a source of )?([a-z_ ]{1,60})$/);
   if(search && !/\b(?:house|build|youtube|video|food|movie)\b/.test(search[1])) {

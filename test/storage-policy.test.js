@@ -36,6 +36,10 @@ test('Home in another dimension never silently falls back to spawn',()=>{
   f.store.put('locations',{id:'home',name:'Home',realmId:1,dimension:'the_nether',position:{x:0,y:64,z:0}});
   assert.equal(storageAnchor(f.service),null);assert.deepEqual(approvedStores(f.service),[]);
 });
+test('changing the selected Realm cannot authorize storage in a still-connected previous Realm',()=>{
+  const f=fixture();recordServerSpawn(f.store,1,{location:{x:50,y:64,z:0}},'overworld');
+  f.service.runtime.connection={realmId:2};assert.equal(storageAnchor(f.service),null);assert.deepEqual(approvedStores(f.service),[]);
+});
 test('changing Home during approach prevents opening the old deposit chest',async()=>{
   const f=fixture();f.store.put('locations',{id:'home',name:'Home',realmId:1,dimension:'overworld',position:{x:0,y:64,z:0}});f.chest('old-home',4);
   let opened=false;f.bot.pathfinder={goto:async()=>{f.bot.entity.position=new Vec3(4,64,0);f.store.put('locations',{id:'home',name:'Home',realmId:1,dimension:'overworld',position:{x:200,y:64,z:0}});},setGoal(){}};

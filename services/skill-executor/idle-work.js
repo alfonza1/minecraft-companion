@@ -1,3 +1,4 @@
+import {storageAnchor} from './storage-policy.js';
 import {inventoryCounts} from '../../src/actions.js';
 import {foodCount,depositPlan,approvedStores,matureCrops,huntableAnimals,COOKED,valuableCargo,cookingFuel,pendingFarmRepairs} from './survival.js';
 import {requireNaturalTree} from './index.js';
@@ -11,7 +12,7 @@ export function chooseIdleWork(service,blocked=new Set()){
   if(!prefs.busyMode||settings.autonomy==='instructions'||!bot?.minenessReady||!service.runtime.isActive())return {reason:'Automatic work is off.'};
   if(bot.companionTransport?.projected||bot.companionInventoryUnverified||bot.entity.isInWater||bot.entity.isInLava||bot.health<14||bot.food<6||service.threats(bot.entity.position,12).length)return {reason:'Waiting for safe health, food, terrain and clear surroundings.'};
   const candidates=[],counts=inventoryCounts(bot),stores=approvedStores(service),surplus=depositPlan(service),valuable=valuableCargo(bot);
-  if(prefs.autoDeposit&&surplus.length&&stores.length)candidates.push({tool:'store_surplus',args:{},reason:'Putting surplus and valuables away.'});
+  if(prefs.autoDeposit&&surplus.length&&(stores.length||storageAnchor(service)))candidates.push({tool:'store_surplus',args:{},reason:'Putting surplus and valuables away.'});
   if(valuable||bot.inventory.emptySlotCount()<4)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Loot needs safe storage. Use approved deposit storage at Home/Base, or server spawn when no home is set.'};
   if(pendingFarmRepairs(service).length)candidates.push({tool:'tend_farm',args:{count:1},reason:'Replanting a crop interrupted by the previous task.'});
   if(bot.food<14||foodCount(bot)<8){
@@ -23,10 +24,12 @@ export function chooseIdleWork(service,blocked=new Set()){
     if((counts.wheat||0)>=3&&bot.findBlock({matching:bot.registry.blocksByName.crafting_table.id,maxDistance:16}))candidates.push({tool:'craft_item',args:{item:'bread',count:1},reason:'Turning owned wheat into food.'});
     if(matureCrops(service).length)candidates.push({tool:'tend_farm',args:{count:3},reason:'Harvesting and replanting the approved farm.'});
     if(bot.inventory.items().some(item=>/_sword$|_axe$/.test(item.name))&&huntableAnimals(service).length)candidates.push({tool:'hunt_food',args:{count:1},reason:'Hunting a nearby wild adult animal.'});
+    candidates.push({tool:'find_food',args:{},reason:'Looking for food along reachable surface routes and preparing basic gear if needed.'});
     return candidates.find(value=>!blocked.has(value.tool))||{reason:'Food is short. Need an approved stocked chest, ripe farm, or safe wild animals and a weapon.'};
   }
   const time=bot.time?.timeOfDay;
   if(time!==undefined&&time>13000&&time<23000)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Nighttime: staying near supplies instead of roaming.'};
+  if(!stores.length&&storageAnchor(service)&&!blocked.has('ensure_storage'))return {tool:'ensure_storage',args:{},reason:'Making storage at Home/spawn before background gathering.'};
   if(!stores.length)return {reason:'Approve a loot-deposit chest at Home/Base, or server spawn when no home is set, before background gathering.'};
   const stock={...counts};for(const chest of stores){if(!chest.observedAt||Date.now()-Date.parse(chest.observedAt)>300000)continue;for(const item of chest.inventory||[])stock[item.name]=(stock[item.name]||0)+item.count;}
   const logs=Object.entries(stock).filter(([name])=>name.endsWith('_log')).reduce((sum,[,n])=>sum+n,0);
@@ -53,7 +56,7 @@ export class IdleWorkService{
     if(this.reason!==decision.reason){this.reason=decision.reason;this.publish();}
     if(!decision.tool)return;
     this.running=true;
-    try{const work=this.runtime.execute(decision.tool,decision.args);this.taskId=this.runtime.currentTask?.id;const result=await work;if(result?.success===false)this.failures.set(decision.tool,Date.now());else if(['explore_nearby','tend_farm','restock_food'].includes(decision.tool))this.failures.set(decision.tool,Date.now());}
+    try{const work=this.runtime.execute(decision.tool,decision.args);this.taskId=this.runtime.currentTask?.id;const result=await work;if(result?.success===false)this.failures.set(decision.tool,Date.now());else if(['explore_nearby','tend_farm','restock_food','find_food'].includes(decision.tool))this.failures.set(decision.tool,Date.now());}
     catch(error){this.failures.set(decision.tool,Date.now());if(this.runtime.isActive())this.teammate.notice(error.message,'blocked',`idle:${decision.tool}`);}
     finally{this.running=false;this.publish();}
   }

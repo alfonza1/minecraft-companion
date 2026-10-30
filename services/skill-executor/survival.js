@@ -1,3 +1,7 @@
+import {ensureStorage} from './automatic-storage.js';
+import {terrainFrontiers} from './terrain.js';
+import pathfinder from 'mineflayer-pathfinder';
+import {abortableWait} from '../build-executor/site.js';
 import {Vec3} from 'vec3';
 import {setTimeout as delay} from 'node:timers/promises';
 import {inventoryCounts} from '../../src/actions.js';
@@ -47,7 +51,22 @@ export function approvedStores(service){
   return service.store.get('supplyChests').filter(chest=>chest.approved&&chest.depositAllowed&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&vector(chest.position).distanceTo(vector(anchor.position))<=HOME_STORAGE_RADIUS&&vector(chest.position).distanceTo(bot.entity.position)<=64).sort((a,b)=>vector(a.position).distanceTo(vector(anchor.position))-vector(b.position).distanceTo(vector(anchor.position)));
 }
 export async function storeSurplus(service,signal){
-  const bot=requireSafeWork(service,signal),chest=approvedStores(service)[0];
+  const deposited={};
+  for(let attempt=0;attempt<3;attempt++){
+    await ensureStorage(service,signal);
+    const candidates=approvedStores(service);let needsExpansion=false;
+    for(const chest of candidates){
+      const result=await depositInChest(service,chest,signal);
+      for(const [name,count] of Object.entries(result.deposited))deposited[name]=(deposited[name]??0)+count;
+      if(!depositPlan(service).length)return {success:true,deposited,summary:'Stored surplus at Home/spawn and kept my useful kit.'};
+      needsExpansion=true;
+    }
+    if(needsExpansion)await ensureStorage(service,signal,{forceNew:true});
+  }
+  throw new Error('Storage expanded but some surplus remains. Check capacity before trying again.');
+}
+async function depositInChest(service,chest,signal){
+  const bot=requireSafeWork(service,signal);
   if(!chest)throw new Error('Approve a nearby chest for loot deposits at Home/Base, or at server spawn if no home is set (within 32 blocks). Return within 64 blocks of that storage first. If spawn is unknown, reconnect to observe it. I will keep my loot until then.');
   await navigateWithRecovery(bot,chest.position,2,signal);requireSafeWork(service,signal);
   if(!approvedStores(service).some(value=>value.id===chest.id))throw new Error('Home/spawn storage or its deposit permission changed. Deposit stopped.');
@@ -60,7 +79,10 @@ export async function storeSurplus(service,signal){
       requireSafeWork(service,signal);
       if(!approvedStores(service).some(value=>value.id===chest.id))throw new Error('Deposit permission or Home/spawn storage changed.');
       const before=container.items().filter(value=>value.name===item.name).reduce((sum,value)=>sum+value.count,0);
-      try{await container.deposit(bot.registry.itemsByName[item.name].id,null,item.count);}catch(error){record();throw new Error(`Storage could not accept ${item.name}. My remaining items stay in inventory.`);}
+      const slots=container.slots?.slice(0,container.inventoryStart);
+      const capacity=slots?slots.reduce((n,slot)=>n+(!slot?(bot.registry.itemsByName[item.name].stackSize??64):slot.name===item.name&&!slot.customName&&!slot.enchants?.length?Math.max(0,slot.stackSize-slot.count):0),0):item.count;
+      const amount=Math.min(item.count,capacity);if(!amount)continue;
+      try{await container.deposit(bot.registry.itemsByName[item.name].id,null,amount);} catch(error){record();throw new Error(`Storage could not accept ${item.name}. My remaining items stay in inventory.`);}
       await confirmInventory(bot,container);signal.throwIfAborted();
       const moved=before-container.items().filter(value=>value.name===item.name).reduce((sum,value)=>sum+value.count,0);if(moved>0)deposited[item.name]=moved;record();
     }
@@ -106,10 +128,10 @@ export async function tendFarm(service,{count=4},signal){
   return {success:replanted>0,replanted,harvested,gained,summary:replanted?`Harvested ${harvested} mature crops and replanted ${replanted} spots, including interrupted repairs.`:'No ripe crops with spare replanting seeds were available.'};
 }
 
-export function huntableAnimals(service){
+export function huntableAnimals(service,maxDistance=24){
   const bot=service.runtime.bot,area=farmArea(service),homes=service.store.get('locations').filter(place=>/^(home|base)$/i.test(place.name)&&place.realmId===service.store.settings().realmId&&place.dimension===bot.game.dimension);
   return Object.values(bot.entities).filter(entity=>{
-    if(!Object.hasOwn(MEAT,entity.name)||entity.isValid===false||entity.customName||entity.username||entity.leashHolder||entity.vehicle||entity.passengers?.length||entity.position.distanceTo(bot.entity.position)>24)return false;
+    if(!Object.hasOwn(MEAT,entity.name)||entity.isValid===false||entity.customName||entity.username||entity.leashHolder||entity.vehicle||entity.passengers?.length||entity.position.distanceTo(bot.entity.position)>maxDistance)return false;
     const keys=bot.registry.entitiesByName[entity.name]?.metadataKeys||[],baby=keys.indexOf('baby'),health=keys.indexOf('health'),custom=keys.indexOf('custom_name');
     if(baby<0||health<0||!Number.isFinite(entity.metadata?.[health])||entity.metadata?.[baby]===true||entity.metadata?.[custom])return false;
     if(area&&entity.position.distanceTo(vector(area.position))<area.radius+8)return false;
@@ -133,9 +155,15 @@ export async function huntFood(service,{count=1},signal){
         if(target.position.distanceTo(bot.entity.position)>3.1)continue;
         await bot.lookAt(target.position.offset(0,.5,0),true);bot.attack(target);await delay(750,undefined,{signal});
       }
-      if(!dead)continue;killed++;
+      if(!dead)continue;killed++;await delay(250,undefined,{signal});
       const drops=Object.values(bot.entities).filter(entity=>entity.name==='item'&&entity.isValid!==false&&entity.position.distanceTo(target.position)<4).slice(0,8);
-      for(const drop of drops){requireSafeWork(service,signal);await navigateWithRecovery(bot,drop.position,0,signal);await delay(150,undefined,{signal});}
+      for(const drop of drops){
+        requireSafeWork(service,signal);
+        try{await abortableWait(()=>bot.pathfinder.goto(new pathfinder.goals.GoalFollow(drop,0)),signal,bot);}
+        catch(error){signal.throwIfAborted();if(drop.isValid!==false&&bot.entities[drop.id])throw error;}
+        finally{bot.pathfinder.setGoal(null);}
+        await delay(250,undefined,{signal});
+      }
     }finally{bot.removeListener('entityDead',death);}
   }
   await confirmInventory(bot);const after=inventoryCounts(bot),gained=Object.fromEntries(Object.entries(after).map(([name,n])=>[name,n-(before[name]||0)]).filter(([,n])=>n>0));
@@ -164,6 +192,7 @@ export async function cookFood(service,{count=2},signal){
 }
 
 export function explorationSteps(bot,anchor,radius,visited=[]){
+  if(bot.pathfinder?.getPathTo&&bot.pathfinder.movements)return terrainFrontiers(bot,anchor,radius,visited);
   const p=bot.entity.position.floored(),seen=new Set(visited),points=[];
   for(const [dx,dz] of [[8,0],[0,8],[-8,0],[0,-8],[6,6],[-6,6],[6,-6],[-6,-6]]){
     const next=p.offset(dx,0,dz);if(next.distanceTo(anchor)>radius||seen.has(next.toString()))continue;

@@ -194,3 +194,29 @@ login coordinates or a default `(0,0,0)` value are spawn. If the required storag
 unavailable, full or too far away, it retains its items and asks for help. Supply withdrawals
 still obey their own approved-chest permissions. Longer searches also use spawn as their
 return anchor when Home/Base is unset.
+
+
+## Independent food, terrain and storage
+
+With **Stay productive between my requests** enabled, the teammate now starts food
+searches even when no eligible animal is already nearby. It previews observed paths
+on ordinary slopes, prioritizes observed wild animals, rescans as it moves, can make
+a workbench and wooden axe from unreserved common wood, and returns after its search.
+It checks known food stock once rather than repeatedly walking back to empty chests.
+Say **look around**, **walk around**, or **check for food** to start deterministic skills.
+
+Home/spawn storage can bootstrap a workbench/chest, gather missing common wood from
+observed natural trees, and create another separate chest when existing approved
+storage fills. Only clear, grounded sites are used; existing blocks and project sites
+are protected. New companion-owned chests permit deposits and common supply withdrawals;
+rare, named, enchanted and reserved supplies remain protected. Limits:12 automatic
+chests per home area, three expansion passes per task,64-block food-search radius,
+12 food-scouting legs and bounded action deadlines. Terrain previews reject digging,
+block placement, water/lava and drops beyond ordinary one-block steps. This is not
+unrestricted cave navigation, fishing, farm creation or guaranteed survival.
+
+Evidence: `node scripts/test-native-game.mjs --independence` uses an isolated official
+26.3 survival server. It tests gathering missing wood from a one-log start, actual
+crafting/placement/deposits, full-chest expansion, and food scouting across a low hill
+with automatic wooden-axe preparation and confirmed meat pickup/return. No personal
+Realm is used for these destructive fixture tests.
