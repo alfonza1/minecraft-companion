@@ -58,9 +58,9 @@ test('tool selection skips a faster nearly broken tool and equips usable replace
 
 test('explicit scouting records only visible sources and respects survival safety before movement',async()=>{
   const saved=[],point=new Vec3(2,64,2),anchor=new Vec3(0,64,0);
-  const bot={minenessReady:true,health:20,food:20,entity:{position:anchor},inventory:{items:()=>[]},registry:{blocksByName:{bamboo:{id:1}}},game:{dimension:'overworld'},time:{timeOfDay:1000},findBlocks:()=>[point],blockAt:()=>({name:'bamboo',position:point}),canSeeBlock:()=>true,pathfinder:{goto:async()=>{},setGoal(){},stop(){}},clearControlStates(){}};
-  const service={runtime:{bot},threats:()=>[],store:{settings:()=>({realmId:1}),put:(name,row)=>saved.push({name,row})},publish(){}};
+  const bot={minenessReady:true,health:20,food:20,entity:{position:anchor},inventory:{items:()=>[]},registry:{blocksByName:{bamboo:{id:1}}},game:{dimension:'overworld'},time:{timeOfDay:1000},findBlocks:()=>[point],blockAt:p=>p.equals(point)?{name:'bamboo',position:point}:({name:p.y<64?'stone':'air',boundingBox:p.y<64?'block':'empty',position:p}),canSeeBlock:()=>true,pathfinder:{goto:async()=>{},setGoal(){},stop(){}},clearControlStates(){}};
+  const service={runtime:{bot},threats:()=>[],store:{get:()=>[],settings:()=>({realmId:1}),put:(name,row)=>saved.push({name,row})},publish(){}};
   const result=await findResource(service,{item:'bamboo'},new AbortController().signal);
-  assert.equal(result.success,true);assert.equal(saved[0].row.provenance,'observed');assert.match(result.summary,/haven't harvested/);
-  bot.health=4;await assert.rejects(findResource(service,{item:'bamboo'},new AbortController().signal),/unsafe/);assert.equal(saved.length,1);
+  assert.equal(result.success,true);assert.equal(saved.find(value=>value.name==='resourceLocations').row.provenance,'observed');assert.match(result.summary,/haven't harvested/);
+  bot.health=4;await assert.rejects(findResource(service,{item:'bamboo'},new AbortController().signal),/unsafe/);assert.equal(saved.filter(value=>value.name==='resourceLocations').length,1);
 });

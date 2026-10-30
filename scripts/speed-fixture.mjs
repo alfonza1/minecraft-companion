@@ -4,7 +4,7 @@ import { createBuildSupplies } from '../services/build-executor/supplies.js';
 import { validateBlueprint } from '../services/build-planner/blueprint.js';
 import { companionPerformance } from '../services/companion-runtime/performance.js';
 
-export async function speedChecks({check,command,until,runtime,store,teammate}) {
+export async function speedChecks({check,command,until,runtime,store,teammate,logs}) {
   const bot=runtime.bot,origin={x:4,y:-59,z:4};
   command('tp NativeFixture 0 -59 0');command('clear NativeFixture');command('time set day');command('gamerule minecraft:advance_time false');
   await until(()=>bot.entity.position.distanceTo(new Vec3(.5,-59,.5))<.2&&!bot.inventory.items().length,'speed fixture reset');
@@ -19,13 +19,29 @@ export async function speedChecks({check,command,until,runtime,store,teammate}) 
     assert.deepEqual(calls,[8]);assert.equal(bot.inventory.items().filter(item=>item.name==='oak_planks').reduce((n,item)=>n+item.count,0),32);
     return {calls,confirmedPlanks:32,timings:companionPerformance.snapshot()};
   });
-  await check('native explicit bamboo scouting observes source and returns without harvesting',async()=>{
-    command('setblock 3 -59 0 minecraft:bamboo');
-    await until(()=>bot.blockAt(new Vec3(3,-59,0))?.name==='bamboo','visible bamboo');
-    const anchor=bot.entity.position.clone();
-    const result=await runtime.runJob('scout-fixture',signal=>teammate.execute('find_resource',{item:'bamboo',radius:16,steps:1},signal));
-    assert.equal(result.success,true);assert.equal(bot.blockAt(new Vec3(3,-59,0)).name,'bamboo');assert.ok(bot.entity.position.distanceTo(anchor)<2);
-    assert.equal(store.get('resourceLocations')[0].provenance,'observed');
-    return {source:result.source,returned:true,harvested:false};
+  await check('native extended scouting deposits diamonds locates distant bamboo and returns home',async()=>{
+    command('setblock 3 -59 0 minecraft:air');
+    command('setblock 2 -59 -2 minecraft:chest');
+    command('forceload add 60 60');
+    let lastAttempt=0;
+    await until(()=>{
+      if(logs.some(line=>line.includes('EXPEDITION_SOURCE_READY')))return true;
+      if(Date.now()-lastAttempt>250){lastAttempt=Date.now();command('setblock 60 -59 60 minecraft:bamboo');command('execute if block 60 -59 60 minecraft:bamboo run say EXPEDITION_SOURCE_READY');}
+      return false;
+    },'server-confirmed distant bamboo fixture');
+    command('give NativeFixture minecraft:diamond 3');
+    command('give NativeFixture minecraft:bread 16');
+    await until(()=>bot.inventory.items().some(item=>item.name==='diamond'&&item.count===3)&&bot.inventory.items().some(item=>item.name==='bread'&&item.count>=16)&&bot.blockAt(new Vec3(2,-59,-2))?.name==='chest','scouting kit and storage');
+    store.put('supplyChests',{id:'search-vault',approved:true,depositAllowed:true,allowedItems:[],realmId:1,dimension:bot.game.dimension,position:{x:2,y:-59,z:-2}});
+    store.put('locations',{id:'home',name:'Home',realmId:1,dimension:bot.game.dimension,position:{x:0,y:-59,z:0}});
+    const result=await runtime.execute('find_resource',{item:'bamboo',radius:128,steps:24});
+    assert.equal(result.success,true,JSON.stringify(result));assert.equal(result.returnedHome,true);
+    assert.equal(bot.inventory.items().filter(item=>item.name==='diamond').length,0);
+    assert.ok(store.get('supplyChests')[0].inventory.some(item=>item.name==='diamond'&&item.count===3));
+    assert.ok(bot.entity.position.distanceTo(new Vec3(.5,-59,.5))<2);
+    assert.equal(store.get('resourceLocations')[0].position.x,60);
+    assert.equal(store.get('expeditions')[0].status,'returned');assert.equal(store.get('expeditions')[0].route.length,0);
+    assert.equal(bot.blockAt(new Vec3(60,-59,60))?.name==='bamboo'||store.get('resourceLocations')[0].block==='bamboo',true);
+    return {source:result.source,distanceFromHome:Math.hypot(60,60),returnedHome:true,confirmedStoredDiamonds:3,harvested:false};
   });
 }

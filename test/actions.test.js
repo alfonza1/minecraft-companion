@@ -62,6 +62,15 @@ assert.equal((await timedActions.run("overlap", async () => {})).success, false)
 await delay(45);
 assert.equal(timedActions.state().action, null);
 
+// A longer search deadline must not extend ordinary actions or remove Stop.
+const searchBot = body(), searchActions = createActions(searchBot, 10);
+assert.equal((await searchActions.run('find_resource', async () => { await delay(25); },100)).success,true);
+const searchWork=searchActions.run('find_resource',async signal=>{
+  signal.throwIfAborted();
+  await new Promise(resolve=>signal.addEventListener('abort',resolve,{once:true}));signal.throwIfAborted();
+},100);
+searchActions.stop();assert.equal((await searchWork).stopped,true);
+
 // An empty path must not be reported as a successful arrival.
 await assert.rejects(walkTo(body(), new Vec3(10, 70, 0), 2, new AbortController().signal), /Could not reach/);
 assert.equal(resolvePlayer(bot, "torres").username, "Torres");

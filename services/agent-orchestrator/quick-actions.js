@@ -28,7 +28,7 @@ export function quickPlan(text, { world, playerName, currentTask, locations = []
   if(search && !/\b(?:house|build|youtube|video|food|movie)\b/.test(search[1])) {
     const phrase=normalize(search[1]), item=phrase==='jungle'?'jungle_log':phrase.replaceAll(' ','_');
     if(!/^(?:bamboo|scaffolding|string|cobweb|glass|sand|dirt|stone|cobblestone|diamond|iron_ingot|coal|cocoa_beans|(?:oak|birch|spruce|jungle|acacia|dark_oak|cherry|mangrove)_(?:log|planks))$/.test(item))return null;
-    return {reply:`I’ll check safe nearby terrain for ${phrase} and come back. I won’t clear structures or head into danger.`,intent:'minecraft_action',actions:[{tool:'find_resource',args:{item}}]};
+    return {reply:`I’ll check nearby for ${phrase}, then search farther if my home route and supplies are ready. I’ll come back afterward.`,intent:'minecraft_action',actions:[{tool:'find_resource',args:{item}}]};
   }
   const stack = message.match(/^(?:get|gather|collect|chop) (?:me )?(?:another |one |a )?stack(?: of ([a-z ]+))?$/);
   if(stack){

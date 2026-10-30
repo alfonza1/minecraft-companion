@@ -29,8 +29,8 @@ unsafe loot farming or harvesting someone else's crops.
   batches. Ask permitted chests for plain iron tools, then select the fastest usable
   owned tool with at least16 durability remaining. No replacement-tool crafting or
   spending rare shared materials. Unavailable gear can still block construction.
-- `resource-search.js`: explicit searches default to48 blocks and six safe surface
-  waypoints, capped at64 blocks. Require daylight, health, food, no nearby hostiles,
+- `resource-search.js`: explicit searches default to256 blocks and48 safe surface
+  waypoints, expanding from nearby terrain in stages. Require daylight, health, food, no nearby hostiles,
   and approved storage for valuable cargo. Save visible source coordinates, return,
   and report observation limits. A distant jungle, portal travel or mob-drop farming
   remains outside this skill. Search does not itself authorize harvesting.
@@ -74,3 +74,37 @@ Reproduce: enable `COMPANION_TEST_LOCAL_SPEECH=1`, run `npm test`,
 `node apps/dashboard/tests/speed.mjs`. Native fixtures require the already-authorized
 private Java/server setup. Durable output is under `.git/hackers-lair/` and
 `.git/verification/`, with native results in `.git/*-results.json`.
+
+
+## Extended searches — 2026-10-30
+
+`SEARCH_LIMITS` in `services/skill-executor/search-route.js` centralizes expedition limits:
+256-block maximum radius,48 waypoints, four minutes outward/ten minutes total,15 seconds
+per navigation segment, eight food items for longer trips and a1200-tick daylight margin
+plus a conservative return-time estimate. Resource searches have a dedicated eleven-minute
+action timeout; other gameplay retains its existing45-second cap.
+
+Before departure, store observed valuable cargo in an approved deposit chest. Protected,
+reserved or rejected valuables still in inventory prevent departure. Useful equipment is
+retained. Longer searches start from a saved Home/Base in the same Realm/dimension, nearby
+with an observed clear route. Without that preparation, remain within64 blocks and explain
+what is missing. Search scans from the bot as new chunks load, without invoking the model.
+
+Only observed flat surface corridors with solid footing and clear headroom are accepted.
+No digging, portals, swimming or cliff traversal. Save actual grounded movement breadcrumbs
+outside Git, retrace them in reverse and recheck each segment. If the route changes, becomes
+unloaded or unsafe, save the remaining route and ask for help. Pause/disconnect stops movement;
+the next search request recovers the saved route before scouting anew. Return is confirmed
+before claiming arrival. Dynamic mobs/terrain still make an absolute survival guarantee
+impossible. Source discovery remains separate from harvesting permission.
+
+
+Validation for the extended search: eight dedicated expedition cases cover distance,
+food/home requirements, valuables without storage, early return, pause/recovery,
+blocked/unloaded routes, holes, daylight and Realm scope. The official localhost
+survival fixture confirmed three diamonds deposited in an approved chest, discovered
+bamboo84.85 blocks from Home and verified return with the checkpoint route cleared.
+A source off the selected route may be missed: this is bounded scouting, not exhaustive
+coverage of every block within the radius. Typecheck, production build and the full
+suite passed (260 cases:257 passed, three optional live/provider/speech cases skipped).
+The existing headless dashboard integration also passed. No personal Realm was used.

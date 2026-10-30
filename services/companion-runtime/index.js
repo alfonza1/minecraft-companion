@@ -1,3 +1,4 @@
+import { SEARCH_LIMITS } from '../skill-executor/search-route.js';
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import pathfinderPkg from 'mineflayer-pathfinder';
@@ -298,7 +299,7 @@ export class CompanionRuntime extends EventEmitter {
       if (this.bot?.companionTransport?.projected) throw new Error('Teammate resource actions require a native Minecraft connection.');
       const validated = this.teammate.schemas[name].parse(args);
       return this.runJob(name, async signal => {
-        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal));
+        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal), name === 'find_resource' ? SEARCH_LIMITS.actionMs : undefined);
         signal.throwIfAborted(); return result;
       }, { tool: name, args: validated });
     }

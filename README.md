@@ -171,8 +171,11 @@ chests. Actual server placement, inventory and mining confirmations remain requi
 Say **“get another stack of oak logs”**, **“keep building”**, or **“find bamboo”** for deterministic
 commands. Temporary requests continue to use the existing resume-after-help setting.
 Difficult or unavailable materials produce a spoken request and a persistent card in **Shared tasks**.
-The assisted split defaults biome-specific and unsupported supplies to you. An explicit search checks
-safe loaded Overworld surface terrain, saves an observed location and returns. It does not guarantee
+The assisted split defaults biome-specific and unsupported supplies to you. An explicit search checks nearby loaded Overworld surface terrain and can expand to256 blocks,
+saving breadcrumbs to retrace home. Longer trips need a saved Home/Base within64 blocks,
+a clear observed route to it and eight food items. Valuable cargo must be deposited first;
+protected or reserved valuables that cannot be deposited block departure. It saves observed
+source locations and returns early when food, health or daylight reserve drops. It does not guarantee
 a distant jungle or automatically harvest an unapproved source. Temporary dirt/cobblestone platforms
 need no bamboo; the Minecraft scaffolding item does need bamboo and string.
 

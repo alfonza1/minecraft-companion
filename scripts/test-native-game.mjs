@@ -83,7 +83,7 @@ try {
  const orchestrator = createOrchestrator({ runtime, store, publish() {}, request: async () => { throw new Error('Native fixture must not request a model.'); } });
  runtime.modelCancel = options => orchestrator.cancel(options);
  if(process.argv.includes('--speed-only')){
-  await speedChecks({check,command,until,runtime,store,teammate});
+  await speedChecks({check,command,until,runtime,store,teammate,logs});
  }else if(process.argv.includes('--automatic-build')){
   await automaticBuildChecks({check,command,until,runtime,store,teammate});
  }else if(process.argv.includes('--building-only')){

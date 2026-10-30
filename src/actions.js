@@ -74,7 +74,7 @@ export function createActions(bot, capMs = ACTION_CAP_MS) {
     return null;
   }
 
-  async function run(name, work) {
+  async function run(name, work, timeoutMs = capMs) {
     const problem = unavailable();
     if (problem) return { success: false, summary: problem };
     haltMotion();
@@ -85,9 +85,9 @@ export function createActions(bot, capMs = ACTION_CAP_MS) {
     const started = Date.now();
     const timer = setTimeout(() => {
       job.timedOut = true;
-      job.controller.abort(new Error("Action exceeded 45 seconds. Check your surroundings before retrying."));
+      job.controller.abort(new Error("Action exceeded its time limit. Check your surroundings before retrying."));
       haltMotion();
-    }, capMs);
+    }, timeoutMs);
     const aborted = new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
     // Keep a cancelled body busy until the library operation settles, so a late
     // continuation cannot interfere with the next action.
