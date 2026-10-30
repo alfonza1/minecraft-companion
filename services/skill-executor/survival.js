@@ -4,6 +4,7 @@ import {inventoryCounts} from '../../src/actions.js';
 import {collect} from '../../src/tools/play.js';
 import {confirmInventory} from './items.js';
 import {navigateWithRecovery} from './navigation.js';
+import {storageAnchor,HOME_STORAGE_RADIUS} from './storage-policy.js';
 
 export const CROPS={wheat:{age:7,seed:'wheat_seeds'},carrots:{age:7,seed:'carrot'},potatoes:{age:7,seed:'potato'},beetroots:{age:3,seed:'beetroot_seeds'}};
 export const MEAT={cow:'beef',pig:'porkchop',sheep:'mutton',chicken:'chicken'};
@@ -41,13 +42,15 @@ export function depositPlan(service){
   return Object.entries(totals).filter(([name,count])=>!protectedNames.has(name)&&count>(keep[name]||0)).map(([name,count])=>({name,count:count-(keep[name]||0)}));
 }
 export function approvedStores(service){
-  const bot=service.runtime.bot;
-  return service.store.get('supplyChests').filter(chest=>chest.approved&&chest.depositAllowed&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&vector(chest.position).distanceTo(bot.entity.position)<=64).sort((a,b)=>vector(a.position).distanceTo(bot.entity.position)-vector(b.position).distanceTo(bot.entity.position));
+  const bot=service.runtime.bot,anchor=storageAnchor(service);
+  if(!anchor)return [];
+  return service.store.get('supplyChests').filter(chest=>chest.approved&&chest.depositAllowed&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&vector(chest.position).distanceTo(vector(anchor.position))<=HOME_STORAGE_RADIUS&&vector(chest.position).distanceTo(bot.entity.position)<=64).sort((a,b)=>vector(a.position).distanceTo(vector(anchor.position))-vector(b.position).distanceTo(vector(anchor.position)));
 }
 export async function storeSurplus(service,signal){
   const bot=requireSafeWork(service,signal),chest=approvedStores(service)[0];
-  if(!chest)throw new Error('Approve a nearby chest for loot deposits in Companion → Routines & supplies. I will keep my loot until then.');
+  if(!chest)throw new Error('Approve a nearby chest for loot deposits at Home/Base, or at server spawn if no home is set (within 32 blocks). Return within 64 blocks of that storage first. If spawn is unknown, reconnect to observe it. I will keep my loot until then.');
   await navigateWithRecovery(bot,chest.position,2,signal);requireSafeWork(service,signal);
+  if(!approvedStores(service).some(value=>value.id===chest.id))throw new Error('Home/spawn storage or its deposit permission changed. Deposit stopped.');
   const block=bot.blockAt(vector(chest.position));if(!block||!['chest','barrel'].includes(block.name))throw new Error('The approved storage is unloaded or missing.');
   const container=await bot.openContainer(block),deposited={};
   bot.companionInventorySyncing=true;
@@ -55,7 +58,7 @@ export async function storeSurplus(service,signal){
   try{
     for(const item of depositPlan(service)){
       requireSafeWork(service,signal);
-      if(!service.store.get('supplyChests').some(value=>value.id===chest.id&&value.approved&&value.depositAllowed))throw new Error('Deposit permission was revoked.');
+      if(!approvedStores(service).some(value=>value.id===chest.id))throw new Error('Deposit permission or Home/spawn storage changed.');
       const before=container.items().filter(value=>value.name===item.name).reduce((sum,value)=>sum+value.count,0);
       try{await container.deposit(bot.registry.itemsByName[item.name].id,null,item.count);}catch(error){record();throw new Error(`Storage could not accept ${item.name}. My remaining items stay in inventory.`);}
       await confirmInventory(bot,container);signal.throwIfAborted();

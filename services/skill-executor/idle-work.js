@@ -12,7 +12,7 @@ export function chooseIdleWork(service,blocked=new Set()){
   if(bot.companionTransport?.projected||bot.companionInventoryUnverified||bot.entity.isInWater||bot.entity.isInLava||bot.health<14||bot.food<6||service.threats(bot.entity.position,12).length)return {reason:'Waiting for safe health, food, terrain and clear surroundings.'};
   const candidates=[],counts=inventoryCounts(bot),stores=approvedStores(service),surplus=depositPlan(service),valuable=valuableCargo(bot);
   if(prefs.autoDeposit&&surplus.length&&stores.length)candidates.push({tool:'store_surplus',args:{},reason:'Putting surplus and valuables away.'});
-  if(valuable||bot.inventory.emptySlotCount()<4)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Loot needs safe storage. Approve deposit access to a nearby chest.'};
+  if(valuable||bot.inventory.emptySlotCount()<4)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Loot needs safe storage. Use approved deposit storage at Home/Base, or server spawn when no home is set.'};
   if(pendingFarmRepairs(service).length)candidates.push({tool:'tend_farm',args:{count:1},reason:'Replanting a crop interrupted by the previous task.'});
   if(bot.food<14||foodCount(bot)<8){
     const raw=bot.inventory.items().some(item=>COOKED[item.name]),log=bot.inventory.items().find(item=>item.name.endsWith('_log')&&item.count>service.reserved(item.name));
@@ -27,7 +27,7 @@ export function chooseIdleWork(service,blocked=new Set()){
   }
   const time=bot.time?.timeOfDay;
   if(time!==undefined&&time>13000&&time<23000)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Nighttime: staying near supplies instead of roaming.'};
-  if(!stores.length)return {reason:'Approve a loot-deposit chest before background resource gathering.'};
+  if(!stores.length)return {reason:'Approve a loot-deposit chest at Home/Base, or server spawn when no home is set, before background gathering.'};
   const stock={...counts};for(const chest of stores){if(!chest.observedAt||Date.now()-Date.parse(chest.observedAt)>300000)continue;for(const item of chest.inventory||[])stock[item.name]=(stock[item.name]||0)+item.count;}
   const logs=Object.entries(stock).filter(([name])=>name.endsWith('_log')).reduce((sum,[,n])=>sum+n,0);
   if(logs<STOCK_TARGETS.logs){try{requireNaturalTree(bot);candidates.push({tool:'chop_tree',args:{count:Math.min(8,STOCK_TARGETS.logs-logs)},reason:'Topping up the shared wood supply.'});}catch{}}

@@ -86,7 +86,7 @@ action timeout; other gameplay retains its existing45-second cap.
 
 Before departure, store observed valuable cargo in an approved deposit chest. Protected,
 reserved or rejected valuables still in inventory prevent departure. Useful equipment is
-retained. Longer searches start from a saved Home/Base in the same Realm/dimension, nearby
+retained. Longer searches start from saved Home/Base, or confirmed server spawn when Home is unset, in the same Realm/dimension, nearby
 with an observed clear route. Without that preparation, remain within64 blocks and explain
 what is missing. Search scans from the bot as new chunks load, without invoking the model.
 
@@ -108,3 +108,20 @@ A source off the selected route may be missed: this is bounded scouting, not exh
 coverage of every block within the radius. Typecheck, production build and the full
 suite passed (260 cases:257 passed, three optional live/provider/speech cases skipped).
 The existing headless dashboard integration also passed. No personal Realm was used.
+
+
+## Home/spawn deposit policy — 2026-10-30
+
+Loot deposits require approved deposit-enabled chests within `HOME_STORAGE_RADIUS`
+(32 blocks) of saved Home/Base. Only when Home/Base is absent does server-reported
+spawn become the fallback. Spawn positions are observed from `spawn_position` protocol
+packets and persisted by Realm/dimension; default library coordinates and login
+positions are never treated as confirmed spawn. A Home in another dimension requires
+returning there. Deposits remain locally bounded (64 blocks from the bot), with the
+policy rechecked after navigation and before transfers. Unavailable storage leaves
+items in inventory. Saved fractional Home positions normalize to their actual block.
+
+Validation: six policy cases, existing survival/search checks, full typecheck/build/tests,
+headless teamwork UI, and actual localhost survival deposits of three diamonds at
+confirmed spawn with no Home saved, followed by distant bamboo scouting and return.
+Personal Realm gameplay remains untested for this policy.

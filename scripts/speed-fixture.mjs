@@ -19,7 +19,7 @@ export async function speedChecks({check,command,until,runtime,store,teammate,lo
     assert.deepEqual(calls,[8]);assert.equal(bot.inventory.items().filter(item=>item.name==='oak_planks').reduce((n,item)=>n+item.count,0),32);
     return {calls,confirmedPlanks:32,timings:companionPerformance.snapshot()};
   });
-  await check('native extended scouting deposits diamonds locates distant bamboo and returns home',async()=>{
+  await check('native spawn fallback deposits diamonds locates distant bamboo and returns to spawn',async()=>{
     command('setblock 3 -59 0 minecraft:air');
     command('setblock 2 -59 -2 minecraft:chest');
     command('forceload add 60 60');
@@ -33,15 +33,15 @@ export async function speedChecks({check,command,until,runtime,store,teammate,lo
     command('give NativeFixture minecraft:bread 16');
     await until(()=>bot.inventory.items().some(item=>item.name==='diamond'&&item.count===3)&&bot.inventory.items().some(item=>item.name==='bread'&&item.count>=16)&&bot.blockAt(new Vec3(2,-59,-2))?.name==='chest','scouting kit and storage');
     store.put('supplyChests',{id:'search-vault',approved:true,depositAllowed:true,allowedItems:[],realmId:1,dimension:bot.game.dimension,position:{x:2,y:-59,z:-2}});
-    store.put('locations',{id:'home',name:'Home',realmId:1,dimension:bot.game.dimension,position:{x:0,y:-59,z:0}});
+    assert.ok(store.get('spawnPoints').some(value=>value.realmId===1&&value.dimension===bot.game.dimension&&value.provenance==='server-reported'),'Actual server spawn packet must be recorded');
     const result=await runtime.execute('find_resource',{item:'bamboo',radius:128,steps:24});
-    assert.equal(result.success,true,JSON.stringify(result));assert.equal(result.returnedHome,true);
+    assert.equal(result.success,true,JSON.stringify(result));assert.equal(result.returnedHome,false);assert.equal(store.get('expeditions')[0].returnTarget,'spawn');
     assert.equal(bot.inventory.items().filter(item=>item.name==='diamond').length,0);
     assert.ok(store.get('supplyChests')[0].inventory.some(item=>item.name==='diamond'&&item.count===3));
     assert.ok(bot.entity.position.distanceTo(new Vec3(.5,-59,.5))<2);
     assert.equal(store.get('resourceLocations')[0].position.x,60);
     assert.equal(store.get('expeditions')[0].status,'returned');assert.equal(store.get('expeditions')[0].route.length,0);
     assert.equal(bot.blockAt(new Vec3(60,-59,60))?.name==='bamboo'||store.get('resourceLocations')[0].block==='bamboo',true);
-    return {source:result.source,distanceFromHome:Math.hypot(60,60),returnedHome:true,confirmedStoredDiamonds:3,harvested:false};
+    return {source:result.source,distanceFromHome:Math.hypot(60,60),returnedToSpawn:true,confirmedStoredDiamonds:3,harvested:false};
   });
 }

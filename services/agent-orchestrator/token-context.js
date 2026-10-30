@@ -32,6 +32,7 @@ export function compactConversationContext({ message, recent, memory, project, w
     savedTasks: savedTasks ? { held: savedTasks.held, total: savedTasks.frames.length, frames: savedTasks.frames.slice(-limits.tasks).map(frame => ({ label: frame.label, status: frame.status, step: frame.step, steps: frame.steps, error: frame.error?.slice(0, 160) })) } : null,
     teammate: teammate ? {
       preferences: teammate.preferences,
+      storageAnchor: teammate.storageAnchor,
       locations: relevant(teammate.locations || [], message, ['name', 'id'], limits.locations).map(place => ({ name: place.name, position: point(place.position), dimension: place.dimension, realmId: place.realmId, provenance: place.provenance, observedAt: place.observedAt })),
       routines: (teammate.routines || []).map(routine => ({ id: routine.id, supplies: routine.supplies })),
       supplies: (teammate.supplies || []).slice(-8).map(chest => ({ name: chest.name, dimension: chest.dimension, realmId: chest.realmId, approved: chest.approved, observedAt: chest.observedAt })),

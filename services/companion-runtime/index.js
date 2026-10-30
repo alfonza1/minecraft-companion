@@ -1,4 +1,5 @@
 import { SEARCH_LIMITS } from '../skill-executor/search-route.js';
+import { recordServerSpawn } from '../skill-executor/storage-policy.js';
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import pathfinderPkg from 'mineflayer-pathfinder';
@@ -111,6 +112,9 @@ export class CompanionRuntime extends EventEmitter {
     this.trackOperations(bot);
     this.tools = createToolRegistry(bot, this.actions);
     const current = () => this.bot === bot && generation === this.generation;
+    bot._client?.on?.('spawn_position', packet=>{
+      if(current())recordServerSpawn(this.store,realmId,packet,bot.game?.dimension);
+    });
     const observe = () => {
       if (this.bot !== bot) return;
       if (bot.companionInventorySyncing) return;

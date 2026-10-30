@@ -1,3 +1,4 @@
+import { storageAnchor } from './storage-policy.js';
 import { SEARCH_LIMITS, point, vector, safeSearchSegment, routeDistance } from './search-route.js';
 import { requireSafeWork, valuableCargo, storeSurplus, explorationSteps, foodCount } from './survival.js';
 import { navigateWithRecovery } from './navigation.js';
@@ -15,7 +16,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
   const recovering=previous&&!['returned','complete'].includes(previous.status);
   if (!recovering) requireSafeWork(service,signal,{roam:true});
   if (!recovering && valuableCargo(bot)) { await storeSurplus(service, signal); if (valuableCargo(bot)) throw new Error('My valuables still need approved storage before scouting. Reserved or protected valuables must be stored or unreserved first.'); }
-  const home=service.store.get('locations').find(place=>/^(home|base)$/i.test(place.name)&&place.realmId===realmId&&place.dimension===dimension);
+  const home=storageAnchor(service);
   const anchor=bot.entity.position.clone(),started=now();
   const trip=recovering?previous:{id:'resource-search',item,realmId,dimension,home:point(anchor.floored()),returnTarget:'departure',route:[point(anchor.floored())],status:'searching',startedAt:new Date().toISOString()};
   const save=()=>{trip.updatedAt=new Date().toISOString();service.store.put('expeditions',trip);};
@@ -54,10 +55,10 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
   const extended=radius>64;
   let limitation=null;
   if(extended){
-    if(!home)limitation='Save a Home or Base in Companion before I search beyond 64 blocks.';
+    if(!home)limitation='Save Home/Base or reconnect to observe server spawn before I search beyond 64 blocks.';
     else if(anchor.distanceTo(vector(home.position))>64||!safeSearchSegment(bot,anchor,home.position))limitation='Start the longer search near Home with an observed clear route to it.';
     else if(foodCount(bot)<SEARCH_LIMITS.food)limitation='I need at least eight food items for a longer search.';
-    else {await travel(home.position);trip.home=point(bot.entity.position.floored());trip.returnTarget='home';trip.route=[trip.home];}
+    else {await travel(home.position);trip.home=point(bot.entity.position.floored());trip.returnTarget=home.kind;trip.route=[trip.home];}
   }
   if(limitation)service.notice?.(limitation+' I will check nearby terrain and return.','blocked','search-preparation');
   const origin=vector(trip.home),maxRadius=limitation?64:radius,visited=[origin.toString()];

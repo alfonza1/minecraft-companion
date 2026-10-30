@@ -172,7 +172,7 @@ Say **“get another stack of oak logs”**, **“keep building”**, or **“fi
 commands. Temporary requests continue to use the existing resume-after-help setting.
 Difficult or unavailable materials produce a spoken request and a persistent card in **Shared tasks**.
 The assisted split defaults biome-specific and unsupported supplies to you. An explicit search checks nearby loaded Overworld surface terrain and can expand to256 blocks,
-saving breadcrumbs to retrace home. Longer trips need a saved Home/Base within64 blocks,
+saving breadcrumbs to retrace home. Longer trips need saved Home/Base or confirmed server spawn within64 blocks,
 a clear observed route to it and eight food items. Valuable cargo must be deposited first;
 protected or reserved valuables that cannot be deposited block departure. It saves observed
 source locations and returns early when food, health or daylight reserve drops. It does not guarantee
@@ -185,3 +185,12 @@ Pause/Stop cancels actual synthesis and releases the worker. The AI's validated 
 before speech starts; this is not provider-token streaming or instant thinking.
 **Settings → Diagnostics → Where time goes** shows measured stage timings without model calls or
 invented costs. See [limits, tuning and evidence](docs/SPEED-IMPLEMENTATION.md).
+
+
+Loot is deposited only in approved chests within32 blocks of saved Home/Base.
+With no saved home, the fallback is the server-reported spawn point for that Realm/dimension.
+Spawn is learned from the Minecraft protocol and cached locally; the bot never assumes its
+login coordinates or a default `(0,0,0)` value are spawn. If the required storage is unknown,
+unavailable, full or too far away, it retains its items and asks for help. Supply withdrawals
+still obey their own approved-chest permissions. Longer searches also use spawn as their
+return anchor when Home/Base is unset.

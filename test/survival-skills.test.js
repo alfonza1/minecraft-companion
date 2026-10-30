@@ -11,6 +11,7 @@ import {conversationArguments,CODEX_RESTRICTIONS} from '../services/agent-orches
 function fixture(){
   const records=new Map(),settings={realmId:1,autonomy:'helpful',miningZone:null};let inventory=[{name:'bread',count:12},{name:'iron_pickaxe',count:1},{name:'iron_sword',count:1}];
   const store={settings:()=>settings,get:name=>records.get(name)||[],put(name,record){records.set(name,[...(records.get(name)||[]).filter(value=>value.id!==record.id),record]);}};
+  store.put('spawnPoints',{id:'1:overworld',realmId:1,dimension:'overworld',position:{x:0,y:64,z:0},provenance:'server-reported'});
   const bot={minenessReady:true,registry:minecraftData('1.21.5'),version:'1.21.5',health:20,food:20,game:{dimension:'overworld'},time:{timeOfDay:6000},entity:{position:new Vec3(0,64,0)},entities:{},inventory:{items:()=>inventory,emptySlotCount:()=>30},findBlock:()=>null,findBlocks:()=>[],blockAt:()=>null};
   const runtime=Object.assign(new EventEmitter(),{state:'ACTIVE',bot,isActive(){return this.state==='ACTIVE';},actions:{state:()=>({})},execute:async()=>({success:true}),taskStack:{frames:[]}});
   const preferences={busyMode:true,autoDeposit:true};const service={runtime,store,preferences:()=>preferences,threats:()=>[],reserved:name=>name==='stone'?8:0,notice(){},publish(){}};

@@ -1,3 +1,4 @@
+import { storageAnchor } from './storage-policy.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { SEARCH_LIMITS } from './search-route.js';
@@ -73,7 +74,7 @@ export class TeammateService {
   }
   preferences() { return { autoRestock: false, busyMode:false,autoDeposit:true, updates: this.store.settings().alertFrequency === 'quiet' ? 'quiet' : 'useful', resumeAfterHelp: true, ...this.store.settings().teammate }; }
   routines() { return DEFAULT_ROUTINES.map(base => this.store.get('routines').find(value => value.id === base.id) || base); }
-  snapshot() { const trip=this.store.get('expeditions').find(value=>value.id==='resource-search'); return { expedition:trip?{item:trip.item,status:trip.status,home:trip.home,returnTarget:trip.returnTarget,remainingWaypoints:trip.route.length,reason:trip.reason}:null, locations: this.store.get('locations'), supplies: this.store.get('supplyChests'), routines: this.routines(), deaths: this.store.get('deaths').slice(-10), preferences: this.preferences(),workAreas:this.store.get('workAreas'),idleWork:this.runtime.idleWork?.snapshot() }; }
+  snapshot() { const trip=this.store.get('expeditions').find(value=>value.id==='resource-search'); return { storageAnchor:storageAnchor(this), expedition:trip?{item:trip.item,status:trip.status,home:trip.home,returnTarget:trip.returnTarget,remainingWaypoints:trip.route.length,reason:trip.reason}:null, locations: this.store.get('locations'), supplies: this.store.get('supplyChests'), routines: this.routines(), deaths: this.store.get('deaths').slice(-10), preferences: this.preferences(),workAreas:this.store.get('workAreas'),idleWork:this.runtime.idleWork?.snapshot() }; }
   notice(text, kind = 'useful', key = text) {
     const cooldown = kind === 'danger' ? 30_000 : 120_000;
     if (Date.now() - (this.alerts.get(key) || 0) < cooldown) return;
