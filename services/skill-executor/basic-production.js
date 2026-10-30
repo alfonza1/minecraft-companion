@@ -9,7 +9,7 @@ import { navigateWithRecovery } from './navigation.js';
 import { approach,occupied,abortableWait } from '../build-executor/site.js';
 import { EMPTY,fullCube,placeAdaptedBlock } from '../build-executor/placement.js';
 
-const BASIC=/^(chest|crafting_table|stick|bread|wooden_axe|wooden_pickaxe|wooden_sword|furnace|[a-z_]+_planks)$/;
+const BASIC=/^(chest|crafting_table|stick|bread|(?:wooden|stone|iron|diamond)_(?:pickaxe|axe|sword|shovel|hoe)|(?:leather|iron|diamond)_(?:helmet|chestplate|leggings|boots)|furnace|[a-z_]+_planks)$/;
 export const freeBasic=(service,name)=>service.runtime.bot.inventory.items().some(item=>item.name===name&&(item.customName||item.enchants?.length))?0:Math.max(0,service.runtime.bot.inventory.items().filter(item=>item.name===name&&!item.customName&&!item.enchants?.length).reduce((n,item)=>n+item.count,0)-service.reserved(name));
 export async function commonWoodSpecies(service,signal){
   const bot=service.runtime.bot;
@@ -62,9 +62,10 @@ export async function placeUtility(service,name,p,signal,validate=()=>{}){
     await confirmInventory(bot);signal.throwIfAborted();return record;
   }finally{bot.removeListener('blockUpdate',acknowledged);}
 }
-export async function ensureBasicItem(service,name,target,signal,depth=0){
+export async function ensureBasicItem(service,name,target,signal,depth=0,options={}){
   const bot=service.runtime.bot;
-  signal.throwIfAborted();if(freeBasic(service,name)>=target)return;
+  const stock=options.stock??(()=>freeBasic(service,name));
+  signal.throwIfAborted();if(stock()>=target)return;
   if(depth>5||!BASIC.test(name))throw new Error(`No automatic basic production route for ${name}.`);
   let table=null;
   if(!['crafting_table','stick'].includes(name)&&!name.endsWith('_planks')){
@@ -96,7 +97,7 @@ export async function ensureBasicItem(service,name,target,signal,depth=0){
     const ingredient=bot.registry.items[input.id]?.name;return ingredient&&(ingredient.endsWith('_log')||ingredient.endsWith('_planks')||ingredient==='stick'||freeBasic(service,ingredient)>=-input.count);
   }));
   if(!recipe)throw new Error(`Missing basic recipe or ingredients for ${name}.`);
-  const repetitions=Math.min(8,Math.ceil((target-freeBasic(service,name))/recipe.result.count));
+  const repetitions=Math.min(8,Math.ceil((target-stock())/recipe.result.count));
   // Intermediate recipes can consume an earlier ingredient (sticks use planks).
   // Reconcile the actual stock before the final recipe instead of assuming all
   // previously prepared ingredients are still available.
@@ -122,5 +123,5 @@ export async function ensureBasicItem(service,name,target,signal,depth=0){
   const originalClick=bot.clickWindow;
   bot.clickWindow=async(...args)=>{signal.throwIfAborted();await originalClick(...args);await bot.waitForTicks(2);signal.throwIfAborted();await confirmInventory(bot,bot.currentWindow??bot.inventory);};
   try{await bot.craft(recipe,repetitions,recipe.requiresTable?table:null);}finally{bot.clickWindow=originalClick;}
-  await confirmInventory(bot);signal.throwIfAborted();if(freeBasic(service,name)<target)throw new Error(`No confirmed ${name} production.`);
+  await confirmInventory(bot);signal.throwIfAborted();if(stock()<target)throw new Error(`No confirmed ${name} production.`);
 }

@@ -38,7 +38,7 @@ export function gatherApprovedBlocks(bot, actions, args, zone) {
 
 export function chopNaturalTrees(bot, actions, { count, species }) {
   return actions.run('chop_tree', async signal => {
-    const before = inventoryCounts(bot);
+    const gained = {};
     let mined = 0, trees = 0, blocked = null;
     while (mined < count) {
       signal.throwIfAborted();
@@ -50,11 +50,11 @@ export function chopNaturalTrees(bot, actions, { count, species }) {
         .filter(item => item.name === root.name).reduce((sum, item) => sum + stackSize - item.count, 0);
       if (!capacity) { blocked = 'My inventory is full. Hand off or deposit some items first.'; break; }
       const result = await collect(bot, uniqueTreeLogs(bot, root, Math.min(count - mined, capacity)), signal);
+      for (const [name, quantity] of Object.entries(result.gained)) gained[name] = (gained[name] ?? 0) + quantity;
       mined += result.mined; trees++;
       if (!result.mined || !result.success) { blocked = result.summary; break; }
     }
     const inventory = inventoryCounts(bot);
-    const gained = Object.fromEntries(Object.entries(inventory).map(([name, quantity]) => [name, quantity - (before[name] ?? 0)]).filter(([, quantity]) => quantity > 0));
     const collected = Object.entries(gained).filter(([name]) => name.endsWith('_log')).reduce((sum, [, quantity]) => sum + quantity, 0);
     return { success: collected >= count, partial: collected > 0 && collected < count, mined, collected, requested: count, trees, gained, inventory, blocked,
       summary: `Collected ${Object.entries(gained).map(([name, quantity]) => `${quantity} ${name}`).join(', ') || 'no drops'} from ${trees} trees.${blocked ? ` ${blocked}` : ''}` };

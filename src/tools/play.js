@@ -33,8 +33,17 @@ export async function collect(bot, blocks, signal) {
       if (!bot.canDigBlock(block)) await walkTo(bot, block.position, 3, signal);
       signal.throwIfAborted();
       await waitForMiningFooting(bot, signal);
+      const beforeUpkeep = inventoryCounts(bot);
+      await bot.companionPrepareTool?.(block, signal);
       await equipFastestTool(bot, block, signal);
+      const afterUpkeep = inventoryCounts(bot);
+      // Keep tool crafting and its ingredient consumption out of harvest totals.
+      for (const name of new Set([...Object.keys(beforeUpkeep), ...Object.keys(afterUpkeep)])) before[name] = (before[name] ?? 0) + (afterUpkeep[name] ?? 0) - (beforeUpkeep[name] ?? 0);
       signal.throwIfAborted();
+      // Tool upkeep may visit a workbench between mining targets.
+      if (!bot.canDigBlock(block)) await walkTo(bot, block.position, 3, signal);
+      await waitForMiningFooting(bot, signal);
+      if (bot.blockAt(block.position)?.type !== block.type) continue;
       if (!bot.pathfinder.movements.safeToBreak(block)) throw new Error(`Cannot safely mine ${block.name} at ${block.position}.`);
       await bot.dig(block);
       signal.throwIfAborted();

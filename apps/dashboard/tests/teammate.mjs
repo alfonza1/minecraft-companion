@@ -19,6 +19,9 @@ try {
   await page.getByRole('heading',{name:'Survival work',exact:true}).waitFor();
   for(const name of ['Get food','Hunt','Tend farm','Cook','Store loot','Explore','Resume approved build'])assert.equal(await page.getByRole('button',{name,exact:true}).isDisabled(),true);
   await page.getByLabel('Stay productive between my requests').click();
+  assert.equal(await page.getByLabel('Upgrade tools and armor; replace worn tools automatically').isChecked(),true);
+  await page.getByLabel('Upgrade tools and armor; replace worn tools automatically').click();
+  await page.waitForFunction(async()=>(await (await fetch('/api/state')).json()).teammate.preferences.autoGear===false);
   await page.waitForFunction(async()=>(await (await fetch('/api/state')).json()).teammate.preferences.busyMode===true);assert.equal(store.settings().autonomy,'helpful');
   assert.equal(await page.getByRole('button', { name: 'Help me', exact: true }).isDisabled(), true);
   assert.equal(await page.getByRole('button', { name: 'Resume saved work', exact: true }).isDisabled(), true);
@@ -37,6 +40,7 @@ try {
   assert.equal(await page.getByLabel('Restock before new gathering jobs').isChecked(), true);
   assert.equal(await page.getByLabel('Teammate updates').inputValue(), 'quiet');
   assert.equal(await page.getByLabel('Stay productive between my requests').isChecked(),true);
+  assert.equal(await page.getByLabel('Upgrade tools and armor; replace worn tools automatically').isChecked(),false);
   await page.getByLabel('Routine supplies', { exact: true }).fill('diamond 64');
   await page.getByRole('button', { name: 'Save routine', exact: true }).click();
   await page.locator('.inline-error[role="alert"]').filter({ hasText: 'Rare resources require an explicit task' }).waitFor();

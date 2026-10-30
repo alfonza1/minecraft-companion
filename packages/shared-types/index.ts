@@ -117,7 +117,7 @@ export interface CompanionState {
   currentTask: any | null;
   taskStack?: { held: boolean; switching: boolean; frames: { id: string; label: string; status: string; step: number; steps: number; actions: { tool: string; args: Record<string, any> }[]; error?: string }[] };
   teammate?: {
-    preferences: { autoRestock: boolean;busyMode?:boolean;autoDeposit?:boolean; updates: 'quiet' | 'useful' | 'chatty'; resumeAfterHelp: boolean };
+    preferences: { autoRestock: boolean;busyMode?:boolean;autoDeposit?:boolean;autoGear?:boolean; updates: 'quiet' | 'useful' | 'chatty'; resumeAfterHelp: boolean };
     workAreas?:{id:string;radius:number;dimension:string;position:{x:number;y:number;z:number}}[];
     idleWork?:{held:boolean;reason:string;running:boolean};
     locations: { id: string; name: string; position: { x: number; y: number; z: number }; dimension: string; observedAt: string }[];

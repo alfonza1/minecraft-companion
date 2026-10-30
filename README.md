@@ -242,3 +242,23 @@ furnaces are left alone; an interrupted own batch resumes only when its scoped c
 input/output and fuel match. Deposits and cooked output use server inventory confirmation.
 A paused furnace may continue smelting on the Minecraft server; resuming recovers its
 matching batch without restarting it or mixing somebody else's work.
+
+### Automatic equipment upkeep
+
+Companion → Working together enables automatic gear upgrades by default. Between
+jobs, with **Stay productive between my requests** enabled, it makes and equips
+wooden/stone/iron/diamond tools and leather/iron/diamond armor from available,
+unreserved supplies. It can smelt carried raw iron, preparing its own furnace and
+common wood fuel as needed. It prioritizes a pickaxe, armor, then the other core
+tools; it does not mine rare ores merely to upgrade equipment.
+
+While chopping/mining it crafts a replacement from carried supplies when the last
+usable tool reaches 8% durability or 16 uses, whichever is higher. It switches to
+healthy backups and stores expendable older gear through the existing Home/spawn
+storage flow. Named/enchanted items and project reservations are protected. This
+authorizes carried diamonds for personal equipment; diamonds in shared chests are
+never withdrawn automatically. Say “upgrade your gear” to request a check directly.
+Pause/Stop cancel upkeep through the same gameplay controller. Copper crafting,
+netherite smithing, enchanting and anvil repairs remain unsupported.
+
+Local survival validation: `node scripts/test-native-game.mjs --gear-only`.

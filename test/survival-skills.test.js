@@ -14,7 +14,7 @@ function fixture(){
   store.put('spawnPoints',{id:'1:overworld',realmId:1,dimension:'overworld',position:{x:0,y:64,z:0},provenance:'server-reported'});
   const bot={minenessReady:true,registry:minecraftData('1.21.5'),version:'1.21.5',health:20,food:20,game:{dimension:'overworld'},time:{timeOfDay:6000},entity:{position:new Vec3(0,64,0)},entities:{},inventory:{items:()=>inventory,emptySlotCount:()=>30},findBlock:()=>null,findBlocks:()=>[],blockAt:()=>null};
   const runtime=Object.assign(new EventEmitter(),{state:'ACTIVE',bot,isActive(){return this.state==='ACTIVE';},actions:{state:()=>({})},execute:async()=>({success:true}),taskStack:{frames:[]}});
-  const preferences={busyMode:true,autoDeposit:true};const service={runtime,store,preferences:()=>preferences,threats:()=>[],reserved:name=>name==='stone'?8:0,notice(){},publish(){}};
+  const preferences={autoGear:false,busyMode:true,autoDeposit:true};const service={runtime,store,preferences:()=>preferences,threats:()=>[],reserved:name=>name==='stone'?8:0,notice(){},publish(){}};
   return {service,runtime,bot,store,settings,preferences,setInventory:items=>inventory=items};
 }
 const approved={id:'supply',name:'Supplies',realmId:1,dimension:'overworld',position:{x:4,y:64,z:0},approved:true,depositAllowed:true,allowedItems:['bread']};
@@ -22,7 +22,7 @@ const approved={id:'supply',name:'Supplies',realmId:1,dimension:'overworld',posi
 test('loot plan keeps practical kit and reservations, deposits valuables, and never selects named gear by generic type',()=>{
   const f=fixture();f.setInventory([{name:'bread',count:20},{name:'iron_pickaxe',count:2},{name:'diamond',count:7},{name:'stone',count:20},{name:'torch',count:45},{name:'wheat_seeds',count:20},{name:'iron_sword',count:1,customName:'Keep me'}]);
   const plan=Object.fromEntries(depositPlan(f.service).map(item=>[item.name,item.count]));
-  assert.equal(plan.diamond,7);assert.equal(plan.bread,8);assert.equal(plan.iron_pickaxe,1);assert.equal(plan.torch,13);assert.equal(plan.wheat_seeds,4);assert.equal(plan.iron_sword,undefined);assert.equal(keptSupplies(f.service).stone,8);
+  assert.equal(plan.diamond,7);assert.equal(plan.bread,8);assert.equal(plan.iron_pickaxe,undefined);assert.equal(plan.torch,13);assert.equal(plan.wheat_seeds,4);assert.equal(plan.iron_sword,undefined);assert.equal(keptSupplies(f.service).stone,8);
 });
 test('background jobs prioritize storage and cannot ignore unapproved, cross-Realm or missing storage',()=>{
   const f=fixture();f.setInventory([{name:'bread',count:12},{name:'diamond',count:2}]);

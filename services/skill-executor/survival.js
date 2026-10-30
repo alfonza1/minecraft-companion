@@ -1,3 +1,4 @@
+import {remainingDurability} from './gear-policy.js';
 import {freeBasic} from './basic-production.js';
 import {prepareCooking} from './cooking-preparation.js';
 import {ensureStorage} from './automatic-storage.js';
@@ -36,7 +37,8 @@ export function keptSupplies(service){
   for(const name of FOOD){const owned=inventoryCounts(bot)[name]||0;keep[name]=Math.min(owned,food);food-=keep[name];}
   keep.carrot=Math.max(1,keep.carrot||0);
   for(const family of ['pickaxe','axe','sword','shovel','hoe','helmet','chestplate','leggings','boots']){
-    const best=items.filter(item=>item.name.endsWith('_'+family)).sort((a,b)=>toolRank(b.name)-toolRank(a.name)||(a.durabilityUsed||0)-(b.durabilityUsed||0))[0];if(best)keep[best.name]=1;
+    const useful=items.filter(item=>item.name.endsWith('_'+family)&&remainingDurability(bot,item)>=16).sort((a,b)=>toolRank(b.name)-toolRank(a.name)||(a.durabilityUsed||0)-(b.durabilityUsed||0));
+    let spareSlots=2;for(const item of useful){const kept=Math.min(spareSlots,item.count);keep[item.name]=(keep[item.name]||0)+kept;spareSlots-=kept;if(!spareSlots)break;}
   }
   for(const item of items){if(/_(?:log|planks)$/.test(item.name))keep[item.name]=Math.min(16,item.count);keep[item.name]=Math.max(keep[item.name]||0,service.reserved(item.name));}
   return keep;
@@ -172,11 +174,11 @@ export async function huntFood(service,{count=1},signal){
   return {success:killed>0,killed,gained,summary:`Hunted ${killed} observed wild adult animals; collected ${Object.entries(gained).map(([name,n])=>`${n} ${name}`).join(', ')||'no confirmed drops'}. Named animals, young animals, farms and nearby pens are excluded.`};
 }
 
-export async function cookFood(service,{count=8},signal){
+export async function cookFood(service,{count=8},signal,{recipes=COOKED,category='food'}={}){
   const bot=requireSafeWork(service,signal),realmId=service.store.settings().realmId,dimension=bot.game.dimension;
   if(service.runtime.connection?.realmId!=null&&service.runtime.connection.realmId!==realmId)throw new Error('Reconnect to the selected Realm before cooking.');
-  const pending=service.store.get('furnaceJobs').find(job=>['cooking','needs-check'].includes(job.status)&&job.realmId===realmId&&job.dimension===dimension);
-  const raw=bot.inventory.items().find(item=>COOKED[item.name]&&freeBasic(service,item.name)>0);
+  const pending=service.store.get('furnaceJobs').find(job=>['cooking','needs-check'].includes(job.status)&&job.realmId===realmId&&job.dimension===dimension&&(job.category??'food')===category);
+  const raw=bot.inventory.items().find(item=>recipes[item.name]&&freeBasic(service,item.name)>0);
   if(!pending&&!raw)return {success:true,cooked:0,summary:'No unreserved raw food needs cooking.'};
   const amount=pending?.count??Math.min(count,freeBasic(service,raw.name));
   let block,fuel;
@@ -185,13 +187,13 @@ export async function cookFood(service,{count=8},signal){
     if(block?.name!=='furnace')throw new Error('My interrupted cooking station is missing or unloaded.');
   }else ({block,fuel}=await prepareCooking(service,amount,signal));
   await navigateWithRecovery(bot,block.position,2,signal);const furnace=await bot.openFurnace(block);
-  const job=pending??{id:`${realmId}:${dimension}:${block.position}`,realmId,dimension,position:{x:block.position.x,y:block.position.y,z:block.position.z},input:raw.name,count:amount,fuelName:fuel?.name,status:'preparing',phase:'empty',at:new Date().toISOString()};
+  const job=pending??{id:`${realmId}:${dimension}:${block.position}`,realmId,dimension,position:{x:block.position.x,y:block.position.y,z:block.position.z},input:raw.name,output:recipes[raw.name],category,count:amount,fuelName:fuel?.name,status:'preparing',phase:'empty',at:new Date().toISOString()};
   const persist=patch=>{Object.assign(job,patch);service.store.put('furnaceJobs',job);};
   bot.companionInventorySyncing=true;let started=Boolean(pending);
   try{
     if(pending){
       const input=furnace.inputItem(),output=furnace.outputItem(),remainingFuel=furnace.fuelItem();
-      if([input,output,remainingFuel].some(item=>item&&(item.customName||item.enchants?.length))||!['loading-input','cooking'].includes(job.phase)||(input&&input.name!==job.input)||(output&&output.name!==COOKED[job.input])||(remainingFuel&&remainingFuel.name!==job.fuelName)||(input?.count??0)+(output?.count??0)!==amount)throw new Error('Interrupted furnace contents do not match my saved job. I will not take or mix them.');
+      if([input,output,remainingFuel].some(item=>item&&(item.customName||item.enchants?.length))||!['loading-input','cooking'].includes(job.phase)||(input&&input.name!==job.input)||(output&&output.name!==(job.output??recipes[job.input]))||(remainingFuel&&remainingFuel.name!==job.fuelName)||(input?.count??0)+(output?.count??0)!==amount)throw new Error('Interrupted furnace contents do not match my saved job. I will not take or mix them.');
     }else{
       if(!fuel)throw new Error('Cooking fuel was not confirmed.');
       if(furnace.inputItem()||furnace.fuelItem()||furnace.outputItem())throw new Error('The furnace already contains items. I will not mix with someone else’s work.');
@@ -203,14 +205,14 @@ export async function cookFood(service,{count=8},signal){
       persist({phase:'loading-input'});await furnace.putInput(raw.type,null,amount);await confirmInventory(bot,furnace);signal.throwIfAborted();
     }
     persist({status:'cooking',phase:'cooking'});
-    await observed(()=>furnace.outputItem()?.name===COOKED[job.input]&&furnace.outputItem().count>=amount,signal,'Cooking',amount*10000+5000);
+    await observed(()=>furnace.outputItem()?.name===(job.output??recipes[job.input])&&furnace.outputItem().count>=amount,signal,'Cooking',amount*10000+5000);
     requireSafeWork(service,signal);
     if(furnace.outputItem().count!==amount||furnace.inputItem())throw new Error('Furnace contents changed unexpectedly. Check it before collecting.');
-    const before=furnace.items().filter(item=>item.name===COOKED[job.input]).reduce((sum,item)=>sum+item.count,0);
+    const before=furnace.items().filter(item=>item.name===(job.output??recipes[job.input])).reduce((sum,item)=>sum+item.count,0);
     await furnace.takeOutput();await confirmInventory(bot,furnace);signal.throwIfAborted();
-    const cooked=furnace.items().filter(item=>item.name===COOKED[job.input]).reduce((sum,item)=>sum+item.count,0)-before;
+    const cooked=furnace.items().filter(item=>item.name===(job.output??recipes[job.input])).reduce((sum,item)=>sum+item.count,0)-before;
     if(cooked!==amount)throw new Error('Cooked food transfer was not confirmed.');
-    persist({status:'complete',cooked});return {success:true,cooked,item:COOKED[job.input],summary:`Cooked ${cooked} ${COOKED[job.input]}.`};
+    persist({status:'complete',cooked});return {success:true,cooked,item:(job.output??recipes[job.input]),summary:`${category==='food'?'Cooked':'Smelted'} ${cooked} ${(job.output??recipes[job.input])}.`};
   }catch(error){if(started)persist({status:'needs-check'});throw error;}
   finally{furnace.close();try{await confirmInventory(bot);}finally{bot.companionInventorySyncing=false;bot.emit('companionInventoryConfirmed');service.publish();}}
 }

@@ -1,3 +1,4 @@
+import {maintainGear} from './gear-upkeep.js';
 import {ensureStorage} from './automatic-storage.js';
 import {findFood} from './food-search.js';
 import { storageAnchor } from './storage-policy.js';
@@ -19,7 +20,7 @@ const item = z.string().regex(/^[a-z][a-z0-9_]*$/).max(80);
 export const locationSchema = z.object({ name: z.string().trim().min(1).max(60), source: z.enum(['companion', 'player']).default('companion') }).strict();
 export const supplySchema = z.object({ name: item, count: z.number().int().min(1).max(64) }).strict();
 export const routineSchema = z.object({ id: z.enum(['mining', 'building', 'travel']), label: z.string().trim().min(1).max(60), supplies: z.array(supplySchema).min(1).max(12) }).strict();
-export const teammateSettingsSchema = z.object({ autoRestock: z.boolean().optional(), busyMode:z.boolean().optional(),autoDeposit:z.boolean().optional(), updates: z.enum(['quiet', 'useful', 'chatty']).optional(), resumeAfterHelp: z.boolean().optional() }).strict();
+export const teammateSettingsSchema = z.object({ autoGear:z.boolean().optional(), autoRestock: z.boolean().optional(), busyMode:z.boolean().optional(),autoDeposit:z.boolean().optional(), updates: z.enum(['quiet', 'useful', 'chatty']).optional(), resumeAfterHelp: z.boolean().optional() }).strict();
 export const DEFAULT_ROUTINES = [
   { id: 'mining', label: 'Get ready to mine', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 32 }, { name: 'stone_pickaxe', count: 1 }] },
   { id: 'building', label: 'Get ready to build', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 16 }, { name: 'stone_axe', count: 1 }] },
@@ -32,6 +33,7 @@ export const TEAMMATE_ACTIONS = {
   explore_nearby:z.object({radius:z.number().int().min(8).max(48).default(24),steps:z.number().int().min(1).max(4).default(3)}).strict(),
   store_surplus:z.object({}).strict(),
   ensure_storage:z.object({}).strict(),
+  maintain_gear:z.object({}).strict(),
   restock_food:z.object({}).strict(),
   find_food:z.object({}).strict(),
   resume_approved_build:z.object({projectId:z.string().uuid().optional()}).strict(),
@@ -75,7 +77,7 @@ export class TeammateService {
     runtime.on('change', () => this.observe());
     runtime.on('companion-death', event => this.recordDeath(event));
   }
-  preferences() { return { autoRestock: false, busyMode:false,autoDeposit:true, updates: this.store.settings().alertFrequency === 'quiet' ? 'quiet' : 'useful', resumeAfterHelp: true, ...this.store.settings().teammate }; }
+  preferences() { return { autoGear:true,autoRestock: false, busyMode:false,autoDeposit:true, updates: this.store.settings().alertFrequency === 'quiet' ? 'quiet' : 'useful', resumeAfterHelp: true, ...this.store.settings().teammate }; }
   routines() { return DEFAULT_ROUTINES.map(base => this.store.get('routines').find(value => value.id === base.id) || base); }
   snapshot() { const trip=this.store.get('expeditions').find(value=>value.id==='resource-search'); return { storageAnchor:storageAnchor(this), expedition:trip?{item:trip.item,status:trip.status,home:trip.home,returnTarget:trip.returnTarget,remainingWaypoints:trip.route.length,reason:trip.reason}:null, locations: this.store.get('locations'), supplies: this.store.get('supplyChests'), routines: this.routines(), deaths: this.store.get('deaths').slice(-10), preferences: this.preferences(),workAreas:this.store.get('workAreas'),idleWork:this.runtime.idleWork?.snapshot() }; }
   notice(text, kind = 'useful', key = text) {
@@ -217,6 +219,7 @@ export class TeammateService {
   async execute(name, args, signal) {
     const bot = this.runtime.bot;
     if(name==='find_resource')return findResource(this,args,signal);
+    if(name==='maintain_gear')return maintainGear(this,signal);
     if(name==='ensure_storage')return ensureStorage(this,signal);
     if(name==='store_surplus')return storeSurplus(this,signal);
     if(name==='tend_farm')return tendFarm(this,args,signal);

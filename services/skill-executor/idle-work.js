@@ -1,3 +1,4 @@
+import {gearNeedsAttention} from './gear-upkeep.js';
 import {storageAnchor} from './storage-policy.js';
 import {inventoryCounts} from '../../src/actions.js';
 import {foodCount,depositPlan,approvedStores,matureCrops,huntableAnimals,COOKED,valuableCargo,cookingFuel,pendingFarmRepairs} from './survival.js';
@@ -13,9 +14,10 @@ export function chooseIdleWork(service,blocked=new Set()){
   if(bot.companionTransport?.projected||bot.companionInventoryUnverified||bot.entity.isInWater||bot.entity.isInLava||bot.health<14||bot.food<6||service.threats(bot.entity.position,12).length)return {reason:'Waiting for safe health, food, terrain and clear surroundings.'};
   const candidates=[],counts=inventoryCounts(bot),stores=approvedStores(service),surplus=depositPlan(service),valuable=valuableCargo(bot);
   if(prefs.autoDeposit&&surplus.length&&(stores.length||storageAnchor(service)))candidates.push({tool:'store_surplus',args:{},reason:'Putting surplus and valuables away.'});
+  if(prefs.autoGear!==false&&bot.food>=14&&foodCount(bot)>=8&&gearNeedsAttention(service)&&!blocked.has('maintain_gear'))return {tool:'maintain_gear',args:{},reason:'Upgrading available gear and replacing worn tools before more work.'};
   if(valuable||bot.inventory.emptySlotCount()<4)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Loot needs safe storage. Use approved deposit storage at Home/Base, or server spawn when no home is set.'};
   if(bot.inventory.items().some(item=>COOKED[item.name]&&item.count-service.reserved(item.name)>0))candidates.push({tool:'cook_food',args:{count:8},reason:'Preparing fuel and a furnace to cook the raw food.'});
-  if(service.store.get('furnaceJobs').some(job=>['cooking','needs-check'].includes(job.status)&&job.realmId===settings.realmId&&job.dimension===bot.game.dimension))candidates.unshift({tool:'cook_food',args:{count:8},reason:'Recovering my interrupted furnace batch.'});
+  if(service.store.get('furnaceJobs').some(job=>(job.category??'food')==='food'&&['cooking','needs-check'].includes(job.status)&&job.realmId===settings.realmId&&job.dimension===bot.game.dimension))candidates.unshift({tool:'cook_food',args:{count:8},reason:'Recovering my interrupted furnace batch.'});
   if(pendingFarmRepairs(service).length)candidates.push({tool:'tend_farm',args:{count:1},reason:'Replanting a crop interrupted by the previous task.'});
   if(candidates.some(value=>value.tool==='cook_food')&&!blocked.has('cook_food'))return candidates.find(value=>!blocked.has(value.tool));
   if(bot.food<14||foodCount(bot)<8){

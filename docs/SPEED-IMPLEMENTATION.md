@@ -181,3 +181,34 @@ furnace isolation), one complete hunting-to-cooked-food case, and seven existing
 regressions. An initial crop interruption fixture was timing-sensitive under concurrent
 local servers; its sequential rerun passed without farming changes. No destructive
 personal Realm experiment was performed.
+
+
+## Automatic equipment upkeep (2026-10-30)
+
+`gear-upkeep.js` plans personal upgrades without model requests. Available material
+budgets respect reservations and recently observed approved supplies. Carried plain
+diamonds may be used for personal equipment; shared diamonds are never withdrawn.
+Crafting uses the connected version's recipes and confirmed server inventories.
+Equipped armor participates in ownership checks, preventing duplicate armor loops.
+
+The default-on `autoGear` preference is independent of loot storage. Idle upkeep
+requires productive mode, safe surroundings and a food reserve. It smelts owned raw
+iron, makes wooden/stone/iron/diamond tools and leather/iron/diamond armor, and equips
+upgrades while preserving usable named/enchanted gear. Netherite smithing, copper
+gear crafting, enchanting and anvil repair remain outside this controller.
+
+Collecting checks worn tools before each target. Near the 8%/16-use threshold it
+confirms durability, since dig completion can precede server wear packets. A focused
+survival regression reproduces threshold crossing: the original iron axe stops at
+20 uses remaining and a crafted replacement finishes the tree. Tool preparation is
+scoped to the collector; generic tool selection cannot unexpectedly leave a custom
+construction route. Harvest counts exclude crafting outputs and ingredient spending.
+Storage retains a usable primary plus a spare; worn expendable gear can be deposited.
+All work remains inside the existing cancellation/controller boundary.
+
+Validation: automated policy/reservation/cancellation checks; a headless dashboard
+preference test with reload persistence and desktop/mobile overflow checks; three
+local survival gear scenarios (iron kit, mid-job replacement, raw-iron smelting),
+and the three cooking regression scenarios. No personal Realm gameplay is claimed.
+Evidence is kept under `.git/gear-game-results.json`, `.git/cooking-game-results.json`,
+`.git/verification/teammate-ui/` and `.git/hackers-lair/verification.json`.
