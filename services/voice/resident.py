@@ -7,6 +7,10 @@ import wave
 from pathlib import Path
 from worker import model_directory, decode_bounded_audio
 
+# Node writes JSON as UTF-8; Windows pipes otherwise default to a legacy code page.
+sys.stdin.reconfigure(encoding='utf-8', errors='strict')
+sys.stdout.reconfigure(encoding='utf-8', errors='strict')
+
 kokoro = None
 piper = None
 whisper = None
