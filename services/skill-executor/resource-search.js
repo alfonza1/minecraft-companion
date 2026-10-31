@@ -5,7 +5,7 @@ import { requireSafeWork, valuableCargo, storeSurplus, explorationSteps, foodCou
 import { navigateWithRecovery } from './navigation.js';
 
 const SOURCE_BLOCKS = { scaffolding: ['bamboo'], string: ['cobweb'], glass: ['sand'], diamond: ['diamond_ore', 'deepslate_diamond_ore'], iron_ingot: ['iron_ore', 'deepslate_iron_ore'], coal: ['coal_ore', 'deepslate_coal_ore'], cocoa_beans: ['cocoa'] };
-export async function findResource(service, { item, radius = SEARCH_LIMITS.radius, steps = SEARCH_LIMITS.steps }, signal, { navigate = navigateWithRecovery, now = Date.now } = {}) {
+export async function findResource(service, { item, radius = SEARCH_LIMITS.radius, steps = SEARCH_LIMITS.steps }, signal, { navigate = navigateWithRecovery, now = Date.now, acceptSource=()=>true, onSource } = {}) {
   const bot = requireSafeWork(service, signal);
   const names = SOURCE_BLOCKS[item] ?? [item.endsWith('_planks')?item.replace('_planks','_log'):item];
   const matching = names.map(name => bot.registry.blocksByName[name]?.id).filter(Number.isInteger);
@@ -27,7 +27,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
     const p=bot.entity.position.floored();
     if(p.distanceTo(vector(trip.route.at(-1)))>=SEARCH_LIMITS.breadcrumbSpacing){trip.route.push(point(p));save();}
   };
-  async function travel(target, returning=false) {
+  async function travel(target, returning=false,{tolerance=returning?0:1}={}) {
     scope();
     if(!safeSearchSegment(bot,bot.entity.position,target)&&!observedTerrainPath(bot,vector(target)))throw new Error('The observed route is unloaded, obstructed or unsafe. I saved my position and need help instead of crossing it blindly.');
     const controller=new AbortController(),combined=AbortSignal.any([signal,controller.signal]);
@@ -35,7 +35,7 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
     const timer=setTimeout(()=>controller.abort(new Error('Search route segment timed out.')),SEARCH_LIMITS.segmentMs);
     combined.addEventListener('abort',halt,{once:true});
     if(!returning)bot.on?.('physicsTick',record);
-    try {await navigate(bot,vector(target),returning?0:1,combined);scope();}
+    try {await navigate(bot,vector(target),tolerance,combined);scope();}
     finally {clearTimeout(timer);combined.removeEventListener('abort',halt);if(!returning){bot.removeListener?.('physicsTick',record);record();}}
   }
   async function returnHome() {
@@ -57,9 +57,15 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
   let limitation=null;
   if(extended){
     if(!home)limitation='Save Home/Base or reconnect to observe server spawn before I search beyond 64 blocks.';
-    else if(anchor.distanceTo(vector(home.position))>64||(!safeSearchSegment(bot,anchor,home.position)&&!observedTerrainPath(bot,vector(home.position))))limitation='Start the longer search near Home with an observed clear route to it.';
+    else if(anchor.distanceTo(vector(home.position))>64||(anchor.distanceTo(vector(home.position))>SEARCH_LIMITS.homeArrivalRadius&&!safeSearchSegment(bot,anchor,home.position)&&!observedTerrainPath(bot,vector(home.position))))limitation='Start the longer search near Home with an observed clear route to it.';
     else if(foodCount(bot)<SEARCH_LIMITS.food)limitation='I need at least eight food items for a longer search.';
-    else {await travel(home.position);trip.home=point(bot.entity.position.floored());trip.returnTarget=home.kind;trip.route=[trip.home];}
+    else {
+      // Already inside the home area: keep the known clear departure tile.
+      // A utility block beside the marker must not force a needless last-meter detour.
+      try{if(anchor.distanceTo(vector(home.position))>SEARCH_LIMITS.homeArrivalRadius)await travel(home.position);}
+      catch(error){trip.status=signal.aborted?'paused':'needs-help';trip.reason=error.message;save();throw error;}
+      trip.home=point(bot.entity.position.floored());trip.returnTarget=home.kind;trip.route=[trip.home];
+    }
   }
   if(limitation)service.notice?.(limitation+' I will check nearby terrain and return.','blocked','search-preparation');
   const origin=vector(trip.home),maxRadius=limitation?64:radius,visited=[origin.toString()];
@@ -75,17 +81,23 @@ export async function findResource(service, { item, radius = SEARCH_LIMITS.radiu
       if(bot.health<18||bot.food<16||service.threats(bot.entity.position,16).length||time+returnTicks>=12000||now()-started>=SEARCH_LIMITS.outwardMs){reason='Turning back early to protect my health, food and daylight reserve.';break;}
       requireSafeWork(service,signal,{roam:true});
       const positions=bot.findBlocks({matching,point:bot.entity.position,maxDistance:32,count:64});
-      found=positions.map(p=>bot.blockAt(p)).find(block=>block&&block.position.distanceTo(origin)<=maxRadius&&bot.canSeeBlock(block));
-      if(found||step===steps)break;
+      found=positions.map(p=>bot.blockAt(p)).find(block=>block&&block.position.distanceTo(origin)<=maxRadius&&bot.canSeeBlock(block)&&acceptSource(block));
+      if(found){
+        if(!onSource)break;
+        bot.on?.('physicsTick',record);
+        let complete;try{complete=await onSource(found,{travel,origin});scope();}finally{bot.removeListener?.('physicsTick',record);record();}
+        if(complete)break;
+      }
+      if(step===steps)break;
       const searchRadius=Math.min(maxRadius,64*Math.pow(2,Math.floor(step/12)));
       const next=explorationSteps(bot,origin,searchRadius,visited).filter(p=>safeSearchSegment(bot,bot.entity.position,p)||observedTerrainPath(bot,p)).sort((a,b)=>b.distanceTo(origin)-a.distanceTo(origin))[0];
       if(!next)break;
       await travel(next);visited.push(next.toString());
     }
-    if(found){const {x,y,z}=found.position;service.store.put('resourceLocations',{id:`${realmId}:${dimension}:${found.name}:${x},${y},${z}`,item,block:found.name,position:{x,y,z},realmId,dimension,provenance:'observed',at:new Date().toISOString()});}
+    if(found){const {x,y,z}=found.position,observed=bot.blockAt(found.position);service.store.put('resourceLocations',{id:`${realmId}:${dimension}:${found.name}:${x},${y},${z}`,item,block:found.name,position:{x,y,z},realmId,dimension,provenance:'observed',available:observed?observed.name===found.name:null,at:new Date().toISOString()});}
     await returnHome();service.publish();
     return {success:Boolean(found),returnedHome:trip.returnTarget==='home',requested:item,source:found?.name,position:found?point(found.position):null,visited:visited.length-1,radius:maxRadius,
-      summary:found?`Found ${found.name.replaceAll('_',' ')} at ${found.position}. I saved the location and came back. I haven't harvested it or verified ownership.`:`I checked ${visited.length-1} safe surface waypoints, up to ${maxRadius} blocks from departure, and returned. ${reason||'No visible source found; I will need another route or your help.'}`};
+      summary:found?(onSource?'Worked the reachable exposed source and returned along my saved route. Harvest totals come from confirmed inventory.':`Found ${found.name.replaceAll('_',' ')} at ${found.position}. I saved the location and came back. I haven't harvested it or verified ownership.`):`I checked ${visited.length-1} safe surface waypoints, up to ${maxRadius} blocks from departure, and returned. ${reason||'No visible source found; I will need another route or your help.'}`};
   }catch(error){
     if(!signal.aborted){
       try {await returnHome();}catch(returnError){trip.status='needs-help';trip.reason=returnError.message;save();service.notice?.('My search route is blocked or unsafe. My position and remaining route are saved; can you help me get home?','danger','search-return');throw returnError;}

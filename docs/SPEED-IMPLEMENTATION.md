@@ -212,3 +212,44 @@ local survival gear scenarios (iron kit, mid-job replacement, raw-iron smelting)
 and the three cooking regression scenarios. No personal Realm gameplay is claimed.
 Evidence is kept under `.git/gear-game-results.json`, `.git/cooking-game-results.json`,
 `.git/verification/teammate-ui/` and `.git/hackers-lair/verification.json`.
+
+
+## Autonomous mining preparation and iron objectives (2026-10-31)
+
+`mining-preparation.js` checks remembered approved chests and obtains ordinary
+missing prerequisites. Equivalent cooked food replaces a hard requirement for
+bread. A healthy iron-capable pick is sufficient; otherwise it gathers protected
+surface stone and crafts a starter/stone pick. Torch production can create its
+own furnace, smelt common logs into charcoal and craft sticks/torches using actual
+versioned recipes. The intended furnace input batch is reserved during preparation.
+Partially harvested verified natural trees remain usable through bounded session
+memory, rather than becoming indistinguishable from unverified floating logs.
+
+`get_iron` is an event-driven 1–32-ingot objective with no model polling. Ordinary
+iron requests route directly to it; the legacy iron-resource action adapts to it.
+It prepares the kit, searches up to 256 blocks using the existing observed return
+route, mines reachable exposed natural iron, returns, smelts and deposits ingots at
+Home/spawn. A raycast chooses a safe visible standing position for each ore block;
+nearby exposed blocks can be inspected from another angle. No blind tunneling or
+below-foot mining is permitted. Silk Touch is excluded from raw-iron collection.
+
+The persistent mission keeps delivered quantities, exact deposit receipts and
+material reservations. Pause retains them and its furnace checkpoint; explicit
+cancellation releases reservations. Transfer receipts are recorded after inventory
+confirmation, including when cancellation arrives before the transfer returns.
+Remembered container stock is refreshed on access; unreachable/missing containers
+do not prevent checking another approved chest. Recording failure cannot restore a
+revoked permission. Old unchanged automatic-storage permissions receive only common
+mining additions; manually customized permissions are preserved.
+
+Searches already within eight blocks of Home keep their current clear departure
+tile instead of walking unnecessarily into the marker beside utility blocks. Travel
+and source callbacks retain bounded routes and cancellation listeners. All execution
+uses the one runtime controller, and request timeouts cover preparation/smelting.
+Deep caves, branch mining and guaranteed ore discovery remain unsupported.
+
+Reproduce with `--mining-prep-only` and `--iron-only` on the isolated official 26.3
+fixture. Evidence lives under `.git/mining-preparation-game-results.json`,
+`.git/iron-mining-game-results.json`, `.git/iron-mining-verification.log` and
+`.git/verification/mining-review.json`. These are local survival checks, not claims
+of personal Realm validation.

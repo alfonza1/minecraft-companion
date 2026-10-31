@@ -1,4 +1,4 @@
-import {miningChecks} from './mining-fixture.mjs';
+import {miningChecks,ironChecks} from './mining-fixture.mjs';
 import {gearChecks} from './gear-fixture.mjs';
 import {cookingChecks} from './cooking-fixture.mjs';
 import {independenceChecks} from './independence-fixture.mjs';
@@ -47,7 +47,7 @@ if (process.argv.includes('--check-runtime')) { console.log('Verified private Ja
 assert.equal(nativeProtocol.installed, true, 'Run npm run setup:native first.');
 const directory = await mkdtemp(path.join(os.tmpdir(),'companion-native-'));
 const logs=[],results=[], errors=[]; let child,runtime,store,recipient,exitPromise,exited=false,failed=false;
-const EXPECTED_CHECKS = process.argv.includes('--mining-prep-only')?2:process.argv.includes('--gear-only')?(process.argv.includes('--gear-wear-only')?1:3):process.argv.includes('--cooking-only')?3:process.argv.includes('--independence')?(process.argv.includes('--food-only')?1:3):process.argv.includes('--speed-only')?2:process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?1:4):process.argv.includes('--building-only')?9:process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
+const EXPECTED_CHECKS = process.argv.includes('--iron-only')?2:process.argv.includes('--mining-prep-only')?2:process.argv.includes('--gear-only')?(process.argv.includes('--gear-wear-only')?1:3):process.argv.includes('--cooking-only')?3:process.argv.includes('--independence')?(process.argv.includes('--food-only')?1:3):process.argv.includes('--speed-only')?2:process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?1:4):process.argv.includes('--building-only')?9:process.argv.includes('--survival-only')?7:process.argv.includes('--survival-skills')?24:17;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(predicate, label, timeout = 30000) {
   const started = Date.now();
@@ -63,7 +63,7 @@ async function check(name, work) {
   results.push({ name, status: 'passed', detail });
   console.log(`PASS ${name} ${JSON.stringify(detail ?? {})}`);
 }
-const timeout=setTimeout(()=>{failed=true;runtime?.bot?.end();child?.kill();},(process.argv.includes('--mining-prep-only')||process.argv.includes('--automatic-build'))?600000:process.argv.includes('--survival-skills')?360000:240000);
+const timeout=setTimeout(()=>{failed=true;runtime?.bot?.end();child?.kill();},(process.argv.includes('--iron-only')||process.argv.includes('--mining-prep-only')||process.argv.includes('--automatic-build'))?600000:process.argv.includes('--survival-skills')?360000:240000);
 try {
  const probe=net.createServer();probe.listen(0,'127.0.0.1');await once(probe,'listening');const port=probe.address().port;await new Promise(r=>probe.close(r));
  await writeFile(path.join(directory,'eula.txt'),'eula=true\n');
@@ -86,7 +86,9 @@ try {
  const teammate = new TeammateService({ runtime, store, publish() {} });
  const orchestrator = createOrchestrator({ runtime, store, publish() {}, request: async () => { throw new Error('Native fixture must not request a model.'); } });
  runtime.modelCancel = options => orchestrator.cancel(options);
- if(process.argv.includes('--mining-prep-only')){
+ if(process.argv.includes('--iron-only')){
+  await ironChecks({check,command,until,runtime,store,teammate});
+ }else if(process.argv.includes('--mining-prep-only')){
   await miningChecks({check,command,until,runtime,store,teammate});
  }else if(process.argv.includes('--gear-only')){
   await gearChecks({check,command,until,runtime,store,teammate});
@@ -232,7 +234,7 @@ finally {
   }
   store?.close(); clearTimeout(timeout);
   const passed = !failed && exited && results.length === EXPECTED_CHECKS;
-  await writeFile(process.argv.includes('--mining-prep-only')?'.git/mining-preparation-game-results.json':process.argv.includes('--gear-only')?'.git/gear-game-results.json':process.argv.includes('--cooking-only')?'.git/cooking-game-results.json':process.argv.includes('--independence')?'.git/independence-game-results.json':process.argv.includes('--speed-only')?'.git/speed-game-results.json':process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?'.git/automatic-house-results.json':'.git/automatic-build-results.json'):process.argv.includes('--building-only')?'.git/building-game-results.json':process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
+  await writeFile(process.argv.includes('--iron-only')?'.git/iron-mining-game-results.json':process.argv.includes('--mining-prep-only')?'.git/mining-preparation-game-results.json':process.argv.includes('--gear-only')?'.git/gear-game-results.json':process.argv.includes('--cooking-only')?'.git/cooking-game-results.json':process.argv.includes('--independence')?'.git/independence-game-results.json':process.argv.includes('--speed-only')?'.git/speed-game-results.json':process.argv.includes('--automatic-build')?(process.argv.includes('--house-only')?'.git/automatic-house-results.json':'.git/automatic-build-results.json'):process.argv.includes('--building-only')?'.git/building-game-results.json':process.argv.includes('--survival-only')?'.git/survival-game-results.json':'.git/native-game-results.json', JSON.stringify({
     at: new Date().toISOString(), serverVersion: '26.3', serverSha1: SERVER_SHA1,
     clientVersion: '26.3', protocol: 777, translated: false, lockHash: nativeProtocol.lockHash,
     scope: 'Disposable localhost-only official 26.3 survival server; no Microsoft authentication or Realm gameplay claimed.',

@@ -280,3 +280,30 @@ route can still pause work with the kit and progress retained.
 
 Run `node scripts/test-native-game.mjs --mining-prep-only` for isolated survival
 preparation and actual chest-restocking checks. These tests do not use your Realm.
+
+
+### One-request iron trips
+
+Say **“find iron”**, **“get me some iron”**, or **“mine 16 iron”**. The `get_iron`
+skill prepares missing supplies, searches observed reachable surface terrain,
+mines exposed natural iron veins from safe visible positions, retraces its saved
+route, smelts the ore and deposits confirmed ingots at approved Home/spawn storage.
+The default is eight ingots, with requests bounded to 1–32 and searches to 256
+blocks. Readiness uses eight edible food items and sixteen torches; it can make
+charcoal instead of requiring a coal deposit first. No model polling is involved.
+
+It remembers approved chest locations, reopens them instead of trusting old empty
+counts, skips missing/unreachable containers, and records actual stock after
+confirmed transfers. Permission revocation remains effective. Rare supplies
+and custom chest permissions are not silently expanded; the exact old defaults of
+Companion-created storage gain common mining supplies during migration.
+
+Iron objectives persist their reserved materials, furnace jobs, observed return
+routes and confirmed deposit receipts. Resume continues an unfinished objective;
+it does not credit an intended transfer or infer what is inside an unseen chest.
+Night, danger, no safe exposed source, depleted food, or blocked travel can still
+pause the objective. Deep cave exploration, tunneling and branch mining remain
+unsupported; this is a bounded surface miner, not guaranteed ore discovery.
+
+Local evidence: `node scripts/test-native-game.mjs --iron-only` checks the complete
+request and an interrupted smelting/recovery case without using a personal Realm.

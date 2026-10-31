@@ -1,6 +1,7 @@
 import {maintainGear} from './gear-upkeep.js';
 import {ensureStorage,upgradeAutomaticSupplies} from './automatic-storage.js';
 import {prepareMining,miningFoodCount,MINING_LIMITS} from './mining-preparation.js';
+import {getIron,reservedMiningMaterials} from './iron-mining.js';
 import {findFood} from './food-search.js';
 import { storageAnchor } from './storage-policy.js';
 import { randomUUID } from 'node:crypto';
@@ -28,6 +29,7 @@ export const DEFAULT_ROUTINES = [
   { id: 'travel', label: 'Get ready to travel', supplies: [{ name: 'bread', count: 8 }, { name: 'torch', count: 16 }] },
 ];
 export const TEAMMATE_ACTIONS = {
+  get_iron:z.object({count:z.number().int().min(1).max(32).default(8),radius:z.number().int().min(8).max(256).default(256)}).strict(),
   hunt_food:z.object({count:z.number().int().min(1).max(2).default(1)}).strict(),
   tend_farm:z.object({count:z.number().int().min(1).max(8).default(4)}).strict(),
   cook_food:z.object({count:z.number().int().min(1).max(8).default(8)}).strict(),
@@ -121,9 +123,10 @@ export class TeammateService {
     return { position: new Vec3(last.position.x, last.position.y, last.position.z), current: false };
   }
   threats(center, radius = 8) { return Object.values(this.runtime.bot.entities || {}).filter(entity => entity.isValid !== false && HOSTILES.has(entity.name) && entity.position.distanceTo(center) <= radius); }
-  reserved(name) { return this.store.get('projects').reduce((sum, project) => sum + (project.reservations?.[name] || 0), 0); }
+  reserved(name) { return this.store.get('projects').reduce((sum, project) => sum + (project.reservations?.[name] || 0), 0)+reservedMiningMaterials(this,name); }
   async withdraw(supplies, signal) {
-    const bot = this.runtime.bot;
+    const bot = this.runtime.bot,realmId=this.store.settings().realmId,scopeDimension=dimension(bot);
+    const noteIssue=(id,message)=>{const current=this.store.get('supplyChests').find(c=>c.id===id);if(current)this.store.put('supplyChests',{...current,lastCheckError:message,lastCheckedAt:now()});};
     if (bot.companionTransport?.projected || bot.companionInventoryUnverified) throw new Error('Restocking requires confirmed native inventory.');
     const approved = this.store.get('supplyChests').filter(chest => chest.approved && chest.realmId === this.store.settings().realmId && chest.dimension === dimension(bot));
     for (const chest of approved) {
@@ -131,18 +134,21 @@ export class TeammateService {
       if (!supplies.some(supply => supplyOwned(bot, supply) < supply.count && chest.allowedItems.includes(supply.name))) continue;
       const p = new Vec3(chest.position.x, chest.position.y, chest.position.z);
       if (bot.entity.position.distanceTo(p) > SUPPLY_SEARCH_RADIUS) continue;
-      await navigateWithRecovery(bot, p, 2, signal);
+      try{await navigateWithRecovery(bot, p, 2, signal);}catch(error){signal.throwIfAborted();noteIssue(chest.id,'Route unavailable; stored inventory is historical.');continue;}
+      if(this.runtime.bot!==bot||this.store.settings().realmId!==realmId||dimension(bot)!==scopeDimension)throw new Error('Restocking scope changed.');
+      if(!this.store.get('supplyChests').some(c=>c.id===chest.id&&c.approved&&c.realmId===realmId&&c.dimension===scopeDimension))continue;
       const block = bot.blockAt(p);
-      if (!block || !['chest', 'barrel'].includes(block.name)) throw new Error(`Supply chest ${chest.name} is unloaded or no longer a chest/barrel.`);
+      if (!block || !['chest', 'barrel'].includes(block.name)){noteIssue(chest.id,'Container missing or unloaded; stored inventory is historical.');continue;}
       const container = await bot.openContainer(block);
       try {
         const recordStock = () => {
           const current = this.store.get('supplyChests').find(value => value.id === chest.id);
-          if (current) this.store.put('supplyChests', { ...current, inventory: container.containerItems().map(value => ({ name: value.name, count: value.count })), provenance: 'observed-container', observedAt: now() });
+          if (current) this.store.put('supplyChests', { ...current, inventory: container.containerItems().map(value => ({ name: value.name, count: value.count })), provenance: 'observed-container', observedAt: now(),lastCheckError:null,lastCheckedAt:now() });
         };
         recordStock();
         for (const supply of supplies) {
           signal.throwIfAborted();
+          if(this.runtime.bot!==bot||this.store.settings().realmId!==realmId||dimension(bot)!==scopeDimension)throw new Error('Restocking scope changed.');
           const permission = this.store.get('supplyChests').find(value => value.id === chest.id && value.approved);
           if (!permission) throw new Error('Supply chest permission was revoked. Restocking stopped.');
           const missing = Math.max(0, supply.count - supplyOwned(bot, supply));
@@ -152,7 +158,7 @@ export class TeammateService {
           // Skip mixed stock instead of accidentally taking somebody's named gear.
           if (stacks.some(value => value.enchants?.length || value.customName || (gearFamily(value.name) && !usableTool(bot, value)))) continue;
           const available = stacks.reduce((sum, value) => sum + value.count, 0);
-          if (available) { await container.withdraw(bot.registry.itemsByName[supply.name].id, null, Math.min(missing, available)); signal.throwIfAborted(); recordStock(); }
+          if (available) { await container.withdraw(bot.registry.itemsByName[supply.name].id, null, Math.min(missing, available));await confirmInventory(bot,container);recordStock();signal.throwIfAborted(); }
         }
       } finally { container.close(); }
       await confirmInventory(bot); signal.throwIfAborted();
@@ -223,7 +229,8 @@ export class TeammateService {
   }
   async execute(name, args, signal) {
     const bot = this.runtime.bot;
-    if(name==='find_resource')return findResource(this,args,signal);
+    if(name==='get_iron')return getIron(this,args,signal);
+    if(name==='find_resource')return args.item==='iron_ingot'?getIron(this,{count:8,radius:args.radius},signal):findResource(this,args,signal);
     if(name==='maintain_gear')return maintainGear(this,signal);
     if(name==='ensure_storage')return ensureStorage(this,signal);
     if(name==='store_surplus')return storeSurplus(this,signal);

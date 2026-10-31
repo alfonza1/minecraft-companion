@@ -15,6 +15,8 @@ function ownedItems(phrase, inventory) {
 export function quickPlan(text, { world, playerName, currentTask, locations = [], project } = {}) {
   if (!world) return null;
   const message = text.trim().toLowerCase().replace(/^[\s]*(?:hey[, ]+|yo[, ]+)?(?:can you |could you |please )?/, '').replace(/[.!?]+$/, '').replace(/ please$/, '').trim();
+  const iron=message.match(/^(?:(?:help me|go|you) )?(?:find|mine|gather|collect|get)(?: (?:me|us))?(?: (?:some|more))?(?: (\d+))? iron(?: ore| ingots?)?$/);
+  if(iron){const count=Number(iron[1]||8);if(count<1||count>32)return null;return {reply:'I’ll sort out my mining supplies, look for reachable iron, and bring it back to storage.',intent:'minecraft_action',actions:[{tool:'get_iron',args:{count}}]};}
   for(const [pattern,tool,reply] of [
     [/^(?:(?:upgrade|improve|check) (?:your |the )?(?:gear|tools|armor)|replace (?:your |the )?(?:worn |broken )?tools)$/,'maintain_gear','I’ll check my gear and make upgrades or replacements from available supplies.'],
     [/^(?:hunt(?: for food)?|get (?:some )?meat|hunt (?:some )?animals)$/,'hunt_food','I’ll look for a safe wild animal.'],

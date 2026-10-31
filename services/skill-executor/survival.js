@@ -87,8 +87,9 @@ async function depositInChest(service,chest,signal){
       const capacity=slots?slots.reduce((n,slot)=>n+(!slot?(bot.registry.itemsByName[item.name].stackSize??64):slot.name===item.name&&!slot.customName&&!slot.enchants?.length?Math.max(0,slot.stackSize-slot.count):0),0):item.count;
       const amount=Math.min(item.count,capacity);if(!amount)continue;
       try{await container.deposit(bot.registry.itemsByName[item.name].id,null,amount);} catch(error){record();throw new Error(`Storage could not accept ${item.name}. My remaining items stay in inventory.`);}
-      await confirmInventory(bot,container);signal.throwIfAborted();
-      const moved=before-container.items().filter(value=>value.name===item.name).reduce((sum,value)=>sum+value.count,0);if(moved>0)deposited[item.name]=moved;record();
+      await confirmInventory(bot,container);
+      const moved=before-container.items().filter(value=>value.name===item.name).reduce((sum,value)=>sum+value.count,0);if(moved>0){deposited[item.name]=moved;service.onDeposit?.({name:item.name,count:moved,chestId:chest.id,at:new Date().toISOString()});}record();
+      signal.throwIfAborted();
     }
   }finally{record();container.close();try{await confirmInventory(bot);}finally{bot.companionInventorySyncing=false;bot.emit('companionInventoryConfirmed');service.publish();}}
   return {success:true,deposited,summary:`Stored ${Object.entries(deposited).map(([name,count])=>`${count} ${name}`).join(', ')||'nothing extra'}. Kept food, useful tools and reserved project materials.`};

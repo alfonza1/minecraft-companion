@@ -14,7 +14,7 @@ const coordinate = z.number().int().min(-29_999_984).max(29_999_984);
 const faces = [new Vec3(0, -1, 0), new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(0, 1, 0)];
 const replaceable = new Set(['air', 'cave_air', 'void_air', 'leaf_litter', 'short_grass', 'tall_grass', 'fern', 'large_fern']);
 
-export async function collect(bot, blocks, signal) {
+export async function collect(bot, blocks, signal,options={}) {
   if (!blocks.length) throw new Error("No matching blocks nearby. Move to a different area and try again.");
   const before = inventoryCounts(bot);
   let mined = 0;
@@ -35,7 +35,7 @@ export async function collect(bot, blocks, signal) {
       await waitForMiningFooting(bot, signal);
       const beforeUpkeep = inventoryCounts(bot);
       await bot.companionPrepareTool?.(block, signal);
-      await equipFastestTool(bot, block, signal);
+      await equipFastestTool(bot, block, signal,options);
       const afterUpkeep = inventoryCounts(bot);
       // Keep tool crafting and its ingredient consumption out of harvest totals.
       for (const name of new Set([...Object.keys(beforeUpkeep), ...Object.keys(afterUpkeep)])) before[name] = (before[name] ?? 0) + (afterUpkeep[name] ?? 0) - (beforeUpkeep[name] ?? 0);
@@ -56,7 +56,7 @@ export async function collect(bot, blocks, signal) {
       signal.throwIfAborted();
       // Enter the item's block and follow it while it falls; stopping one
       // block away can leave the drop just outside the pickup hitbox.
-      try { await bot.pathfinder.goto(new goals.GoalFollow(drop, 0)); }
+      try { await bot.pathfinder.goto(new goals.GoalFollow(drop, options.pickupRadius??0)); }
       catch(error){
         signal.throwIfAborted();
         // A pickup removes its moving goal before pathfinder finishes. That is

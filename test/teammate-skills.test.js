@@ -66,6 +66,23 @@ test('routine accepts a better healthy tool and replaces a worn-out one without 
   } finally { await f.close(); }
 });
 
+test('a missing remembered chest does not prevent checking the next approved chest',async()=>{
+  const f=await fixture();try{
+    f.store.put('supplyChests',{...chest,id:'missing',position:{x:10,y:65,z:0}});f.store.put('supplyChests',chest);
+    const result=await f.teammate.withdraw([{name:'bread',count:8}],signal());
+    assert.equal(result[0].missing,0);assert.equal(f.owned.bread,8);assert.match(f.store.get('supplyChests').find(c=>c.id==='missing').lastCheckError,/missing/);
+  }finally{await f.close();}
+});
+
+test('recording a failed chest route cannot restore deleted or revoked permission',async()=>{
+  const f=await fixture();try{
+    f.store.put('supplyChests',chest);
+    f.bot.pathfinder.goto=async()=>{f.store.put('supplyChests',{...chest,approved:false});throw new Error('No path');};
+    const result=await f.teammate.withdraw([{name:'bread',count:8}],signal());
+    assert.equal(result[0].missing,8);assert.equal(f.store.get('supplyChests')[0].approved,false);assert.equal(f.withdrawals.length,0);
+  }finally{await f.close();}
+});
+
 test('restocking never selects an enchanted or named tool from type-matched shared stock', async () => {
   const f = await fixture();
   try {

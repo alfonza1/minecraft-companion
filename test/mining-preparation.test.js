@@ -38,6 +38,10 @@ test('mining tool policy rejects wooden, Silk Touch and worn picks; food respect
   f.add('diamond_pickaxe',1,{enchants:[{name:'silk_touch',lvl:1}]});assert.equal(miningPick(f.bot),undefined);
   f.add('iron_pickaxe');assert.equal(miningPick(f.bot).name,'iron_pickaxe');f.add('bread',8);f.service.reserved=()=>8;assert.equal(miningFoodCount(f.service),0);
 });
+test('the preparation durability reserve does not stop a usable pick during its mining job',()=>{
+  const f=fixture();f.add('stone_pickaxe',1,{durabilityUsed:101});
+  assert.equal(miningPick(f.bot),undefined);assert.equal(miningPick(f.bot,{minimumUses:16}).name,'stone_pickaxe');
+});
 test('legacy automatic chest permissions gain mining supplies while custom permissions are preserved',()=>{
   const f=fixture(),legacy=AUTOMATIC_SUPPLIES.filter(name=>!['wooden_pickaxe','stone_pickaxe','iron_pickaxe','furnace','iron_ingot','raw_iron'].includes(name));
   f.store.put('supplyChests',{id:'legacy',automatic:true,approved:true,allowedItems:legacy});

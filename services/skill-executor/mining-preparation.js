@@ -11,9 +11,9 @@ import {remainingDurability} from './gear-policy.js';
 export const MINING_LIMITS=Object.freeze({food:8,torches:16,toolUses:32,foodAttempts:6,woodTrips:8,actionMs:1200000});
 export const MINING_FOOD=['cooked_beef','cooked_porkchop','cooked_mutton','cooked_chicken','bread','baked_potato','carrot','apple'];
 export const miningFoodCount=service=>MINING_FOOD.reduce((n,name)=>n+freeBasic(service,name),0);
-export function miningPick(bot){
+export function miningPick(bot,{minimumUses=MINING_LIMITS.toolUses}={}){
   const harvest=bot.registry.blocksByName?.iron_ore?.harvestTools;
-  return bot.inventory.items().find(item=>item.name.endsWith('_pickaxe')&&remainingDurability(bot,item)>=MINING_LIMITS.toolUses&&!item.enchants?.some(e=>e.name==='silk_touch')&&(harvest?Boolean(harvest[item.type]):/^(stone|iron|diamond|netherite)_/.test(item.name)));
+  return bot.inventory.items().find(item=>item.name.endsWith('_pickaxe')&&remainingDurability(bot,item)>=minimumUses&&!item.enchants?.some(e=>e.name==='silk_touch')&&(harvest?Boolean(harvest[item.type]):/^(stone|iron|diamond|netherite)_/.test(item.name)));
 }
 export function preparationPhase(service,phase,detail={}){
   const bot=service.runtime.bot;

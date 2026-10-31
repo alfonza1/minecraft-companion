@@ -1,6 +1,6 @@
 import { Vec3 } from 'vec3';
 
-export const SEARCH_LIMITS = Object.freeze({ radius:256, steps:48, outwardMs:240000, totalMs:600000, actionMs:660000, segmentMs:15000, food:8, daylightMargin:1200, breadcrumbSpacing:2 });
+export const SEARCH_LIMITS = Object.freeze({ radius:256, steps:48, outwardMs:240000, totalMs:600000, actionMs:660000, segmentMs:15000, food:8, daylightMargin:1200, breadcrumbSpacing:2,homeArrivalRadius:8 });
 export const point = p => ({ x:p.x, y:p.y, z:p.z });
 export const vector = p => new Vec3(p.x,p.y,p.z);
 const HAZARDS = /water|lava|fire|magma|cactus|powder_snow|sweet_berry|wither_rose|campfire/;
