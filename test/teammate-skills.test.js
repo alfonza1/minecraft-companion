@@ -46,11 +46,11 @@ test('unapproved, wrong-dimension and revoked supply chests cannot provide mater
   try {
     for (const patch of [{ approved: false }, { dimension: 'the_nether' }, { realmId: 2 }]) {
       f.store.put('supplyChests', { ...chest, ...patch });
-      assert.equal((await f.teammate.routine('mining', signal())).success, false); assert.equal(f.withdrawals.length, 0);
+      const supplies=await f.teammate.withdraw(f.teammate.routines().find(r=>r.id==='mining').supplies,signal());assert.ok(supplies.every(s=>s.missing>0)); assert.equal(f.withdrawals.length, 0);
     }
     f.store.put('supplyChests', chest); const open = f.bot.openContainer;
     f.bot.openContainer = async () => { const container = await open(); const withdraw = container.withdraw; container.withdraw = async (...args) => { await withdraw(...args); f.store.delete('supplyChests', chest.id); }; return container; };
-    await assert.rejects(f.teammate.routine('mining', signal()), /revoked/);
+    await assert.rejects(f.teammate.withdraw(f.teammate.routines().find(r=>r.id==='mining').supplies,signal()), /revoked/);
     assert.equal(f.withdrawals.length, 1); assert.equal(f.store.get('supplyChests').length, 0);
   } finally { await f.close(); }
 });
@@ -72,9 +72,9 @@ test('restocking never selects an enchanted or named tool from type-matched shar
     f.store.put('supplyChests', chest);
     const open = f.bot.openContainer;
     f.bot.openContainer = async () => { const container = await open(), list = container.containerItems; container.containerItems = () => list().map(value => value.name === 'stone_pickaxe' ? { ...value, enchants: [{ name: 'efficiency', lvl: 3 }], customName: 'My good pick' } : value); return container; };
-    const result = await f.teammate.routine('mining', signal());
-    assert.equal(result.success, false); assert.equal(f.stock.stone_pickaxe, 1); assert.equal(f.owned.stone_pickaxe, undefined);
-    assert.equal(result.missing[0].name, 'stone_pickaxe');
+    const result = await f.teammate.withdraw([{name:'stone_pickaxe',count:1}], signal());
+    assert.equal(f.stock.stone_pickaxe, 1); assert.equal(f.owned.stone_pickaxe, undefined);
+    assert.equal(result[0].missing,1);
   } finally { await f.close(); }
 });
 

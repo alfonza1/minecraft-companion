@@ -1,4 +1,5 @@
 import {maintainMiningTool} from '../skill-executor/gear-upkeep.js';
+import {MINING_LIMITS} from '../skill-executor/mining-preparation.js';
 import { SEARCH_LIMITS } from '../skill-executor/search-route.js';
 import { recordServerSpawn } from '../skill-executor/storage-policy.js';
 import { EventEmitter } from 'node:events';
@@ -305,7 +306,7 @@ export class CompanionRuntime extends EventEmitter {
       if (this.bot?.companionTransport?.projected) throw new Error('Teammate resource actions require a native Minecraft connection.');
       const validated = this.teammate.schemas[name].parse(args);
       return this.runJob(name, async signal => {
-        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal), name === 'find_resource' ? SEARCH_LIMITS.actionMs : ['maintain_gear','find_food','cook_food','store_surplus','ensure_storage','explore_nearby'].includes(name) ? 240000 : undefined);
+        const result = await this.actions.run(name, actionSignal => this.teammate.execute(name, validated, actionSignal), name==='get_iron'||(['prepare_routine','restock_supplies'].includes(name)&&validated.routine==='mining')?MINING_LIMITS.actionMs:name === 'find_resource' ? SEARCH_LIMITS.actionMs : ['maintain_gear','find_food','cook_food','store_surplus','ensure_storage','explore_nearby'].includes(name) ? 240000 : undefined);
         signal.throwIfAborted(); return result;
       }, { tool: name, args: validated });
     }

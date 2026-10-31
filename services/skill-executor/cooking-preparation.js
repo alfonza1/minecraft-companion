@@ -25,7 +25,8 @@ export function cookingStoneTargets(service){
     .map(p=>bot.blockAt(p)).filter(block=>block?.name==='stone'&&block.position.y>=Math.floor(bot.entity.position.y)&&!protectedCookingSource(service,block.position)&&[[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[0,1,0]].some(([x,y,z])=>bot.blockAt(block.position.offset(x,y,z))?.boundingBox==='empty'))
     .sort((a,b)=>a.position.distanceTo(bot.entity.position)-b.position.distanceTo(bot.entity.position));
 }
-async function gatherFurnaceStone(service,signal){
+export async function gatherSurfaceStone(service,target,signal){
+  if(!Number.isInteger(target)||target<1||target>32)throw new Error('Surface stone target must be 1–32.');
   const bot=requireSafeWork(service,signal),origin=bot.entity.position.clone(),visited=[],realmId=service.store.settings().realmId,dimension=bot.game.dimension;
   if(bot.game.dimension!=='overworld')throw new Error('Automatic furnace quarrying stays on observed Overworld surface rock.');
   const observedSources=cookingStoneTargets(service).map(block=>block.position.clone());
@@ -35,10 +36,10 @@ async function gatherFurnaceStone(service,signal){
   // Keep the observed quarry location instead of forgetting it and wandering.
   if(!cookingStoneTargets(service).length&&observedSources.length)await navigateWithRecovery(bot,observedSources[0],3,signal);
   let mined=0;
-  for(let scout=0;scout<=COOKING_LIMITS.scoutSteps&&freeBasic(service,'cobblestone')<COOKING_LIMITS.stone;scout++){
+  for(let scout=0;scout<=COOKING_LIMITS.scoutSteps&&freeBasic(service,'cobblestone')<target;scout++){
     const targets=cookingStoneTargets(service);
     for(const block of targets){
-      requireSafeWork(service,signal);if(mined>=COOKING_LIMITS.maxMined||freeBasic(service,'cobblestone')>=COOKING_LIMITS.stone)break;
+      requireSafeWork(service,signal);if(mined>=target+4||freeBasic(service,'cobblestone')>=target)break;
       await navigateWithRecovery(bot,block.position,3,signal);await waitForMiningFooting(bot,signal);
       const actual=bot.blockAt(block.position),tool=usablePick();
       if(actual?.name!=='stone'||actual.position.y<Math.floor(bot.entity.position.y)||protectedCookingSource(service,actual.position))continue;
@@ -57,11 +58,11 @@ async function gatherFurnaceStone(service,signal){
       }
       await confirmInventory(bot);
     }
-    if(freeBasic(service,'cobblestone')>=COOKING_LIMITS.stone||mined>=COOKING_LIMITS.maxMined)break;
+    if(freeBasic(service,'cobblestone')>=target||mined>=target+4)break;
     requireSafeWork(service,signal,{roam:true});const next=terrainFrontiers(bot,origin,COOKING_LIMITS.scoutRadius,visited)[0];if(!next)break;
     await navigateWithRecovery(bot,next,0,signal);visited.push(next.toString());
   }
-  if(freeBasic(service,'cobblestone')<COOKING_LIMITS.stone)throw new Error('I could not collect eight confirmed cobblestone from safe exposed rock. I will keep the food and equipment; I need another surface route.');
+  if(freeBasic(service,'cobblestone')<target)throw new Error(`I could not collect ${target} confirmed cobblestone from safe exposed rock. I will keep the food and equipment; I need another surface route.`);
 }
 export function availableCookingFuel(service,amount){
   return service.runtime.bot.inventory.items().find(item=>{
@@ -86,7 +87,7 @@ export async function prepareCooking(service,amount,signal){
     finally{station.close();await confirmInventory(bot);}
   }
   if(!block){
-    if(freeBasic(service,'furnace')<1){if(freeBasic(service,'cobblestone')<8)await gatherFurnaceStone(service,signal);await ensureBasicItem(service,'furnace',1,signal);}
+    if(freeBasic(service,'furnace')<1){if(freeBasic(service,'cobblestone')<8)await gatherSurfaceStone(service,8,signal);await ensureBasicItem(service,'furnace',1,signal);}
     const anchor=storageAnchor(service),site=emptyUtilitySites(bot,anchor?.position??bot.entity.position,16)[0];
     if(!site)throw new Error('No clear observed site for a furnace at Home/spawn.');
     await placeUtility(service,'furnace',site,signal);block=bot.blockAt(site);

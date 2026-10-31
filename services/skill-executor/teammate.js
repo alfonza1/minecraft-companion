@@ -1,5 +1,6 @@
 import {maintainGear} from './gear-upkeep.js';
-import {ensureStorage} from './automatic-storage.js';
+import {ensureStorage,upgradeAutomaticSupplies} from './automatic-storage.js';
+import {prepareMining,miningFoodCount,MINING_LIMITS} from './mining-preparation.js';
 import {findFood} from './food-search.js';
 import { storageAnchor } from './storage-policy.js';
 import { randomUUID } from 'node:crypto';
@@ -73,6 +74,7 @@ export function supplyOwned(bot, requirement) {
 export class TeammateService {
   constructor({ runtime, store, publish }) {
     Object.assign(this, { runtime, store, publish }); this.lastObservedAt = null; this.alerts = new Map();
+    upgradeAutomaticSupplies(store);
     runtime.teammate = this; this.schemas = TEAMMATE_ACTIONS;
     runtime.on('change', () => this.observe());
     runtime.on('companion-death', event => this.recordDeath(event));
@@ -160,7 +162,10 @@ export class TeammateService {
   }
   async routine(id, signal) {
     const routine = this.routines().find(value => value.id === id), bot = this.runtime.bot;
-    const supplies = await this.withdraw(routine.supplies, signal);
+    if(id==='mining')await prepareMining(this,signal,{food:routine.supplies.find(s=>s.name==='bread')?.count??MINING_LIMITS.food,torches:routine.supplies.find(s=>s.name==='torch')?.count??MINING_LIMITS.torches});
+    const wanted=id==='mining'?routine.supplies.filter(s=>s.name!=='bread'):routine.supplies;
+    const supplies = await this.withdraw(wanted, signal);
+    if(id==='mining'&&routine.supplies.some(s=>s.name==='bread')){const count=routine.supplies.find(s=>s.name==='bread').count,available=miningFoodCount(this);supplies.push({name:'food',count,available,missing:Math.max(0,count-available)});}
     const missing = supplies.filter(value => value.missing);
     if (missing.length) return { success: false, missing, summary: `Still need ${missing.map(value => `${value.missing} ${value.name}`).join(', ')}. I checked approved nearby supply chests; I won’t take unapproved materials.` };
     const family = id === 'mining' ? 'pickaxe' : id === 'building' ? 'axe' : null;

@@ -262,3 +262,21 @@ Pause/Stop cancel upkeep through the same gameplay controller. Copper crafting,
 netherite smithing, enchanting and anvil repairs remain unsupported.
 
 Local survival validation: `node scripts/test-native-game.mjs --gear-only`.
+
+
+### Mining preparation
+
+“Get ready to mine” now checks remembered approved chests and produces missing
+supplies, instead of only listing them. It accepts equivalent cooked food and a
+healthy iron-capable pickaxe; gathers common wood and exposed stone; crafts a
+starter/stone pickaxe, furnace and sticks; smelts logs into charcoal when coal is
+missing; and crafts real torches. Empty remembered chest snapshots are rechecked.
+Named/enchanted stock and reserved project ingredients stay protected.
+
+The default mining routine remains editable in Companion. The preparation controller defaults to
+an eight-food/sixteen-torch kit; explicit preparation follows the saved routine.
+No source is invented: unsafe terrain, unavailable food/wood/rock, or a blocked
+route can still pause work with the kit and progress retained.
+
+Run `node scripts/test-native-game.mjs --mining-prep-only` for isolated survival
+preparation and actual chest-restocking checks. These tests do not use your Realm.

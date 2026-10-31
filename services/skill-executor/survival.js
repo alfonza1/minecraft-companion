@@ -185,7 +185,12 @@ export async function cookFood(service,{count=8},signal,{recipes=COOKED,category
   if(pending){
     await navigateWithRecovery(bot,vector(pending.position),2,signal);block=bot.blockAt(vector(pending.position));
     if(block?.name!=='furnace')throw new Error('My interrupted cooking station is missing or unloaded.');
-  }else ({block,fuel}=await prepareCooking(service,amount,signal));
+  }else {
+    // Furnace/tool/fuel preparation must not spend the batch being smelted.
+    const preparation=Object.create(service);
+    preparation.reserved=name=>service.reserved(name)+(name===raw.name?amount:0);
+    ({block,fuel}=await prepareCooking(preparation,amount,signal));
+  }
   await navigateWithRecovery(bot,block.position,2,signal);const furnace=await bot.openFurnace(block);
   const job=pending??{id:`${realmId}:${dimension}:${block.position}`,realmId,dimension,position:{x:block.position.x,y:block.position.y,z:block.position.z},input:raw.name,output:recipes[raw.name],category,count:amount,fuelName:fuel?.name,status:'preparing',phase:'empty',at:new Date().toISOString()};
   const persist=patch=>{Object.assign(job,patch);service.store.put('furnaceJobs',job);};

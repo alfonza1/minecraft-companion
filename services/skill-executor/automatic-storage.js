@@ -4,7 +4,14 @@ import {emptyUtilitySites,ensureBasicItem,placeUtility} from './basic-production
 import {requireSafeWork,approvedStores} from './survival.js';
 
 export const MAX_AUTOMATIC_CHESTS = 12;
-const AUTOMATIC_SUPPLIES=['bread','cooked_beef','cooked_porkchop','cooked_chicken','cooked_mutton','carrot','baked_potato','oak_log','spruce_log','birch_log','oak_planks','spruce_planks','birch_planks','stick','coal','charcoal','cobblestone','torch','crafting_table','wooden_axe','stone_axe','iron_axe'];
+const LEGACY_SUPPLIES=['bread','cooked_beef','cooked_porkchop','cooked_chicken','cooked_mutton','carrot','baked_potato','oak_log','spruce_log','birch_log','oak_planks','spruce_planks','birch_planks','stick','coal','charcoal','cobblestone','torch','crafting_table','wooden_axe','stone_axe','iron_axe'];
+export const AUTOMATIC_SUPPLIES=[...LEGACY_SUPPLIES,'wooden_pickaxe','stone_pickaxe','iron_pickaxe','furnace','iron_ingot','raw_iron'];
+export function upgradeAutomaticSupplies(store){
+  for(const chest of store.get('supplyChests')){
+    // Preserve manually changed permissions; only migrate our exact old default.
+    if(chest.automatic&&chest.approved&&!chest.supplyPolicyVersion&&chest.allowedItems?.length===LEGACY_SUPPLIES.length&&LEGACY_SUPPLIES.every(name=>chest.allowedItems.includes(name)))store.put('supplyChests',{...chest,allowedItems:AUTOMATIC_SUPPLIES,supplyPolicyVersion:2});
+  }
+}
 export async function ensureStorage(service,signal,{forceNew=false}={}){
   const bot=requireSafeWork(service,signal),anchor=storageAnchor(service);
   if(!anchor)throw new Error('Home/spawn is not known in this dimension yet.');
@@ -25,6 +32,6 @@ export async function ensureStorage(service,signal,{forceNew=false}={}){
     const live=storageAnchor(service);
     if(!live||live.realmId!==anchor.realmId||live.dimension!==anchor.dimension||JSON.stringify(live.position)!==JSON.stringify(anchor.position))throw new Error('Home/spawn changed before chest placement.');
   });
-  service.store.put('supplyChests',{id:randomUUID(),name:`Companion storage ${existing.length+1}`,position:placed.position,realmId:anchor.realmId,dimension:anchor.dimension,approved:true,depositAllowed:true,automatic:true,allowedItems:AUTOMATIC_SUPPLIES,inventory:[],observedAt:placed.at,provenance:'companion-placed'});
+  service.store.put('supplyChests',{id:randomUUID(),name:`Companion storage ${existing.length+1}`,position:placed.position,realmId:anchor.realmId,dimension:anchor.dimension,approved:true,depositAllowed:true,automatic:true,allowedItems:AUTOMATIC_SUPPLIES,supplyPolicyVersion:2,inventory:[],observedAt:placed.at,provenance:'companion-placed'});
   service.publish();return {success:true,created:true,position:placed.position,summary:`Made and placed a new chest at ${anchor.kind==='home'?'Home':'spawn'}.`};
 }

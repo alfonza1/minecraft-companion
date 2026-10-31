@@ -9,7 +9,7 @@ import { navigateWithRecovery } from './navigation.js';
 import { approach,occupied,abortableWait } from '../build-executor/site.js';
 import { EMPTY,fullCube,placeAdaptedBlock } from '../build-executor/placement.js';
 
-const BASIC=/^(chest|crafting_table|stick|bread|(?:wooden|stone|iron|diamond)_(?:pickaxe|axe|sword|shovel|hoe)|(?:leather|iron|diamond)_(?:helmet|chestplate|leggings|boots)|furnace|[a-z_]+_planks)$/;
+const BASIC=/^(chest|crafting_table|stick|torch|bread|(?:wooden|stone|iron|diamond)_(?:pickaxe|axe|sword|shovel|hoe)|(?:leather|iron|diamond)_(?:helmet|chestplate|leggings|boots)|furnace|[a-z_]+_planks)$/;
 export const freeBasic=(service,name)=>service.runtime.bot.inventory.items().some(item=>item.name===name&&(item.customName||item.enchants?.length))?0:Math.max(0,service.runtime.bot.inventory.items().filter(item=>item.name===name&&!item.customName&&!item.enchants?.length).reduce((n,item)=>n+item.count,0)-service.reserved(name));
 export async function commonWoodSpecies(service,signal){
   const bot=service.runtime.bot;
@@ -68,13 +68,13 @@ export async function ensureBasicItem(service,name,target,signal,depth=0,options
   signal.throwIfAborted();if(stock()>=target)return;
   if(depth>5||!BASIC.test(name))throw new Error(`No automatic basic production route for ${name}.`);
   let table=null;
-  if(!['crafting_table','stick'].includes(name)&&!name.endsWith('_planks')){
+  if(!['crafting_table','stick','torch'].includes(name)&&!name.endsWith('_planks')){
     table=bot.findBlock({matching:bot.registry.blocksByName.crafting_table.id,maxDistance:24});
     if(!table){await ensureBasicItem(service,'crafting_table',1,signal,depth+1);const site=emptyUtilitySites(bot,bot.entity.position,5).find(p=>outsideBuilds(service,p));if(!site)throw new Error('No clear workbench site nearby.');await placeUtility(service,'crafting_table',site,signal);table=bot.blockAt(site);}
   }
   const recipes=bot.recipesAll(bot.registry.itemsByName[name].id,null,Boolean(table));
   let preferred=bot.inventory.items().find(item=>/_(?:log|planks)$/.test(item.name)&&freeBasic(service,item.name)>0)?.name.replace(/_(?:log|planks)$/,'');
-  if(!preferred&&!name.endsWith('_planks')&&!['bread','furnace'].includes(name)){
+  if(!preferred&&!name.endsWith('_planks')&&!['bread','furnace','torch'].includes(name)){
     const anchor=bot.entity.position.clone(),visited=[];
     for(let scout=0;scout<3&&!preferred;scout++){
       signal.throwIfAborted();
@@ -119,7 +119,8 @@ export async function ensureBasicItem(service,name,target,signal,depth=0,options
   }
   if(recipe.requiresTable)await navigateWithRecovery(bot,table.position,2,signal);
   signal.throwIfAborted();
-  if(!recipe.delta.filter(value=>value.count<0).every(value=>freeBasic(service,bot.registry.items[value.id].name)>=-value.count*repetitions))throw new Error('Basic ingredients changed or are reserved.');
+  const missing=recipe.delta.filter(value=>value.count<0&&freeBasic(service,bot.registry.items[value.id].name)<-value.count*repetitions).map(value=>`${bot.registry.items[value.id].name}: need ${-value.count*repetitions}, available ${freeBasic(service,bot.registry.items[value.id].name)}`);
+  if(missing.length)throw new Error(`Basic ingredients changed or are reserved for ${name}: ${missing.join('; ')}.`);
   const originalClick=bot.clickWindow;
   bot.clickWindow=async(...args)=>{signal.throwIfAborted();await originalClick(...args);await bot.waitForTicks(2);signal.throwIfAborted();await confirmInventory(bot,bot.currentWindow??bot.inventory);};
   try{await bot.craft(recipe,repetitions,recipe.requiresTable?table:null);}finally{bot.clickWindow=originalClick;}

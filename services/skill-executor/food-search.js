@@ -8,7 +8,7 @@ async function visibleFood(service,signal,context){
   if(bot.inventory.items().some(item=>COOKED[item.name]&&item.count-service.reserved(item.name)>0))return cookFood(service,{count:8},signal);
   if(foodCount(bot)>=8)return {success:true,summary:`Carrying ${foodCount(bot)} food items.`};
   if(bot.inventory.items().some(item=>COOKED[item.name])&&cookingFuel(bot)&&bot.findBlock({matching:bot.registry.blocksByName.furnace.id,maxDistance:16}))return cookFood(service,{count:2},signal);
-  if(!context.stockChecked&&service.store.get('supplyChests').some(chest=>chest.approved&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&chest.allowedItems?.some(name=>bot.registry.foodsByName?.[name])&&(!Array.isArray(chest.inventory)||chest.inventory.some(item=>item.count>0&&bot.registry.foodsByName?.[item.name])))){
+  if(!context.stockChecked&&service.store.get('supplyChests').some(chest=>chest.approved&&chest.realmId===service.store.settings().realmId&&chest.dimension===bot.game.dimension&&chest.allowedItems?.some(name=>bot.registry.foodsByName?.[name]))){
     context.stockChecked=true;
     const stock=await service.execute('restock_food',{},signal);if(stock.success&&foodCount(bot)>0)return stock;
   }
