@@ -56,6 +56,32 @@ test('API validates settings, persists memory, protects paused controls and serv
   const asset = await app.inject('/api/assets/item/oak_log'); assert.equal(asset.statusCode, 200); assert.equal(asset.headers['content-type'], 'image/png');
 });
 
+test('26.3 item imagery uses a named visual-only fallback without changing game state', async t => {
+  const app = await fixture(t), runtime = app.companion.runtime;
+  runtime.connection.version = '26.3';
+  const before = structuredClone({ connection: runtime.connection, world: runtime.world, state: runtime.state });
+  for (const name of ['oak_log', 'iron_pickaxe', 'cobblestone']) {
+    const response = await app.inject(`/api/assets/item/${name}`);
+    assert.equal(response.statusCode, 200, response.body);
+    assert.equal(response.headers['content-type'], 'image/png');
+    assert.equal(response.headers['x-asset-catalog'], '26.1');
+    assert.equal(response.headers['x-asset-fallback'], 'true');
+    assert.equal(response.rawPayload.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  }
+  assert.equal((await app.inject('/api/assets/block/oak_log')).statusCode, 200);
+  for (const path of ['item/new_item_without_a_texture', 'item/../../package.json', 'item/oak%2Flog', 'item/constructor', 'item/__proto__', 'item/OAK_LOG', 'unknown/oak_log']) {
+    const response = await app.inject(`/api/assets/${path}`);
+    assert.equal(response.statusCode, 404, path);
+    assert.notEqual(response.headers['content-type'], 'image/png');
+  }
+  assert.deepEqual({ connection: runtime.connection, world: runtime.world, state: runtime.state }, before);
+  assert.equal(runtime.state, 'DISCONNECTED');
+  runtime.connection.version = '26.1';
+  const nativeCatalog = await app.inject('/api/assets/item/oak_log');
+  assert.equal(nativeCatalog.statusCode, 200);
+  assert.equal(nativeCatalog.headers['x-asset-fallback'], 'false');
+});
+
 test('workspace and companion routes retain host and origin protection', async t => {
   const app = await fixture(t);
   for (const url of ['/api/games', '/api/companion/export']) {

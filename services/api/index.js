@@ -33,6 +33,7 @@ import { IdleWorkService } from '../skill-executor/idle-work.js';
 import { createModelCatalog } from '../agent-orchestrator/models.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+const VISUAL_ASSET_FALLBACK_VERSION = '26.1';
 const runningSourceFingerprint = await sourceFingerprint(root);
 const hotkeySchema = z.unknown().transform((value, context) => { try { return normalizeHotkey(value); } catch (error) { context.addIssue({ code: 'custom', message: error.message }); return z.NEVER; } });
 const desktopDevice = z.object({name:z.string().min(1).max(300),hostapi:z.number().int().min(0).max(100)}).strict().nullable();
@@ -180,7 +181,12 @@ export async function createApp(options = {}) {
   app.get('/api/assets/:kind/:name', async (request, reply) => {
     const { kind, name } = request.params;
     if (!['item','block'].includes(kind) || !/^[a-z0-9_]+$/.test(name)) return reply.code(404).send({ error: 'Unknown Minecraft asset.' });
-    const assets = minecraftAssets(runtime.connection.version || '1.21.11');
+    const requestedVersion = runtime.connection.version || '1.21.11';
+    // Texture catalogs lag protocol releases. Reuse only identical item names;
+    // this display fallback never changes the connected version or inventory.
+    const assets = minecraftAssets(requestedVersion) || minecraftAssets(VISUAL_ASSET_FALLBACK_VERSION);
+    if (!assets) return reply.code(404).send({ error: 'No installed visual asset catalog.' });
+    reply.header('X-Asset-Catalog', assets.version).header('X-Asset-Fallback', String(assets.version !== requestedVersion));
     const embedded = assets?.textureContent?.[name]?.texture;
     if (typeof embedded === 'string' && embedded.startsWith('data:image/png;base64,')) return reply.type('image/png').header('Cache-Control', 'private,max-age=3600').send(Buffer.from(embedded.slice('data:image/png;base64,'.length), 'base64'));
     const record = (kind === 'item' ? assets?.items : assets?.blocks)?.[name];
