@@ -35,7 +35,11 @@ installed shortcuts, authentication caches, projects, or launcher updates.
 - [x] Contributor, security, license, installation, API and extension documentation
 - [x] CI, release artifacts, dependency/license and secret review
 - [x] Desktop/mobile browser validation and existing runtime regression checks
-- [ ] Publish scoped source/release/site where permissions permit; report exact gaps
+- [x] Publish scoped source/release/site; report exact gaps in DELIVERY.md
+
+Published 2026-11-01: GitHub Pages, reviewed source branch and v0.2.0-alpha.1
+source prerelease. Windows/Linux CI passed. The reviewed feature branch is the
+repository default; the original main branch was preserved.
 
 ## Design direction
 
