@@ -12,4 +12,3 @@ updates:
       - dependency-name: prismarine-auth
       - dependency-name: prismarine-realms
     # Protocol pins need coordinated native adapter and actual gameplay validation.
-

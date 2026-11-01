@@ -35,4 +35,3 @@ await writeFile('evaluations/local/latest.tap', output + errors);
 if (process.argv.includes('--publish') && code === 0) await writeFile('apps/website/public/evaluation.json', JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
 if (code !== 0 || report.tests === 0) process.exitCode = 1;
-

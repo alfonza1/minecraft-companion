@@ -10,4 +10,3 @@ List checks actually run; distinguish unit doubles, local gameplay and real prov
 
 Explain permissions, cancellation, resource accounting and unsupported cases affected.
 Do not attach private conversations, credentials or real account data.
-

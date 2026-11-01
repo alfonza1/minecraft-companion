@@ -8,4 +8,3 @@
 .agent-identity strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
 .agent-identity small{color:#9daea8;margin-left:auto;font-size:11px}
 @media(max-width:700px){.agent-identity small{margin-left:0;width:100%}}
-

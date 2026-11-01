@@ -20,4 +20,3 @@ body:
     attributes:
       label: How could we verify it?
       description: Suggest a reproducible fixture or comparison.
-

@@ -28,4 +28,3 @@ it is not a signed standalone desktop binary.
 
 Do not silently change repository visibility or default branch while deploying.
 Do not claim CI or a release succeeded until the remote run/artifact is verified.
-

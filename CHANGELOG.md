@@ -17,4 +17,3 @@ survival competence or full macOS/Linux desktop support.
 Local Realm runtime, dashboard, speech, provider adapters, blueprint/build studio,
 collaboration, bounded survival and checkpoint recovery, extending Mineness.
 See Git history and docs/CAPABILITIES.md for exact behavior and boundaries.
-

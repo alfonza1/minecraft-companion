@@ -39,4 +39,3 @@ callers must not interpret a rejected operation as completed work.
 Never send a provider password/token through these routes. Microsoft authentication
 uses device code and server-owned encrypted caches. No external website should
 fetch this API or embed it in a public demo.
-

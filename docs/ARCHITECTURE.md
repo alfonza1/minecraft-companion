@@ -91,4 +91,3 @@ statically installed trusted code; no dynamic plugin marketplace or sandbox exis
 New gameplay tools require schemas, runtime integration, permissions, cancellation
 and real gameplay tests. Minecraft assumptions still live in planner/tool schemas;
 a second environment will require a real adapter, not merely a renamed interface.
-

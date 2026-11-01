@@ -54,4 +54,3 @@ Publish only explicitly reviewed fixture results. Strip usernames, account IDs,
 Realm identifiers, coordinates from personal worlds, device paths, prompts,
 conversation and credentials. Screenshots must use a disposable local app state
 and be captioned as such. The public hero is explanatory artwork, not gameplay.
-

@@ -71,4 +71,3 @@ try {
   assert.equal(requests.some(url=>/\/api\/(state|events|settings)/.test(url)),false,'Public site contacted private runtime');
   console.log(JSON.stringify({passed:true,pagesAndViewports:checked,interactiveFlows:7,consoleErrors:errors.length,privateApiRequests:0,screenshots:'.git/website-checks'},null,2));
 }finally{await browser.close();await new Promise(r=>server.close(r));}
-

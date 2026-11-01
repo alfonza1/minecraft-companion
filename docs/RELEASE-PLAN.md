@@ -51,8 +51,8 @@ Launch as an experimental open-source release, not a claim of consumer maturity.
 
 ## Positioning refinement
 
-The homepage explicitly leads with “Your AI Minecraft survival teammate,” following
-the owner’s clarification. Gathering, mining, crafting, building, natural voice and
+The homepage leads with “Minecraft survival. Better together.” and immediately
+describes an AI teammate. Gathering, mining, crafting, building, natural voice and
 shared work remain visible alongside the open-source agent engineering.
 
 The abstract voxel sculpture was replaced after owner feedback with original

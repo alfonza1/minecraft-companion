@@ -36,4 +36,3 @@ jobs:
       - name: Deploy static website
         id: deployment
         uses: actions/deploy-pages@v4
-

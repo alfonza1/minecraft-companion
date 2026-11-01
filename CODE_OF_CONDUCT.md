@@ -16,4 +16,3 @@ Report conduct concerns privately to the repository owner through their public
 GitHub profile contact, or use GitHub's Report content feature if no private
 contact is available. Do not publish sensitive details in an issue. There is no
 dedicated staffed moderation team or promised response time.
-

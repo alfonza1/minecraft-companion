@@ -25,4 +25,3 @@ await writeFile('release/dependency-licenses.json', JSON.stringify({ source:'pac
 await writeFile('release/source-audit.json', JSON.stringify({ filesScanned:names.length, findings, method:'Heuristic current-tree credential/artifact patterns; not a complete security audit' },null,2)+'\n');
 console.log(JSON.stringify({ filesScanned:names.length, findings, licenses:licenses.length, undeclared:licenses.filter(item=>item.license==='UNDECLARED').map(item=>item.package) },null,2));
 if(findings.length)process.exitCode=1;
-

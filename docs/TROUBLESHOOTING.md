@@ -24,4 +24,3 @@ Back up in Settings before updating. Local data stays under the platform applica
 data folder, separate from source. Do not reset credentials or delete SQLite merely
 to fix a frontend build. File an issue with version, OS, sanitized error and precise
 steps, never a private conversation or full database.
-

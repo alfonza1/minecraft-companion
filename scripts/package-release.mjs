@@ -9,4 +9,3 @@ execFileSync('git',['archive','--format=zip','--prefix=waypoint/','-o',`release/
 const hash=createHash('sha256').update(await readFile(`release/${filename}`)).digest('hex');
 await writeFile('release/SHA256SUMS',`${hash}  ${filename}\n`);
 console.log(`Created ${filename} from committed source, excluding ignored private/generated files. Optional skins submodule is not embedded.`);
-

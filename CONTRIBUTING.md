@@ -51,4 +51,3 @@ See [extension guide](docs/EXTENSIONS.md). Suggested tasks are not claims that
 maintainers have assigned or scheduled work. No paid membership is required.
 Contributions are licensed under Apache-2.0; retain third-party notices and clearly
 identify imported code. Be kind and specific in reviews.
-

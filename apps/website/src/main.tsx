@@ -9,4 +9,3 @@ const route = '/' + location.pathname.slice(base.length).replace(/^\//, '');
 const root = document.getElementById('root')!;
 if (root.querySelector('.site-shell')) hydrateRoot(root, <App route={route}/>);
 else createRoot(root).render(<App route={route}/>);
-

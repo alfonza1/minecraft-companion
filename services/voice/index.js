@@ -93,10 +93,10 @@ export async function synthesize(text,speed=1,signal,voiceId='auto') {
     return await readFile(output);
   } finally {await rm(temp,{recursive:true,force:true});}
 }
-export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,desktopDevices=listDesktopDevices}) {
+export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,desktopDevices=listDesktopDevices,desktopSupported=process.platform==='win32'}) {
   configuredBinding=normalizeHotkey(store?.settings?.().voice.pushToTalk);
   const gate=() => {if (!runtime.isActive()) {const error=new Error('Voice inference is disabled while companion is paused or disconnected.');error.statusCode=409;throw error;}};
-  desktopController=createDesktopController({runtime,store,publish,supported:process.platform==='win32',launch:launchDesktop??(async(settings,signal,onStdout)=>{
+  desktopController=createDesktopController({runtime,store,publish,supported:desktopSupported,launch:launchDesktop??(async(settings,signal,onStdout)=>{
     const devices=await desktopDevices(signal);
     signal.throwIfAborted();
     const apiPort=app.server.address()?.port??Number(process.env.PORT??4365);
@@ -126,7 +126,7 @@ export function registerVoiceRoutes(app,{runtime,publish,store,launchDesktop,des
   });
   app.post('/api/voice/desktop',async(request,reply) => {
     const settings=desktopSchema.parse(request.body);
-    if(settings.enabled){gate();if(process.platform!=='win32')return reply.code(400).send({error:'Native desktop push-to-talk currently supports Windows only.'});}
+    if(settings.enabled){gate();if(!desktopSupported)return reply.code(400).send({error:'Native desktop push-to-talk currently supports Windows only.'});}
     const patch={desktopEnabled:settings.enabled};
     if(settings.inputDevice!==undefined||settings.outputDevice!==undefined){
       const devices=await desktopDevices();

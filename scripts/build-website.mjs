@@ -25,4 +25,3 @@ try {
   await writeFile(join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.map(([route])=>`<url><loc>${origin + base + route.slice(1)}</loc></url>`).join('')}</urlset>`);
   console.log(`Prerendered ${pages.length} public pages. No companion API or secrets included.`);
 } finally { await rm(server, { recursive: true, force: true }); }
-

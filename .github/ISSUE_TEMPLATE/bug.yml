@@ -24,4 +24,3 @@ body:
     attributes:
       label: Sanitized error or evidence
       description: Remove account identifiers and credentials. Distinguish actual play from test doubles.
-

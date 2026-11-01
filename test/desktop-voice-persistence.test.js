@@ -9,6 +9,16 @@ import {createDesktopController,resolveDesktopDevice} from '../services/voice/de
 import {createApp} from '../services/api/index.js';
 import * as voiceModule from '../services/voice/index.js';
 
+test('unsupported desktop hosts reject capture without launching a worker',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'companion-unsupported-voice-')),store=new Store(directory);
+  const app=await createApp({store,skipExtensions:true,voiceModule});let starts=0;
+  voiceModule.registerVoiceRoutes(app,{...app.companion,desktopSupported:false,launchDesktop:()=>{starts++;}});
+  t.after(async()=>{await app.close();await rm(directory,{recursive:true,force:true});});
+  await app.companion.runtime.control('plan');
+  const result=await app.inject({method:'POST',url:'/api/voice/desktop',payload:{enabled:true}});
+  assert.equal(result.statusCode,400);assert.match(result.json().error,/Windows only/);assert.equal(starts,0);
+});
+
 async function fixture(t){
   const directory=await mkdtemp(join(tmpdir(),'companion-desktop-persistence-')),store=new Store(directory);
   const runtime=Object.assign(new EventEmitter(),{state:'DISCONNECTED',connection:{status:'offline'},isActive(){return ['ACTIVE','BUSY'].includes(this.state);}});
@@ -58,7 +68,7 @@ test('device identity survives numeric reordering and missing/ambiguous devices 
 test('real settings and voice APIs persist auto-enable/devices, and resume launches exactly one isolated worker',async t=>{
   const directory=await mkdtemp(join(tmpdir(),'companion-desktop-api-')),store=new Store(directory);
   const app=await createApp({store,skipExtensions:true,voiceModule});let starts=0,stops=0;
-  voiceModule.registerVoiceRoutes(app,{...app.companion,launchDesktop:(_settings,signal,receive)=>new Promise((_resolve,reject)=>{starts++;receive('{"phase":"ready"}\n');signal.addEventListener('abort',()=>{stops++;reject(signal.reason);},{once:true});})});
+  voiceModule.registerVoiceRoutes(app,{...app.companion,desktopSupported:true,launchDesktop:(_settings,signal,receive)=>new Promise((_resolve,reject)=>{starts++;receive('{"phase":"ready"}\n');signal.addEventListener('abort',()=>{stops++;reject(signal.reason);},{once:true});})});
   t.after(async()=>{await app.close();await rm(directory,{recursive:true,force:true});});
   const preference={name:'Saved headset',hostapi:1};
   assert.equal((await app.inject({method:'POST',url:'/api/settings',payload:{voice:{desktopInputDevice:preference}}})).statusCode,200);

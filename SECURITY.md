@@ -45,4 +45,3 @@ Never include real tokens, device codes, account passwords or personal databases
 data artifacts and emits a dependency license inventory. It is a heuristic, not a
 proof of absence. Maintainers also review Git history and dependency advisories.
 Known advisory boundaries belong in [release security notes](docs/RELEASE-SECURITY.md).
-

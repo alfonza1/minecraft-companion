@@ -23,6 +23,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm run setup:native
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -42,4 +43,3 @@ jobs:
             release/dependency-licenses.json
             evaluations/local/latest.json
           retention-days: 14
-

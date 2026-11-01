@@ -19,4 +19,3 @@ shared resource assignments; local memory; Windows voice; selectable providers.
 General cave/branch mining, broader build supply chains, unrestricted terrain
 preparation, a second execution environment and coordinated multiple embodied agents.
 There are no promised delivery dates. See CONTRIBUTING.md for scoped entry points.
-

@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "status": "measured",
   "scope": "Automated contracts; not gameplay",
-  "measuredAt": "2026-11-01T09:47:33.394Z",
-  "sourceCommit": "b3127469c9786cf9065342f9db5a2dcd3a43baeb",
-  "sourceModified": true,
+  "measuredAt": "2026-11-01T10:06:33.149Z",
+  "sourceCommit": "df84b59419199bb55c8fe224457364f9f87dbd83",
+  "sourceModified": false,
   "command": "npm run evaluate",
   "suites": [
     "test/ollama.test.js",
@@ -19,11 +19,11 @@
     "platform": "win32",
     "architecture": "x64"
   },
-  "tests": 50,
-  "passed": 50,
+  "tests": 51,
+  "passed": 51,
   "failed": 0,
   "skipped": 0,
-  "elapsedMs": 3948,
+  "elapsedMs": 2224,
   "modelRequests": 0,
   "gameplayActions": 0,
   "modelUsage": null,
@@ -32,11 +32,11 @@
   "gameplaySuccessRate": null,
   "recoveryRate": null,
   "resourceUtilization": {
-    "parentRssBytes": 62881792,
+    "parentRssBytes": 47751168,
     "systemMemoryBytes": 33377656832,
     "scope": "Harness parent process only, not game/model workers"
   },
-  "summary": "50 automated contract tests passed, 0 failed. Includes provider validation, pause gates, API isolation, resource accounting and task recovery doubles. No model or game benchmark.",
+  "summary": "51 automated contract tests passed, 0 failed. Includes provider validation, pause gates, API isolation, resource accounting and task recovery doubles. No model or game benchmark.",
   "limitations": [
     "Synthetic world/action/provider doubles where applicable",
     "No hosted or local model generation",

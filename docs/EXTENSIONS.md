@@ -43,4 +43,3 @@ Additional environments and multi-body agents are proposed work. The current
 planner/runtime still contain Minecraft-specific contracts. A valid new adapter
 needs its own permissions, observations, tests and lifecycle, not fictitious agents
 displayed in a diagram.
-
