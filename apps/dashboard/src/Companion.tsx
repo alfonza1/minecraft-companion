@@ -22,7 +22,7 @@ import {
   type Common,
   type Mutate,
 } from "./shared";
-export default function Companion({ state, mutate, busy }: Common) {
+export default function Companion({ state, mutate, busy, settingsOnly = false }: Common & {settingsOnly?:boolean}) {
   const [text, setText] = useState("");
   const [label, setLabel] = useState("");
   const [value, setValue] = useState("");
@@ -32,8 +32,8 @@ export default function Companion({ state, mutate, busy }: Common) {
     if (container) container.scrollTop = container.scrollHeight;
   }, [state.conversation.length]);
   return (
-    <div className="conversation-layout">
-      <Panel
+    <div className={settingsOnly ? 'ws-gameplay-settings' : 'conversation-layout'}>
+      {!settingsOnly ? <Panel
         className="conversation-panel"
         title="Around the campfire"
         eyebrow="CONVERSATION"
@@ -120,7 +120,7 @@ export default function Companion({ state, mutate, busy }: Common) {
             Stop current task
           </button>
         </div>
-      </Panel>
+      </Panel> : null}
       <div>
         <SavedWork state={state} mutate={mutate} />
         <Teamwork state={state} mutate={mutate} />

@@ -190,6 +190,7 @@ function Assignment({
         value={a.aiProgress}
         max={Math.max(1, a.aiRequired)}
       />
+      {a.constructionSatisfied>0?<p className="note"><strong>{a.constructionSatisfied} raw ingredients already covered by verified construction.</strong> These do not need gathering again. The inventory above is current stock, not historical contribution credit.</p>:null}
       <form
         className="inline-form"
         onSubmit={(e) => {

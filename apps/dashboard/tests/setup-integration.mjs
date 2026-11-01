@@ -52,7 +52,7 @@ try {
   assert.equal(await page.getByRole('button', { name: 'Connect to selected Realm', exact: true }).isDisabled(), true);
   checks.push('Account, Realm and voice steps render genuine disconnected/unverified states. Realm join remains disabled without account and protocol checks.');
   await page.getByRole('button', { name: 'Start planning offline', exact: true }).click();
-  await page.getByRole('heading', { name: 'Companion', exact: true, level: 1 }).waitFor();
+  await page.getByRole('heading', { name: 'Communication', exact: true, level: 1 }).waitFor();
   let state = await (await fetch(`${base}/api/state`)).json();
   assert.equal(state.planning, true); assert.equal(state.state, 'ACTIVE'); assert.equal(state.world, null); assert.equal(state.usage.requests, 0);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
@@ -80,7 +80,9 @@ try {
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false, `${step} mobile overflow`);
     await page.screenshot({ path: join(evidence, `${step.replaceAll(' ', '-').toLowerCase()}-mobile.png`), fullPage: true });
   }
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   assert.deepEqual(errors, []);

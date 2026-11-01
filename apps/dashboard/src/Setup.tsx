@@ -116,7 +116,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
       } else if (state.planning && state.state === "PAUSED") await mutate("/control", { command: "resume" });
       else if (!state.planning) await mutate("/control", { command: "plan" });
       ownsPlanning.current = false;
-      navigate(realm ? "overview" : "companion");
+      navigate(realm ? "overview" : "communication");
     });
   }
 

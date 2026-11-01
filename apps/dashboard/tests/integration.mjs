@@ -37,8 +37,8 @@ try {
   for (const [label, heading] of [
     ["Inventory", "Inventory"],
     ["Build studio", "Build studio"],
-    ["Shared tasks", "Shared tasks"],
-    ["Companion", "Companion"],
+    ["Tasks & plans", "Tasks & plans"],
+    ["My companion", "My companion"],
     ["Settings", "Settings"],
   ]) {
     await page
@@ -68,8 +68,9 @@ try {
   );
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "Companion", exact: true })
+    .getByRole("button", { name: "My companion", exact: true })
     .click();
+  await page.getByText('Gameplay preferences, locations & operational memory', { exact: true }).click();
   const travelPace = page.getByRole('combobox', { name: 'Travel pace', exact: true });
   await travelPace.selectOption('normal');
   await page.waitForFunction(async () => (await (await fetch('/api/state')).json()).settings.movementSpeed === 'normal');
@@ -139,7 +140,7 @@ try {
   });
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "Shared tasks", exact: true })
+    .getByRole("button", { name: "Tasks & plans", exact: true })
     .click();
   await page.getByRole("button", { name: "Apply split", exact: true }).click();
   await page.getByText("Oak Log", { exact: true }).waitFor();
@@ -162,8 +163,9 @@ try {
   );
   await page
     .getByRole("navigation")
-    .getByRole("button", { name: "Companion", exact: true })
+    .getByRole("button", { name: "My companion", exact: true })
     .click();
+  await page.getByText('Gameplay preferences, locations & operational memory', { exact: true }).click();
   await page.getByRole("spinbutton", { name: "Mining area x" }).fill("120");
   await page.getByRole("spinbutton", { name: "Mining area radius" }).fill("8");
   await page
@@ -177,11 +179,12 @@ try {
   evidenceLines.push(
     "Mining permission is an explicit UI action, persisted by the backend, and revocable while offline. No blocks are changed by approval.",
   );
+  await page.getByRole("navigation").getByRole("button", {name:"Communication",exact:true}).click();
   await page
     .getByRole("button", { name: "Start planning offline", exact: true })
     .click();
   await page
-    .getByText("Offline planning is active.", { exact: true })
+    .getByText("Offline conversation session · no game actions available", { exact: true })
     .waitFor();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.getByRole("button", { name: "Resume companion", exact: true })).toBeEnabled();
@@ -203,10 +206,11 @@ try {
     "Overview",
     "Inventory",
     "Build studio",
-    "Shared tasks",
-    "Companion",
+    "Tasks & plans",
+    "My companion",
     "Settings",
   ]) {
+    await page.getByRole("button", {name:"Open navigation",exact:true}).click();
     await page
       .getByRole("navigation")
       .getByRole("button", { name: label, exact: true })
