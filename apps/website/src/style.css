@@ -1,13 +1,13 @@
 :root {
   color-scheme: dark;
-  --site-bg: var(--wp-bg, #141e2c);
-  --site-surface: var(--wp-surface, #1c2a3b);
-  --site-raised: var(--wp-raised, #27374b);
-  --site-ink: var(--wp-ink, #f0eee7);
-  --site-muted: var(--wp-muted, #b6c1cd);
-  --site-border: var(--wp-border, #43546b);
-  --site-copper: var(--wp-mint, #e9b589);
-  --site-ice: var(--wp-violet, #b6cbef);
+  --site-bg: var(--wp-bg, #080b10);
+  --site-surface: var(--wp-surface, #10151d);
+  --site-raised: var(--wp-raised, #1a2330);
+  --site-ink: var(--wp-ink, #edf2f8);
+  --site-muted: var(--wp-muted, #a1afc1);
+  --site-border: var(--wp-border, #354356);
+  --site-copper: var(--wp-mint, #79b8ff);
+  --site-ice: var(--wp-violet, #91d5e7);
   --site-display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --site-body: "Space Grotesk", sans-serif;
   --site-measure: Consolas, ui-monospace, monospace;

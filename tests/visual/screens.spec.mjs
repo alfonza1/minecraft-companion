@@ -30,7 +30,7 @@ async function checkScreen(page, name, info, { synthetic = false } = {}) {
     if (document.getElementById('visual-fixture-label')) return;
     const label = document.createElement('div'); label.id = 'visual-fixture-label';
     label.textContent = 'DESIGN FIXTURE · simulated game observations';
-    Object.assign(label.style, { position: 'fixed', bottom: '0', left: '0', zIndex: '10000', padding: '3px 8px', background: '#141e2c', color: '#f0eee7', borderTop: '1px solid #b6c1cd', font: '10px monospace', pointerEvents: 'none', maxWidth: '100%' });
+    Object.assign(label.style, { position: 'fixed', bottom: '0', left: '0', zIndex: '10000', padding: '3px 8px', background: '#080b10', color: '#edf2f8', borderTop: '1px solid #a1afc1', font: '10px monospace', pointerEvents: 'none', maxWidth: '100%' });
     (document.querySelector('dialog[open]') || document.body).append(label);
   });
   expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}: no horizontal page overflow`).toBe(true);

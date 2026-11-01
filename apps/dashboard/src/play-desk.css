@@ -262,8 +262,9 @@ kbd {
   display: flex;
   align-items: stretch;
   padding: 5px;
-  background: var(--wp-ink);
-  color: var(--wp-bg);
+  background: var(--wp-surface);
+  color: var(--wp-muted);
+  border: 1px solid var(--wp-border);
   border-radius: 6px;
   box-shadow: 0 8px 28px #080e18a0;
   max-width: calc(100% - 24px);
@@ -281,19 +282,20 @@ kbd {
   white-space: nowrap;
 }
 .play-dock button[aria-current="page"] {
-  background: var(--wp-bg);
-  color: var(--wp-ink);
+  background: var(--wp-mint-surface);
+  color: var(--wp-mint);
 }
 .play-dock button:hover:not([aria-current="page"]) {
-  background: #d6d5cf;
+  background: var(--wp-raised);
+  color: var(--wp-ink);
 }
 .play-dock button:focus-visible {
-  outline-color: var(--wp-bg);
+  outline-color: var(--wp-mint);
   outline-offset: -3px;
 }
 .play-dock .play-talk-toggle {
   padding: 8px 13px;
-  border-left: 1px solid #9a9e9f;
+  border-left: 1px solid var(--wp-border);
   border-radius: 0;
   margin-left: 5px;
 }

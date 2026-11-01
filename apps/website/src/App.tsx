@@ -224,8 +224,6 @@ function Home() {
           </p>
           <p className="hero-game">
             Starting with <strong>Minecraft Survival.</strong>
-            <br />
-            Future games will take community work.
           </p>
           <LinkButton to={href("/get-started/")}>Get started — free</LinkButton>
           <a className="text-link" href={source}>

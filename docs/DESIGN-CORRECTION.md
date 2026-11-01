@@ -1,5 +1,15 @@
 # Design correction: the shared play desk
 
+## Current palette
+
+The follow-up theme replaces the original navy/copper palette with near-black
+`#080b10`, graphite surfaces `#10151d`, cool white text and blue `#79b8ff`
+interaction accents. The navigation dock is dark, with separate selected, hover
+and keyboard-focus states. Shared tokens remain in
+`packages/ui/companion-tokens.css`; warning and error colors remain distinct.
+The homepage no longer includes “Future games will take community work.”
+Product captures and visual baselines are refreshed to match the application.
+
 ## Audit before implementation
 
 Captured every public page (9) and workspace destination (16) in an isolated
