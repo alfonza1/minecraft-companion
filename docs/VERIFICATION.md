@@ -322,3 +322,46 @@ An owned twelve-second tutorial fixture was rendered into three cards, encoded a
 Initial failures: the first fixture encoding reused invalid timestamps; explicit frame timestamps fixed it. Reconstruction rejected a placeholder material. A full-registry output enum then failed at the provider boundary; bounded evidence-derived vanilla palette enums fixed the response-schema issue. Structured Codex errors now surface when its process exits nonzero instead of being hidden by a PowerShell snapshot warning.
 
 Gemini native YouTube input, revision-specific response parsing, token mapping, cancellation/deletion ordering and failed-cleanup preservation pass transport-fixture tests. Real Google inference is NOT VERIFIED because no Google key is configured. DPAPI encryption/reopen/clear is tested with a fake key; API state/export never exposes it. Headless UI with explicit provider fixtures covers key setup, consent, failure/retry, evidence, reconstruction, separate source/blueprint counts, approval blocking, pause, persistence and1440/390px layouts. Evidence: .git/verification/source-analysis-ui. No public services, paid account, physical microphone, unauthorized video download or destructive Realm action was used.
+
+
+## Gaming companion workspace redesign — 2026-11-01
+
+Default regression: **344 tests, 340 pass, four opt-in speech skips, zero failures**.
+TypeScript and both production builds pass. The four skipped speech checks were
+then explicitly enabled in a seven-test targeted run: **7 pass, zero skips**.
+Real local TTS-to-STT and two streamed WAV chunks were verified without microphone
+recordings; pause cancelled synthesis. On this run, first WAV was 3270ms cold and
+491ms warm. This is one local fixture measurement, not end-to-end conversation
+latency or a model-performance claim.
+
+Headless workspace: **80 layout checks** (16 routes at 1440/768/414/375/320),
+11 interaction assertions, zero page errors. Real API/WebSocket/SQLite flows cover
+profile/mode persistence, memory-off/delete, no inference while paused, inventory
+updates, assistance ownership, raw/placement views, extension invocation, sidebar
+conversation, reopening and rejection of an older HTTP snapshot after newer
+WebSocket state. World/provider data in this browser suite is explicitly synthetic.
+Existing setup and blueprint/shared-task integration browser suites also pass.
+
+Public website: **45 layout checks**, nine pages at five widths, seven interactive
+flows, no page errors or private API requests. Public dashboard image is captured
+before synthetic world fixtures, from a genuine disconnected disposable session.
+
+Official localhost-only 26.3 survival fixture: **17 checks pass**, protocol777,
+no translation, server exited. Verifies native physics, exact inventory, navigation,
+crafting, gathering, approved construction/checkpoint resume, physical item drop
+and handoff, eight-log axe collection, approved chest supplies, saved-location
+travel, temporary-task resumption, food assistance, approved build resumption,
+death pickup recovery and reconnect paused. No personal Realm was used.
+
+Review fixed consumed-material ownership, reservation double subtraction, stale
+stock, duplicate assistance clicks, source changes during async suspension,
+queued mode switches after Stop and in-flight saved-memory recall after disable.
+New host/origin tests protect workspace/personality routes. Current-tree/history
+Gitleaks and artifact checks found no secrets; 12 existing moderate dependency
+advisories remain, with zero high/critical. See RELEASE-SECURITY.md.
+
+Evidence is retained under Git metadata: hackers-lair/verification.json,
+verification/workspace/results.json, website-checks/, native-game-results.json,
+waypoint-local-speech.log and waypoint-gitleaks-*.json. These reports do not contain
+or claim fresh Realm authentication, physical headset operation, model quality,
+video reconstruction accuracy or general unsupervised survival reliability.

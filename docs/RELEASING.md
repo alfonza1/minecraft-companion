@@ -1,7 +1,7 @@
 # Release and static deployment
 
 The public site builds independently with `npm run build:website` into
-apps/website/dist. All eight pages are prerendered, with local fonts, metadata,
+apps/website/dist. All nine pages are prerendered, with local fonts, metadata,
 sitemap and no runtime API client. No paid backend is required. Deploy only that
 directory, never the repository root or application data directory.
 
@@ -12,7 +12,9 @@ works as static files on GitHub Pages or a comparable host.
 ## Maintainer checklist
 
 1. Review the complete diff, dependency advisories, license inventory and source/history secrets.
-2. Run npm test, npm run typecheck, npm run build, npm run build:website, npm run test:website.
+2. Run npm test, npm run typecheck, npm run build, npm run test:workspace,
+   npm run build:website, npm run test:website. Browser checks use an isolated
+   local database; their world/provider fixtures are not gameplay benchmarks.
 3. Run npm run evaluate; publish only reviewed synthetic results explicitly.
 4. Run npm run release:check. Inspect release/dependency-licenses.json.
 5. Update CHANGELOG and package version. Commit only scoped source.

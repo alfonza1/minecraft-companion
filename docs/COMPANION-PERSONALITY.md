@@ -73,6 +73,8 @@ or disable **Use saved memories**. Disabling memory:
 - Keeps stored records available for inspection and deletion.
 - Excludes saved notes and adventure moments from conversation prompts.
 - Blocks saving additional adventure moments until re-enabled.
+- Cancels pending inference and speech using saved context. Deleting saved context
+  also cancels an in-flight reply; already-delivered provider input cannot be recalled.
 - Does not erase the current conversation or operational records such as Home,
   approved chests, safety permissions, task checkpoints and active project plans.
 

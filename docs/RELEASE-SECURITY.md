@@ -6,8 +6,8 @@ assets retain their own licenses. This is a technical inventory, not legal advic
 
 ## Review performed
 
-- Gitleaks 8.30.1, checksummed official binary, scanned all 50 pre-release Git
-  commits with redacted output; no credential leaks found.
+- Gitleaks 8.30.1, checksummed official binary, scanned source and Git history
+  with redacted output on 2026-11-01; no credential leaks found.
 - Current-tree heuristic scan rejects common credential strings and private data artifacts.
 - Private runtime data remains outside Git. Public screenshots use disposable state.
 - Public website is static, has no private API client and no third-party analytics.

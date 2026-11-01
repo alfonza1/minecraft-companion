@@ -7,6 +7,7 @@ import os from 'node:os';
 const suites = [
   'test/ollama.test.js', 'test/extensions.test.js', 'test/orchestrator-runtime.test.js',
   'test/companion-api.test.js', 'test/build-planner.test.js', 'test/teammate-tasks.test.js',
+  'test/workspace.test.js', 'test/workspace-tasks.test.js', 'test/personality.test.js',
 ];
 const started = performance.now();
 const child = spawn(process.execPath, ['--test', '--test-reporter=tap', ...suites], { stdio: ['ignore','pipe','pipe'], windowsHide: true });
