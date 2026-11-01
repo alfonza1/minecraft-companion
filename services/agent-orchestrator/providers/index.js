@@ -1,12 +1,13 @@
+import { ollamaCatalog, executeOllama } from './ollama.js';
 import { spawn } from 'node:child_process';
 import { MODEL_PROVIDERS } from '../../../packages/shared-types/providers.js';
 import { claudeCatalog, executeClaude, locateClaude, claudeEnvironment } from './claude.js';
 import { openCodeCatalog, executeOpenCode } from './opencode.js';
 import { resolveRequestModel } from '../models.js';
 
-export function createProviderRegistry({ modelCatalog, publish = () => {}, discoverClaude = claudeCatalog, discoverOpenCode = openCodeCatalog, claudeRequest = executeClaude, openCodeRequest = executeOpenCode } = {}) {
+export function createProviderRegistry({ modelCatalog, publish = () => {}, discoverClaude = claudeCatalog, discoverOpenCode = openCodeCatalog, claudeRequest = executeClaude, openCodeRequest = executeOpenCode, discoverOllama = ollamaCatalog, ollamaRequest = executeOllama } = {}) {
   const cache = new Map(), pending = new Map(), controllers = new Map(); let login = null;
-  const discover = { claude: discoverClaude, opencode: discoverOpenCode };
+  const discover = { claude: discoverClaude, opencode: discoverOpenCode, ollama: discoverOllama };
   const status = provider => cache.get(provider)?.status || { available: null, authenticated: null, error: null, version: null };
   const get = async (provider, { refresh = false } = {}) => {
     if (!Object.hasOwn(MODEL_PROVIDERS, provider)) throw new Error('Unknown model provider.');
@@ -22,12 +23,12 @@ export function createProviderRegistry({ modelCatalog, publish = () => {}, disco
   };
   return { get, status,
     async execute(provider, prompt, options) {
-      if (!['claude', 'opencode'].includes(provider)) throw new Error('Unsupported external model provider.');
+      if (!['claude', 'opencode', 'ollama'].includes(provider)) throw new Error('Unsupported external model provider.');
       const model = await resolveRequestModel(options.model, { get: () => get(provider) }, options.signal);
       options.signal?.throwIfAborted();
       if (!model) throw new Error('Select a model in Settings.');
       options.onModel?.(model);
-      return (provider === 'claude' ? claudeRequest : openCodeRequest)(prompt, { ...options, model });
+      return ({ claude: claudeRequest, opencode: openCodeRequest, ollama: ollamaRequest }[provider])(prompt, { ...options, model });
     },
     async startClaudeLogin() {
       if (login) return { started: true };

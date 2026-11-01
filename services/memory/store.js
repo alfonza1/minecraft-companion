@@ -6,8 +6,8 @@ import { DEFAULT_PUSH_TO_TALK } from '../../packages/shared-types/hotkeys.js';
 
 export const dataDirectory = process.env.COMPANION_DATA_DIR || join(process.env.LOCALAPPDATA || join(homedir(), '.local', 'share'), 'MinecraftCompanion');
 export const defaults = {
-  realmId: null, playerName: '', autonomy: 'instructions', combat: 'retreat', followDistance: 3, miningZone: null,fastResponses:true,separateConversationModel:false,conversationModels:{codex:'gpt-6-luna',claude:'',opencode:''},
-  alertFrequency: 'normal', movementSpeed: 'brisk', model: '', provider: 'codex', providerModels: { claude: '', opencode: '' }, lowTokenMode: false, maxRequestsPerHour: 30, inputTokenLimitEnabled: false, maxInputTokens: 100_000,
+  realmId: null, playerName: '', autonomy: 'instructions', combat: 'retreat', followDistance: 3, miningZone: null,fastResponses:true,separateConversationModel:false,conversationModels:{codex:'gpt-6-luna',claude:'',opencode:'',ollama:''},
+  alertFrequency: 'normal', movementSpeed: 'brisk', model: '', provider: 'codex', providerModels: { claude: '', opencode: '', ollama: '' }, lowTokenMode: false, maxRequestsPerHour: 30, inputTokenLimitEnabled: false, maxInputTokens: 100_000,
   voice: { enabled: false, desktopEnabled: true, desktopInputDevice: null, desktopOutputDevice: null, handsFree: false, speed: 1, volume: 0.8, inputDevice: '', outputDevice: '', pushToTalk: DEFAULT_PUSH_TO_TALK, ttsVoice: 'auto' },
 };
 

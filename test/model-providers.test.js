@@ -27,7 +27,7 @@ test('provider choices migrate existing Codex settings and keep each model indep
     assert.deepEqual(modelSelection(store.settings()), { provider: 'codex', model: 'existing-codex' });
     assert.equal((await post({ provider: 'claude', providerModels: { claude: 'sonnet' } })).statusCode, 200);
     assert.equal((await post({ provider: 'opencode', providerModels: { opencode: 'fixture/local' } })).statusCode, 200);
-    assert.deepEqual(store.settings().providerModels, { claude: 'sonnet', opencode: 'fixture/local' });
+    assert.deepEqual(store.settings().providerModels, { claude: 'sonnet', opencode: 'fixture/local', ollama: '' });
     assert.equal((await post({separateConversationModel:true,conversationModels:{claude:'haiku',codex:'gpt-6-luna'}})).statusCode,200);
     assert.deepEqual(modelSelection(store.settings(),'conversation'),{provider:'opencode',model:'fixture/local'});
     assert.equal((await post({conversationModels:{opencode:'fixture/chat'}})).statusCode,200);

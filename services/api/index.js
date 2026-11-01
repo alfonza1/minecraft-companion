@@ -1,3 +1,4 @@
+import { registerObservers } from './extensions.js';
 import nativeProtocol from '../native-26.3/preload.cjs';
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
@@ -34,13 +35,14 @@ const hotkeySchema = z.unknown().transform((value, context) => { try { return no
 const desktopDevice = z.object({name:z.string().min(1).max(300),hostapi:z.number().int().min(0).max(100)}).strict().nullable();
 const voiceSettings = z.object({ enabled: z.boolean().optional(), desktopEnabled:z.boolean().optional(), desktopInputDevice:desktopDevice.optional(), desktopOutputDevice:desktopDevice.optional(), handsFree: z.boolean().optional(), speed: z.number().min(0.5).max(2).optional(), volume: z.number().min(0).max(1).optional(), inputDevice: z.string().max(300).optional(), outputDevice: z.string().max(300).optional(), pushToTalk: hotkeySchema.optional(), ttsVoice: z.enum(voiceCatalog.map(voice => voice.id)).optional() }).strict();
 const miningZoneSchema = z.object({ x: z.number().int().min(-29_999_800).max(29_999_800), y: z.number().int().min(-64).max(319), z: z.number().int().min(-29_999_800).max(29_999_800), radius: z.number().int().min(1).max(32) }).strict();
-export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode']).optional(), providerModels: z.object({ claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), separateConversationModel:z.boolean().optional(),conversationModels:z.object({codex:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(),claude:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(),opencode:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional()}).strict().optional(),fastResponses:z.boolean().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), inputTokenLimitEnabled: z.boolean().optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
+export const settingsSchema = z.object({ realmId: z.number().int().positive().nullable().optional(), playerName: z.string().regex(/^(?:[A-Za-z0-9_]{3,16})?$/).optional(), autonomy: z.enum(['instructions','helpful','independent']).optional(), combat: z.enum(['retreat','defend']).optional(), followDistance: z.number().min(2).max(8).optional(), alertFrequency: z.enum(['quiet','normal']).optional(), movementSpeed: z.enum(['normal','brisk']).optional(), model: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,99})?$/).optional(), provider: z.enum(['codex','claude','opencode','ollama']).optional(), providerModels: z.object({ ollama: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199})?$/).optional(), claude: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(), opencode: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional() }).strict().optional(), separateConversationModel:z.boolean().optional(),conversationModels:z.object({ollama:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199})?$/).optional(),codex:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(),claude:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional(),opencode:z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9_.:/+\[\]@-]{0,199})?$/).optional()}).strict().optional(),fastResponses:z.boolean().optional(), lowTokenMode: z.boolean().optional(), maxRequestsPerHour: z.number().int().min(0).max(200).optional(), inputTokenLimitEnabled: z.boolean().optional(), maxInputTokens: z.number().int().min(0).max(10_000_000).optional(), voice: voiceSettings.optional() }).strict();
 
 export async function createApp(options = {}) {
   const app = Fastify({ logger: false, bodyLimit: 12 * 1024 * 1024, trustProxy: false });
   const store = options.store || new Store();
   const connector = options.connector || new RealmConnector(store.directory);
   const runtime = options.runtime || new CompanionRuntime({ store, connector });
+  registerObservers(app, runtime);
   const modelCatalog = options.modelCatalog || createModelCatalog();
   const clients = new Set();
   let providerRegistry;
@@ -111,7 +113,7 @@ export async function createApp(options = {}) {
   runtime.on('change', publish); connector.on('change', publish);
   connector.on('diagnostic', message => runtime.log('error', message));
   app.get('/api/state', async () => snapshot());
-  const providerName = value => z.enum(['codex','claude','opencode']).parse(value);
+  const providerName = value => z.enum(['codex','claude','opencode','ollama']).parse(value);
   app.get('/api/ai/:provider/models', async request => { const catalog = await providerRegistry.get(providerName(request.params.provider)); publish(); return catalog; });
   app.post('/api/ai/:provider/models/refresh', async request => { const catalog = await providerRegistry.get(providerName(request.params.provider), { refresh: true }); publish(); return catalog; });
   app.post('/api/ai/claude/login', async () => providerRegistry.startClaudeLogin());
