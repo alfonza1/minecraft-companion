@@ -1,9 +1,9 @@
 {
   "name": "minecraft-companion",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha.1",
   "private": true,
   "type": "module",
-  "description": "Local Minecraft Java Realm teammate, build studio and voice companion extending Mineness",
+  "description": "Waypoint: an open-source agent runtime with Minecraft as its first interactive environment",
   "bin": {
     "mineness": "src/server.js"
   },
@@ -13,7 +13,7 @@
     "dev": "node services/api/index.js",
     "dev:dashboard": "vite --config apps/dashboard/vite.config.ts",
     "build": "vite build --config apps/dashboard/vite.config.ts",
-    "typecheck": "tsc --noEmit -p apps/dashboard/tsconfig.json",
+    "typecheck": "tsc --noEmit -p apps/dashboard/tsconfig.json && tsc --noEmit -p apps/website/tsconfig.json",
     "health": "node scripts/health.mjs",
     "setup:native": "node scripts/setup-native.mjs",
     "bootstrap": "powershell -NoProfile -File scripts/Bootstrap.ps1",
@@ -24,13 +24,21 @@
     "skins": "node scripts/skins.mjs",
     "build:plugin": "node scripts/build-plugin.mjs",
     "test:game:upstream": "node scripts/test-game.mjs",
-    "test:game": "node scripts/test-companion-game.mjs"
+    "test:game": "node scripts/test-companion-game.mjs",
+    "install:agent": "node scripts/install.mjs",
+    "check:install": "node scripts/install.mjs --check",
+    "build:website": "node scripts/build-website.mjs",
+    "dev:website": "vite --config apps/website/vite.config.ts",
+    "test:website": "node apps/website/tests/site.mjs",
+    "evaluate": "node scripts/evaluate.mjs",
+    "release:check": "node scripts/release-audit.mjs",
+    "release:package": "node scripts/package-release.mjs",
+    "setup:claude": "node scripts/setup-claude.mjs"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.0"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "0.3.312",
     "@fastify/multipart": "^9.3.0",
     "@fastify/static": "10.1.8",
     "@fastify/websocket": "11.3.4",
@@ -56,6 +64,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@fontsource/space-grotesk": "^5.3.0",
     "@playwright/test": "^1.56.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -64,5 +73,6 @@
     "flying-squid": "^1.12.0",
     "typescript": "^5.9.0",
     "vite": "^7.3.0"
-  }
+  },
+  "license": "Apache-2.0"
 }

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "status": "measured",
+  "scope": "Automated contracts; not gameplay",
+  "measuredAt": "2026-11-01T09:47:33.394Z",
+  "sourceCommit": "b3127469c9786cf9065342f9db5a2dcd3a43baeb",
+  "sourceModified": true,
+  "command": "npm run evaluate",
+  "suites": [
+    "test/ollama.test.js",
+    "test/extensions.test.js",
+    "test/orchestrator-runtime.test.js",
+    "test/companion-api.test.js",
+    "test/build-planner.test.js",
+    "test/teammate-tasks.test.js"
+  ],
+  "environment": {
+    "node": "24.18.1",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "tests": 50,
+  "passed": 50,
+  "failed": 0,
+  "skipped": 0,
+  "elapsedMs": 3948,
+  "modelRequests": 0,
+  "gameplayActions": 0,
+  "modelUsage": null,
+  "estimatedInferenceCost": null,
+  "planningLatency": null,
+  "gameplaySuccessRate": null,
+  "recoveryRate": null,
+  "resourceUtilization": {
+    "parentRssBytes": 62881792,
+    "systemMemoryBytes": 33377656832,
+    "scope": "Harness parent process only, not game/model workers"
+  },
+  "summary": "50 automated contract tests passed, 0 failed. Includes provider validation, pause gates, API isolation, resource accounting and task recovery doubles. No model or game benchmark.",
+  "limitations": [
+    "Synthetic world/action/provider doubles where applicable",
+    "No hosted or local model generation",
+    "No game connection",
+    "No model comparison",
+    "Timing is suite wall time, not planning latency",
+    "No monetary estimate without provider billing data"
+  ]
+}

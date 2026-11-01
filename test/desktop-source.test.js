@@ -8,11 +8,13 @@ import { sourceFingerprint } from '../scripts/desktop-source.mjs';
 test('desktop revisions detect uncommitted dashboard and backend edits without hashing generated builds', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'companion-revision-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  for (const child of ['apps/dashboard/src', 'apps/dashboard/dist', 'apps/desktop/obj', 'apps/desktop/bin', 'services/api']) await mkdir(join(directory, child), { recursive: true });
+  for (const child of ['apps/dashboard/src', 'apps/dashboard/dist', 'apps/desktop/obj', 'apps/desktop/bin', 'apps/website/src', 'services/api']) await mkdir(join(directory, child), { recursive: true });
   const frontend = join(directory, 'apps/dashboard/src/App.tsx');
   await writeFile(frontend, 'original');
   const original = await sourceFingerprint(directory);
   await writeFile(join(directory, 'apps/dashboard/dist/index.html'), 'compiled output');
+  assert.equal(await sourceFingerprint(directory), original);
+  await writeFile(join(directory, 'apps/website/src/App.tsx'), 'public website edit');
   assert.equal(await sourceFingerprint(directory), original);
   await writeFile(join(directory, 'apps/desktop/obj/project.assets.json'), 'restored packages');
   await writeFile(join(directory, 'apps/desktop/bin/runtime.json'), 'compiled desktop');

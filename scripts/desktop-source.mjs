@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const SOURCE_DIRECTORIES = ['apps', 'services', 'packages', 'src', 'scripts'];
+const SOURCE_DIRECTORIES = ['apps/dashboard', 'apps/desktop', 'apps/desktop-voice', 'services', 'packages', 'src', 'scripts'];
 const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', '__pycache__', '.git', 'bin', 'obj']);
 const SOURCE_EXTENSIONS = /\.(?:[cm]?js|tsx?|css|html|json|py|ps1|cs|csproj|java|yml)$/i;
 

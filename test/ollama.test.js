@@ -19,7 +19,7 @@ test('Ollama passes structured schema, actual usage and no private reasoning', a
   const result = await executeOllama('Synthetic test only', { model: 'test:local', schema: { type: 'object' }, fetcher: async (url, options) => {
     const body = JSON.parse(options.body);
     assert.equal(url, 'http://127.0.0.1:11434/api/generate');
-    assert.equal(options.redirect, 'error'); assert.equal(body.stream, false);
+    assert.equal(options.redirect, 'error'); assert.equal(body.stream, false); assert.equal(body.think, false);
     assert.deepEqual(body.format, { type: 'object' });
     return Response.json({ response: '{"reply":"Hello"}', thinking: 'PRIVATE', prompt_eval_count: 7, eval_count: 4 });
   } });

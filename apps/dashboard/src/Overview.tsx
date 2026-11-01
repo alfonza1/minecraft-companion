@@ -1,3 +1,4 @@
+import { modelSelection, MODEL_PROVIDERS } from '../../../packages/shared-types/providers';
 import {
   ArrowRight,
   AudioLines,
@@ -21,6 +22,8 @@ export default function Overview({
   navigate,
 }: Common & { navigate: (page: string) => void }) {
   const world = state.world;
+  const selection = modelSelection(state.settings);
+  const activeModel = state.ai?.modelState?.active;
   const realm = state.realms.find((r) => r.id === state.settings.realmId);
   const [request, setRequest] = useState('');
   const active = ['ACTIVE', 'BUSY'].includes(state.state);
@@ -28,6 +31,7 @@ export default function Overview({
     state.projects.find((p) => p.status === "building") || state.projects[0];
   return (
     <>
+      <div className="agent-identity"><span>WAYPOINT / MINECRAFT ENVIRONMENT</span><strong>{MODEL_PROVIDERS[selection.provider]} · {activeModel?.model || selection.model || 'Provider default'}</strong><small>{activeModel ? 'Model request active' : 'Event-driven · no inference polling'}</small></div>
       <form className="quick-request" onSubmit={async event => { event.preventDefault(); if (!request.trim() || !active || busy) return; try { await mutate('/conversation', { text: request.trim() }); setRequest(''); } catch { /* The shared error banner preserves the request for retry. */ } }}>
         <MessageCircle size={20} />
         <div><label htmlFor="overview-request">What are we doing next?</label><input id="overview-request" value={request} onChange={event => setRequest(event.target.value)} placeholder={active ? 'Follow me, grab some wood, or give me the oak logs…' : 'Start your companion to send a request'} disabled={!active || busy} /></div>

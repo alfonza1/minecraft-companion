@@ -1,0 +1,12 @@
+import { execFileSync } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+const pkg=JSON.parse(await readFile('package.json','utf8'));
+if(execFileSync('git',['status','--porcelain'],{encoding:'utf8'}).trim())throw new Error('Commit reviewed source before packaging a release.');
+await mkdir('release',{recursive:true});
+const filename=`waypoint-${pkg.version}-source.zip`;
+execFileSync('git',['archive','--format=zip','--prefix=waypoint/','-o',`release/${filename}`,'HEAD']);
+const hash=createHash('sha256').update(await readFile(`release/${filename}`)).digest('hex');
+await writeFile('release/SHA256SUMS',`${hash}  ${filename}\n`);
+console.log(`Created ${filename} from committed source, excluding ignored private/generated files. Optional skins submodule is not embedded.`);
+

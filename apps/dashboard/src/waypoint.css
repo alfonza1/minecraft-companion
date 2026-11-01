@@ -1,0 +1,11 @@
+/* Shared Waypoint identity; existing runtime controls and layout stay intact. */
+:root{--emerald:#78d5c5;--gold:#d6b7c7;--bg:#101719;--panel:#172124}
+.sidebar .brand-mark{background:#213b37;color:#eef4ef;border:1px solid #3a5750;border-radius:8px}
+.sidebar .brand{letter-spacing:.02em}
+.sidebar .brand strong{font-size:11px;letter-spacing:.05em;font-weight:400;color:#a8bdb8}
+.agent-identity{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-bottom:18px;padding:14px 18px;background:#162523;border:1px solid #304943;border-radius:8px}
+.agent-identity>span{font-size:10px;letter-spacing:.1em;color:#8bcdbd}
+.agent-identity strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.agent-identity small{color:#9daea8;margin-left:auto;font-size:11px}
+@media(max-width:700px){.agent-identity small{margin-left:0;width:100%}}
+

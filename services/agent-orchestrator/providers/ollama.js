@@ -31,7 +31,7 @@ export async function ollamaCatalog(signal, fetcher) {
 export async function executeOllama(prompt, { signal, model, schema, fetcher } = {}) {
   if (!/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(model) || /cloud/i.test(model)) throw new Error('Select an installed local Ollama model. Cloud models are not supported by this provider.');
   const result = await request('/api/generate', { signal, fetcher, body: {
-    model, prompt, format: schema || 'json', stream: false, keep_alive: '5m', options: { temperature: 0.2, num_predict: 4096 },
+    model, prompt, format: schema || 'json', stream: false, think: false, keep_alive: '5m', options: { temperature: 0.2, num_predict: 4096 },
   } });
   signal?.throwIfAborted();
   let data;

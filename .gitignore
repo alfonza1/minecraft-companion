@@ -53,3 +53,8 @@ scripts/call-*.mjs
 scripts/torres-ping.mjs
 scripts/wfm-proof.mjs
 mc-server/permissions.yml
+
+apps/website/dist/
+apps/website/.ssr/
+release/
+evaluations/local/

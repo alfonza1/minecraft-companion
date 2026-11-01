@@ -2,7 +2,7 @@ import { access, mkdtemp, rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { query } from '@anthropic-ai/claude-agent-sdk';
+import { loadClaudeSdk } from './claude-sdk.js';
 import { runProcess } from '../process.js';
 
 export async function locateClaude() {
@@ -31,6 +31,8 @@ export async function claudeStatus(signal) {
 export const CLAUDE_ISOLATION = Object.freeze({ settingSources: [], tools: [], skills: [], mcpServers: {}, strictMcpConfig: true, permissionMode: 'dontAsk', persistSession: false, plugins: [], settings: { disableAllHooks: true, autoMemoryEnabled: false }, extraArgs: { 'disable-slash-commands': null } });
 
 async function withClaude(work, { signal, ...options } = {}) {
+  signal?.throwIfAborted();
+  const { query } = await loadClaudeSdk();
   signal?.throwIfAborted();
   const directory = await mkdtemp(join(tmpdir(), 'companion-claude-'));
   const controller = new AbortController(), children = [];

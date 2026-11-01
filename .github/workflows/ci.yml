@@ -1,0 +1,45 @@
+name: Verify source
+on:
+  push:
+    branches: [feat/minecraft-companion]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:website
+      - run: npm run release:check
+      - run: npm run evaluate
+      - run: npx playwright install chromium --with-deps
+        if: runner.os == 'Linux'
+      - run: npm run test:website
+        if: runner.os == 'Linux'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-${{ runner.os }}
+          path: |
+            release/source-audit.json
+            release/dependency-licenses.json
+            evaluations/local/latest.json
+          retention-days: 14
+

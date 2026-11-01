@@ -26,7 +26,7 @@ test('hard-material requests persist, avoid repeated notices and resolve only su
 });
 
 test('explicit resource search and stack commands bypass reasoning but unrelated questions do not',()=>{
-  const context={world:{inventory:[]},playerName:'Alfonza'};
+  const context={world:{inventory:[]},playerName:'PlayerOne'};
   assert.equal(quickPlan('Can you find bamboo?',context).actions[0].tool,'find_resource');
   assert.equal(quickPlan('find a source of jungle logs',context).actions[0].args.item,'jungle_log');
   assert.equal(quickPlan('get another stack of oak logs',context).actions[0].args.count,64);

@@ -15,7 +15,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 async function until(predicate) { for (let n = 0; n < 100; n++) { if (predicate()) return; await tick(); } throw new Error('Task did not reach expected state.'); }
 async function fixture() {
   const directory = await mkdtemp(join(tmpdir(), 'companion-task-stack-')), store = new Store(directory);
-  store.updateSettings({ realmId: 1, playerName: 'Alfonza' });
+  store.updateSettings({ realmId: 1, playerName: 'PlayerOne' });
   const runtime = new CompanionRuntime({ store, connector: {} }), bot = new EventEmitter(); let wood = 0;
   Object.assign(bot, { minenessReady: true, entity: { position: new Vec3(1, 65, 3) }, health: 20, food: 20, players: {}, entities: {}, registry: {}, game: { dimension: 'overworld' }, inventory: { slots: [], items: () => wood ? [{ name: 'oak_log', count: wood }] : [] }, quit: () => queueMicrotask(() => bot.emit('end')) });
   runtime.bot = bot; runtime.state = 'ACTIVE'; runtime.actions = { stop() {}, resume() {}, state: () => ({ action: null }) };
@@ -38,7 +38,7 @@ test('temporary helper returns to the original site and resumes only remaining g
   try {
     await f.stack.submit([{ tool: 'chop_tree', args: { count: 8 } }], 'wood'); await until(() => f.calls.length === 1);
     f.setWood(3);
-    await f.stack.submit([{ tool: 'goto', args: { player: 'Alfonza' } }], 'help');
+    await f.stack.submit([{ tool: 'goto', args: { player: 'PlayerOne' } }], 'help');
     await until(() => f.calls.filter(value => value.name === 'chop_tree').length === 2);
     assert.deepEqual(f.calls.map(value => value.name), ['chop_tree', 'goto', 'goto', 'chop_tree']);
     assert.equal(f.calls.at(-1).args.count, 5);

@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -183,12 +184,7 @@ try {
     .getByText("Offline planning is active.", { exact: true })
     .waitFor();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Resume companion", exact: true })
-      .isEnabled(),
-    true,
-  );
+  await expect(page.getByRole("button", { name: "Resume companion", exact: true })).toBeEnabled();
   await page
     .getByRole("button", { name: "Resume companion", exact: true })
     .click();

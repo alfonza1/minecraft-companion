@@ -39,13 +39,13 @@ test('server rejection never becomes a successful predicted handoff', async () =
 test('player handoff approaches pickup range and steps away before authoritative reconciliation', async () => {
   const fixture = inventoryBot(), bot = fixture.bot, routes = [];
   bot.entity = { position: new Vec3(0.5, 5, 0.5) };
-  bot.players = { Alfonza: { entity: { position: new Vec3(4.5, 5, 0.5) } } };
+  bot.players = { PlayerOne: { entity: { position: new Vec3(4.5, 5, 0.5) } } };
   bot.pathfinder = { goto: async goal => { routes.push(goal); bot.entity.position = new Vec3(goal.x, goal.y, goal.z); }, setGoal() {} };
   bot.lookAt = async () => {}; bot.waitForTicks = async () => {};
-  const result = await dropInventoryItem(bot, { item: 'oak_log', count: 3, player: 'Alfonza' }, new AbortController().signal);
+  const result = await dropInventoryItem(bot, { item: 'oak_log', count: 3, player: 'PlayerOne' }, new AbortController().signal);
   assert.equal(result.dropped, 3); assert.equal(routes.length, 2);
   assert.equal(routes[0].rangeSq, 0.75 * 0.75);
-  assert.ok(bot.entity.position.distanceTo(bot.players.Alfonza.entity.position) >= 3);
+  assert.ok(bot.entity.position.distanceTo(bot.players.PlayerOne.entity.position) >= 3);
   assert.equal(result.recipientPickupVerified, false); assert.equal(bot.companionInventoryUnverified, false);
 });
 test('cancelling a drop stops subsequent clicks and still reconciles the completed transfer', async () => {
@@ -88,7 +88,7 @@ test('wood gathering stops before destroying logs when inventory cannot hold any
   const result=await chopNaturalTrees(bot,{run:(_name,work)=>work(new AbortController().signal)},{count:8});
   assert.equal(result.success,false);assert.equal(result.mined,0);assert.equal(result.collected,0);assert.match(result.blocked,/inventory is full/);
 });
-const context={playerName:'Alfonza',world:{inventory:[{name:'oak_log',displayName:'Oak Log',count:10}]}};
+const context={playerName:'PlayerOne',world:{inventory:[{name:'oak_log',displayName:'Oak Log',count:10}]}};
 test('common commands route immediately but general conversation never becomes a game action', () => {
   for(const message of ['give me the wood','drop 3 oak logs','can you follow me?','get 16 oak logs'])assert.ok(validatePlan(quickPlan(message,context)));
   assert.equal(quickPlan('give me the wood',context).actions[0].tool,'give_items_to_player');
@@ -97,7 +97,7 @@ test('common commands route immediately but general conversation never becomes a
 });
 test('direct handoff requests bypass inference and model budgets while pause still gates them', async () => {
   const records=new Map(),executed=[];let active=true,calls=0;
-  const store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'Alfonza',maxRequestsPerHour:0,maxInputTokens:0})};
+  const store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'PlayerOne',maxRequestsPerHour:0,maxInputTokens:0})};
   const runtime={isActive:()=>active,snapshot:()=>({world:context.world}),execute:async(tool,args)=>{executed.push({tool,args});return{success:true}}};
   const orchestrator=createOrchestrator({runtime,store,publish:()=>{},request:async()=>{calls++;throw Error('Unexpected inference')}});
   await orchestrator.respond('give me the wood');await new Promise(resolve=>setImmediate(resolve));
@@ -107,7 +107,7 @@ test('direct handoff requests bypass inference and model budgets while pause sti
 });
 test('quick status questions leave ongoing gameplay running', async () => {
   let release, cancelled=0;
-  const records=new Map(),store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'Alfonza'})};
+  const records=new Map(),store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'PlayerOne'})};
   const runtime={isActive:()=>true,snapshot:()=>({world:context.world,currentTask:{name:'chopping wood'}}),execute:()=>new Promise(resolve=>{release=resolve}),cancelTask:async()=>{cancelled++;release({success:true})}};
   const orchestrator=createOrchestrator({runtime,store,publish:()=>{},request:async()=>{throw Error('Unexpected inference')}});
   await orchestrator.respond('get wood');assert.match(await orchestrator.respond('what are you doing?'),/chopping wood/);assert.equal(cancelled,0);
@@ -116,7 +116,7 @@ test('quick status questions leave ongoing gameplay running', async () => {
 test('Stop wins while a quick handoff waits for the previous action to finish cancelling', async () => {
   let release,beginIdle,finishIdle;
   const idleStarted=new Promise(resolve=>{beginIdle=resolve}),idleFinished=new Promise(resolve=>{finishIdle=resolve});
-  const records=new Map(),executed=[],store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'Alfonza'})};
+  const records=new Map(),executed=[],store={get:c=>records.get(c)||[],put:(c,v)=>records.set(c,[...(records.get(c)||[]),v]),settings:()=>({playerName:'PlayerOne'})};
   const runtime={actionEpoch:0,isActive:()=>true,snapshot:()=>({world:context.world}),execute:tool=>{executed.push(tool);return new Promise(resolve=>{release=resolve})},
     waitForIdle:async()=>{beginIdle();await idleFinished;},cancelTask:async()=>{runtime.actionEpoch++;release?.({success:false});await orchestrator.cancel();}};
   const orchestrator=createOrchestrator({runtime,store,publish:()=>{},request:async()=>{throw Error('Unexpected inference')}});

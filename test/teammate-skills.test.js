@@ -12,7 +12,7 @@ import { quickPlan } from '../services/agent-orchestrator/quick-actions.js';
 
 async function fixture() {
   const directory = await mkdtemp(join(tmpdir(), 'companion-teammate-')), store = new Store(directory);
-  store.updateSettings({ realmId: 1, playerName: 'Alfonza' });
+  store.updateSettings({ realmId: 1, playerName: 'PlayerOne' });
   const bot = new EventEmitter(), stock = { bread: 20, torch: 64, stone_pickaxe: 1 }, owned = {}, visits = [], withdrawals = [];
   Object.assign(bot, { minenessReady: true, entity: { position: new Vec3(0, 65, 0) }, health: 20, food: 20, game: { dimension: 'overworld' }, players: {}, entities: {},
     registry: { itemsByName: { bread: { id: 1 }, torch: { id: 2 }, stone_pickaxe: { id: 3, maxDurability: 131 }, iron_pickaxe: { id: 4, maxDurability: 250 }, diamond: { id: 5 } } },
@@ -109,11 +109,11 @@ test('rescue uses only current or recent observed player locations and respects 
   const f = await fixture();
   try {
     await assert.rejects(f.teammate.rescue(signal()), /can’t see you/);
-    f.runtime.world.nearbyPlayers = [{ name: 'Alfonza', position: { x: 4, y: 65, z: 0 } }]; f.teammate.observe();
+    f.runtime.world.nearbyPlayers = [{ name: 'PlayerOne', position: { x: 4, y: 65, z: 0 } }]; f.teammate.observe();
     assert.equal(f.teammate.playerDestination().current, false);
     f.bot.health = 5; await assert.rejects(f.teammate.rescue(signal()), /too hurt/);
     f.bot.health = 20; assert.equal((await f.teammate.rescue(signal())).success, false);
-    f.bot.players.Alfonza = { entity: { position: new Vec3(4, 65, 0) } };
+    f.bot.players.PlayerOne = { entity: { position: new Vec3(4, 65, 0) } };
     assert.equal((await f.teammate.rescue(signal())).success, true);
     f.bot.entities.creeper = { name: 'creeper', position: new Vec3(4, 65, 1) }; assert.equal((await f.teammate.rescue(signal())).success, false);
   } finally { await f.close(); }
@@ -164,7 +164,7 @@ test('teammate API persists routines/preferences, rejects unsafe permissions and
 });
 
 test('everyday teammate phrases route without inference; unrelated phrases still fall through', () => {
-  const context = { world: { inventory: [] }, playerName: 'Alfonza', locations: [{ id: 'home' }] };
+  const context = { world: { inventory: [] }, playerName: 'PlayerOne', locations: [{ id: 'home' }] };
   for (const [phrase, tool] of [['help me', 'rescue_player'], ['get ready to mine', 'prepare_routine'], ['bring me a stack of wood', 'bring_items'], ['go home', 'visit_location'], ['recover your items', 'recover_items']]) assert.equal(quickPlan(phrase, context).actions[0].tool, tool);
   for (const phrase of ['go figure', 'help me understand Java', 'what is a stack in Python']) assert.equal(quickPlan(phrase, context), null);
 });

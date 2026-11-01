@@ -1,0 +1,23 @@
+name: Capability proposal
+description: Propose a scoped agent capability or research experiment
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What useful task would this enable?
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Scope, permissions and failure behavior
+      description: What must it observe, what can it change, and when should it stop?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How could we verify it?
+      description: Suggest a reproducible fixture or comparison.
+

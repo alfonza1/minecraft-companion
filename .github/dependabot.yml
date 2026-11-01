@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: minecraft-protocol
+      - dependency-name: mineflayer
+      - dependency-name: minecraft-data
+      - dependency-name: prismarine-auth
+      - dependency-name: prismarine-realms
+    # Protocol pins need coordinated native adapter and actual gameplay validation.
+

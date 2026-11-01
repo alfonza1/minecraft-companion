@@ -1,3 +1,4 @@
+import WaypointMark from '../../../packages/ui/WaypointMark';
 import {
   Backpack,
   Box,
@@ -97,10 +98,10 @@ export default function App() {
           aria-label="Minecraft Companion home"
         >
           <span className="brand-mark">
-            <Box size={26} />
+            <WaypointMark />
           </span>
           <span>
-            MINECRAFT<strong>COMPANION</strong>
+            WAYPOINT<strong>Minecraft Companion</strong>
           </span>
         </a>
         <div className="workspace-label">YOUR WORKSPACE</div>

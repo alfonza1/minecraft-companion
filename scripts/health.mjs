@@ -18,7 +18,7 @@ const codexFile = join(process.env.APPDATA || '', 'npm/node_modules/@openai/code
 const codex = existsSync(codexFile) ? args => command(process.execPath, [codexFile, ...args]) : args => command('codex', args);
 const checks = {
   application: 'Minecraft Companion', platform: `${os.platform()} ${os.release()} ${os.arch()}`,
-  node: process.versions.node, nodeCompatible: nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 12),
+  node: process.versions.node, nodeCompatible: nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 13),
   git: command('git', ['--version']), python: command('python', ['--version']),
   java: command('java', ['--version']), javaRequiredForBridge: true,
   codex: codex(['--version']), codexAuthentication: codex(['login', 'status']).replace(/(?:sk-|ghp_|gho_)\S+/g, '[redacted]'),

@@ -13,7 +13,7 @@ function Confirm-Command([string]$Name, [string]$PackageId) {
 Confirm-Command 'node' 'OpenJS.NodeJS.LTS'
 Confirm-Command 'git' 'Git.Git'
 $nodeVersionParts = (& node --version).TrimStart('v').Split('.')
-if ([int]$nodeVersionParts[0] -lt 22 -or ([int]$nodeVersionParts[0] -eq 22 -and [int]$nodeVersionParts[1] -lt 12)) { throw 'Node 22.12 or newer is required. Install the current Node LTS, then rerun this script.' }
+if ([int]$nodeVersionParts[0] -lt 22 -or ([int]$nodeVersionParts[0] -eq 22 -and [int]$nodeVersionParts[1] -lt 13)) { throw 'Node 22.13 or newer is required. Install the current Node LTS, then rerun this script.' }
 & npm.cmd ci --ignore-scripts
 if ($LASTEXITCODE -ne 0) { throw 'Project dependency installation failed.' }
 & node (Join-Path $PSScriptRoot 'setup-native.mjs')

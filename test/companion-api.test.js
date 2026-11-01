@@ -20,6 +20,20 @@ test('real API returns disconnected observations and no invented inventory or us
   const health = (await app.inject('/api/health')).json();
   if (health.supportedVersions.includes('26.3')) assert.equal(health.limitations.some(text => text.includes('requires the optional protocol bridge')), false);
 });
+
+test('observer API retains localhost and pause boundaries without model requests', async t => {
+  const app = await fixture(t);
+  assert.equal((await app.inject('/api/extensions')).json()[0].id, 'inventory-summary');
+  const run = { method: 'POST', url: '/api/extensions/inventory-summary/run', payload: {} };
+  assert.equal((await app.inject(run)).statusCode, 409);
+  assert.equal((await app.inject({ ...run, headers: { host: 'attacker.example', origin: 'https://attacker.example' } })).statusCode, 403);
+  app.companion.runtime.state = 'ACTIVE';
+  assert.deepEqual((await app.inject(run)).json(), { observed: false, items: [] });
+  assert.equal((await app.inject({ ...run, payload: { search: 7 } })).statusCode, 400);
+  app.companion.runtime.state = 'PAUSED';
+  assert.equal((await app.inject(run)).statusCode, 409);
+  assert.equal((await app.inject('/api/state')).json().usage.requests, 0);
+});
 test('API enforces localhost host and browser origin for HTTP and WebSocket upgrade paths', async t => {
   const app = await fixture(t);
   for (const url of ['/api/state', '/api/events']) {

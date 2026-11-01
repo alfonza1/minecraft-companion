@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible failure with sanitized evidence
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private chats, databases or personal Realm details.
+  - type: input
+    id: version
+    attributes:
+      label: Version and OS
+      description: Include the commit/release, Node version and OS.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What happened, what did you expect, and can it happen in a disposable world?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized error or evidence
+      description: Remove account identifiers and credentials. Distinguish actual play from test doubles.
+

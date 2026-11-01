@@ -5,6 +5,7 @@ import "./polish.css";
 import "./style.css";
 import "./voice.css";
 import './desktop.css';
+import './waypoint.css';
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
