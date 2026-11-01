@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "status": "measured",
   "scope": "Automated contracts; not gameplay",
-  "measuredAt": "2026-11-01T10:06:33.149Z",
-  "sourceCommit": "df84b59419199bb55c8fe224457364f9f87dbd83",
+  "measuredAt": "2026-11-01T10:53:19.200Z",
+  "sourceCommit": "34960a54205a9e77d0f3668a3e787dda97b4cbcb",
   "sourceModified": false,
   "command": "npm run evaluate",
   "suites": [
@@ -12,18 +12,21 @@
     "test/orchestrator-runtime.test.js",
     "test/companion-api.test.js",
     "test/build-planner.test.js",
-    "test/teammate-tasks.test.js"
+    "test/teammate-tasks.test.js",
+    "test/workspace.test.js",
+    "test/workspace-tasks.test.js",
+    "test/personality.test.js"
   ],
   "environment": {
     "node": "24.18.1",
     "platform": "win32",
     "architecture": "x64"
   },
-  "tests": 51,
-  "passed": 51,
+  "tests": 84,
+  "passed": 84,
   "failed": 0,
   "skipped": 0,
-  "elapsedMs": 2224,
+  "elapsedMs": 2507,
   "modelRequests": 0,
   "gameplayActions": 0,
   "modelUsage": null,
@@ -32,11 +35,11 @@
   "gameplaySuccessRate": null,
   "recoveryRate": null,
   "resourceUtilization": {
-    "parentRssBytes": 47751168,
+    "parentRssBytes": 55169024,
     "systemMemoryBytes": 33377656832,
     "scope": "Harness parent process only, not game/model workers"
   },
-  "summary": "51 automated contract tests passed, 0 failed. Includes provider validation, pause gates, API isolation, resource accounting and task recovery doubles. No model or game benchmark.",
+  "summary": "84 automated contract tests passed, 0 failed. Includes provider validation, pause gates, API isolation, resource accounting and task recovery doubles. No model or game benchmark.",
   "limitations": [
     "Synthetic world/action/provider doubles where applicable",
     "No hosted or local model generation",
