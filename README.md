@@ -1,8 +1,8 @@
-# Waypoint
+# Player Two
 
 **Good company. Better games.**
 
-Waypoint is a free, open-source **AI gaming companion platform**: a companion to
+Player Two is a free, open-source **AI gaming companion platform**: a companion to
 play with, talk to, share goals with and improve together. **Minecraft Survival is
 the first and only playable integration today.** More games are a community-led
 ambition, not announced support. Built on
@@ -17,7 +17,7 @@ emotional pressure or claims of unattended human-level gameplay.
 [Get started](docs/INSTALLATION.md) · [Workspace](docs/WORKSPACE.md) · [Architecture](docs/ARCHITECTURE.md) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap](docs/ROADMAP.md)
 
-![Waypoint public website — actual application preview, not gameplay footage](apps/website/public/social.png)
+![Player Two public website — actual application preview, not gameplay footage](apps/website/public/social.png)
 
 ## Play together. Talk naturally. Keep the good bits.
 
@@ -29,7 +29,7 @@ the full navigation menu. Gathering, construction, exploration and blockers each
 bring different information forward. No friendship scores, fabricated memories
 or fake live telemetry.
 
-![Actual Waypoint workspace in a disconnected test session](apps/website/public/dashboard.png)
+![Actual Player Two workspace in a disconnected test session](apps/website/public/dashboard.png)
 
 This is an actual application screenshot from a disconnected test session. It is
 not evidence of successful live gameplay. See the
@@ -136,5 +136,5 @@ State and credentials stay outside the repository. Selected hosted providers
 receive request context; media sharing is explicit. Never publish database backups
 or tokens. See [Security](SECURITY.md) and [license/advisory review](docs/RELEASE-SECURITY.md).
 
-Independent project, not affiliated with Mojang or Microsoft. Waypoint is a project
+Independent project, not affiliated with Mojang or Microsoft. Player Two is a project
 identity, not a claim of registered trademark rights.

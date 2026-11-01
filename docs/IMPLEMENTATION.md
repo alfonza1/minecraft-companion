@@ -1,4 +1,4 @@
-# Minecraft Companion implementation checklist
+# Player Two implementation checklist
 
 Evidence levels: implemented; automated tests passed; local gameplay passed; Realm gameplay passed. Passing a fixture does not imply Realm gameplay.
 

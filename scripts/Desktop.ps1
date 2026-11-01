@@ -29,7 +29,7 @@ try {
     $fingerprint = (& node (Join-Path $PSScriptRoot 'desktop-source.mjs')).Trim()
     if ($LASTEXITCODE -ne 0 -or $fingerprint -notmatch '^[a-f0-9]{64}$') { throw 'Could not inspect local application sources.' }
     $health = Read-Health
-    if ($health -and $health.name -ne 'Minecraft Companion') { throw 'Port 4365 is occupied by another application.' }
+    if ($health -and $health.name -notin @('Player Two', 'Minecraft Companion')) { throw 'Port 4365 is occupied by another application.' }
     $requiresRestart = $health -and $health.sourceFingerprint -ne $fingerprint
     if ($CheckOnly) {
         @{ projectRoot = $projectRoot; fingerprint = $fingerprint; running = [bool]$health; requiresRestart = [bool]$requiresRestart } | ConvertTo-Json -Compress
@@ -71,7 +71,7 @@ try {
         if (-not $health) { throw 'The local service did not become ready. Try the launcher again.' }
     }
     if (-not $NoOpen) {
-        $launcher = Join-Path $cache 'Minecraft Companion.exe'
+        $launcher = Join-Path $cache 'Player Two.exe'
         if (-not (Test-Path -LiteralPath $launcher)) { & (Join-Path $PSScriptRoot 'Install-DesktopLauncher.ps1') | Out-Null }
         $nativeExecutable = & (Join-Path $PSScriptRoot 'Build-Desktop.ps1')
         # Reuse the selected account when reopening after a service update.
@@ -90,7 +90,7 @@ try {
 } catch {
     if ($NoOpen -or $CheckOnly) { throw }
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Minecraft Companion', 'OK', 'Error') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Player Two', 'OK', 'Error') | Out-Null
     exit 1
 } finally {
     if ($locked) { $mutex.ReleaseMutex() }

@@ -1,7 +1,7 @@
-# Waypoint release work
+# Player Two release work
 
-Waypoint is the agent platform identity. Minecraft Companion remains the first
-environment and the existing local application/data identity. This avoids breaking
+Player Two is the product identity. Minecraft Survival is the first supported
+environment. The existing local application/data identity remains stable. This avoids breaking
 installed shortcuts, authentication caches, projects, or launcher updates.
 
 ## Audit (2026-11-01)
@@ -27,7 +27,7 @@ installed shortcuts, authentication caches, projects, or launcher updates.
 ## Implementation checklist
 
 - [x] Free local provider, setup selection and portable prerequisite checker
-- [x] Original Waypoint identity and independent static public website
+- [x] Original Player Two identity and independent static public website
 - [x] Home, setup, architecture, features, searchable docs, engineering, contribution, roadmap
 - [x] Shared dashboard identity and observable activity
 - [x] Tested extension contract and working example
@@ -45,7 +45,7 @@ repository default; the original main branch was preserved.
 
 Your supplied reference informs the near-black canvas, large geometric sculpture,
 editorial whitespace, subtle surface lighting and clipped white controls. Original
-Waypoint design uses obsidian #0b0e10, mineral #a9bbb7, chalk #f4f5ef, rose #ed7da7,
+Player Two design uses obsidian #0b0e10, mineral #a9bbb7, chalk #f4f5ef, rose #ed7da7,
 and glacial teal #68d4cc. Display: locally hosted Space Grotesk; body: system sans;
 technical labels: monospace. The signature is an interactive spatial graph of the
 agent lifecycle, explicitly labeled an explanatory visualization, not live play.

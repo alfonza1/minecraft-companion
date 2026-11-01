@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 if (process.platform !== 'win32') throw new Error('This fixture tests the actual Windows desktop window.');
 const exec = promisify(execFile), root = process.cwd();
 const { stdout } = await exec('powershell.exe', ['-NoProfile', '-File', path.join(root, 'scripts/Build-Desktop.ps1')], { windowsHide: true });
-const executable = stdout.trim(), launcher = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/launcher/Minecraft Companion.exe');
+const executable = stdout.trim(), launcher = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/launcher/Player Two.exe');
 const evidence = path.join(root, '.git/verification/desktop-window');
 await mkdir(evidence, { recursive: true });
 const initial = await fetch('http://127.0.0.1:4365/api/state').then(r => r.json());

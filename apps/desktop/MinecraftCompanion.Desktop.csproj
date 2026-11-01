@@ -7,8 +7,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <AssemblyName>MinecraftCompanion.Desktop</AssemblyName>
-    <Product>Minecraft Companion</Product>
-    <AssemblyTitle>Minecraft Companion</AssemblyTitle>
+    <Product>Player Two</Product>
+    <AssemblyTitle>Player Two</AssemblyTitle>
     <ApplicationIcon Condition="'$(CompanionIcon)' != ''">$(CompanionIcon)</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>

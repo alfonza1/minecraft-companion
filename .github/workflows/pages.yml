@@ -1,4 +1,4 @@
-name: Publish Waypoint website
+name: Publish Player Two website
 on:
   push:
     branches: [feat/minecraft-companion]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: waypoint-pages
+  group: player-two-pages
   cancel-in-progress: true
 jobs:
   build:

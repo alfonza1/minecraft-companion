@@ -65,5 +65,5 @@ function load() {
   status.installed = true;
 }
 try { if (process.env.COMPANION_NATIVE_PROTOCOL !== 'off') load(); }
-catch { status.error = 'Native 26.3 dependencies are missing, stale or damaged. Run npm run setup:native, then restart Minecraft Companion.'; }
+catch { status.error = 'Native 26.3 dependencies are missing, stale or damaged. Run npm run setup:native, then restart Player Two.'; }
 module.exports = Object.freeze(status);

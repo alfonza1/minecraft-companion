@@ -17,7 +17,7 @@ const command = (name, args) => {
 const codexFile = join(process.env.APPDATA || '', 'npm/node_modules/@openai/codex/bin/codex.js');
 const codex = existsSync(codexFile) ? args => command(process.execPath, [codexFile, ...args]) : args => command('codex', args);
 const checks = {
-  application: 'Minecraft Companion', platform: `${os.platform()} ${os.release()} ${os.arch()}`,
+  application: 'Player Two', platform: `${os.platform()} ${os.release()} ${os.arch()}`,
   node: process.versions.node, nodeCompatible: nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 13),
   git: command('git', ['--version']), python: command('python', ['--version']),
   java: command('java', ['--version']), javaRequiredForBridge: true,
@@ -29,6 +29,6 @@ const checks = {
   dataStorage: 'LOCALAPPDATA/MinecraftCompanion; Windows DPAPI for account cache',
 };
 try { const response = await fetch('http://127.0.0.1:4365/api/state', { signal: AbortSignal.timeout(2000) }); const state = await response.json(); checks.runtime = { reachable: response.ok, state: state.state, account: state.auth.status }; }
-catch { checks.runtime = { reachable: false, message: 'Launch with Start Minecraft Companion.cmd.' }; }
+catch { checks.runtime = { reachable: false, message: 'Launch with Start Player Two.cmd.' }; }
 console.log(JSON.stringify(checks, null, 2));
 if (!checks.nodeCompatible || !checks.dashboardBuilt) process.exitCode = 1;

@@ -1,9 +1,9 @@
 {
-  "name": "minecraft-companion",
-  "version": "0.4.0-alpha.1",
+  "name": "player-two",
+  "version": "0.4.1-alpha.1",
   "private": true,
   "type": "module",
-  "description": "Waypoint: an open-source AI gaming companion platform, starting with Minecraft Survival",
+  "description": "Player Two: an open-source AI gaming companion platform, starting with Minecraft Survival",
   "bin": {
     "mineness": "src/server.js"
   },

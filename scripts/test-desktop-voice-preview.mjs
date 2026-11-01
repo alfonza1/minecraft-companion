@@ -12,7 +12,7 @@ assert.equal(before.state, 'DISCONNECTED', 'Run this passive preview check only 
 const { stdout } = await exec('powershell.exe', ['-NoProfile', '-File', path.join(root, 'scripts/Build-Desktop.ps1')], { windowsHide: true });
 const listener = net.createServer(); await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
 const debugPort = listener.address().port; await new Promise(resolve => listener.close(resolve));
-const launcher = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/launcher/Minecraft Companion.exe');
+const launcher = path.join(process.env.LOCALAPPDATA, 'MinecraftCompanion/launcher/Player Two.exe');
 const child = spawn(stdout.trim(), ['--project', root, '--launcher', launcher, '--test-port', String(debugPort), '--minimized'], { windowsHide: true, stdio: 'ignore' });
 let browser, page;
 const evidence = { at: new Date().toISOString(), passed: false, scope: 'Actual rebuilt Windows WebView2, isolated minimized test profile and real localhost Kokoro preview. Uses the saved output preference without modifying settings. Audio muted; no physical sound or microphone, no Realm or model request. Test debugging is loopback only.' };

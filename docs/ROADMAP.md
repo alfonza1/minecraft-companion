@@ -1,6 +1,6 @@
 # More worlds, built together
 
-Waypoint's direction is an AI gaming companion people enjoy playing and talking
+Player Two's direction is an AI gaming companion people enjoy playing and talking
 with. Minecraft Survival is the first and only playable integration. Future games
 are community proposals and research until real connections, actions and tests
 exist. There are no promised release dates or fabricated popularity rankings.

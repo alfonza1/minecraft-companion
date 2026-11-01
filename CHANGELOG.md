@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1-alpha.1 — Player Two
+
+- Renamed the product across the website, workspace, documentation, desktop
+  window, launcher, exports and release packaging, with a shared P2 mark.
+- Preserved existing account caches, saved work, custom companion names and
+  Windows taskbar identity. The old default companion name displays as Player Two.
+- Updated desktop and Start-menu shortcuts; old launch targets remain supported.
+- Fixed shortcut registration in encrypted Start-menu folders without changing
+  folder encryption. Installer errors no longer wait on a hidden modal dialog.
+- Includes the near-black graphite theme and blue interaction accents.
+
 ## 0.4.0-alpha.1 — The shared play desk
 
 - Replaced the permanent sidebar with a searchable keyboard tool menu, compact
@@ -37,9 +48,9 @@ Experimental prerelease. Existing account, provider, voice and local storage pat
 are preserved. No claims of human-level play, a second game or exact reconstruction
 of unseen video geometry.
 
-## 0.2.0-alpha.1 — Waypoint experimental platform release
+## 0.2.0-alpha.1 — Player Two experimental platform release
 
-- Separate static public website and original Waypoint identity.
+- Separate static public website and original Player Two identity.
 - Local Ollama provider with structured action validation and reported usage.
 - Model selection in guided setup; portable core installer and support matrix.
 - Versioned observation extension contract with a working inventory summary.

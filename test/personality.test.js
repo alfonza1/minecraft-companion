@@ -40,6 +40,22 @@ test('profile API persists personality, preserves existing automation until expl
   assert.deepEqual(f.calls, ['stop-idle']);
 });
 
+test('product rename updates the old default without losing custom names or saved preferences', async t => {
+  const { store, app } = await fixture(t);
+  assert.equal(companionProfile(store).name, 'Player Two');
+  store.put('companionProfile', { id: 'profile', name: 'Waypoint', style: 'dry-humor', memoryEnabled: false });
+  assert.equal(companionProfile(store).name, 'Player Two');
+  assert.equal(companionProfile(store).style, 'dry-humor');
+  assert.equal(companionProfile(store).memoryEnabled, false);
+  assert.equal(store.get('companionProfile')[0].name, 'Waypoint', 'reading a profile does not rewrite saved data');
+  store.put('companionProfile', { id: 'profile', name: 'iCodex', talkativeness: 'focused' });
+  assert.equal(companionProfile(store).name, 'iCodex');
+  assert.equal(companionProfile(store).talkativeness, 'focused');
+  const exported = (await app.inject('/api/companion/export')).json();
+  assert.equal(exported.format, 'player-two-companion/v1');
+  assert.equal(exported.profile.name, 'iCodex');
+});
+
 test('mode updates serialize and do not grant terrain, chest or combat permissions', async t => {
   const f = await fixture(t); let release;
   f.runtime.idleWork.stop = () => new Promise(resolve => { release = resolve; });

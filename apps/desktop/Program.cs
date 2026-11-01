@@ -27,7 +27,13 @@ internal static class Program
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new CompanionWindow(root, launcher, activate, args.Contains("--updates-pending"), test ? port : null, args.Contains("--minimized")));
         }
-        catch (Exception error) { MessageBox.Show(error.Message, "Minecraft Companion", MessageBoxButtons.OK, MessageBoxIcon.Error); Environment.ExitCode = 1; }
+        catch (Exception error)
+        {
+            // Registration is a hidden installer operation; a modal dialog would hang it.
+            if (args.Contains("--register-shortcut")) Console.Error.WriteLine(error.Message);
+            else MessageBox.Show(error.Message, "Player Two", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Environment.ExitCode = 1;
+        }
     }
     private static string? Argument(string[] args, string name) { int index = Array.IndexOf(args, name); return index >= 0 && index + 1 < args.Length ? args[index + 1] : null; }
 }
@@ -36,8 +42,8 @@ internal sealed class CompanionWindow : Form
 {
     private const string Dashboard = "http://127.0.0.1:4365/";
     private readonly string project, launcher;
-    private readonly WebView2 web = new() { Dock = DockStyle.Fill, DefaultBackgroundColor = Color.FromArgb(16, 21, 24) };
-    private readonly Label status = new() { Dock = DockStyle.Fill, ForeColor = Color.FromArgb(139, 212, 172), TextAlign = ContentAlignment.MiddleCenter, Text = "MINECRAFT COMPANION\n\nOpening your workspace…", Font = new Font("Segoe UI", 15) };
+    private readonly WebView2 web = new() { Dock = DockStyle.Fill, DefaultBackgroundColor = Color.FromArgb(8, 11, 16) };
+    private readonly Label status = new() { Dock = DockStyle.Fill, ForeColor = Color.FromArgb(121, 184, 255), TextAlign = ContentAlignment.MiddleCenter, Text = "PLAYER TWO\n\nOpening your workspace…", Font = new Font("Segoe UI", 15) };
     private readonly System.Windows.Forms.Timer activationTimer = new() { Interval = 300 };
     private readonly EventWaitHandle activation;
     private readonly int? testPort;
@@ -47,7 +53,7 @@ internal sealed class CompanionWindow : Form
     public CompanionWindow(string project, string launcher, EventWaitHandle activation, bool updatesPending, int? testPort, bool minimized)
     {
         this.project = project; this.launcher = launcher; this.activation = activation; this.updatesPending = updatesPending; this.testPort = testPort;
-        Text = "Minecraft Companion"; BackColor = Color.FromArgb(16, 21, 24);
+        Text = "Player Two"; BackColor = Color.FromArgb(16, 21, 24);
         Size = new Size(1420, 960); MinimumSize = new Size(960, 680); StartPosition = FormStartPosition.CenterScreen;
         Icon = new Icon(Path.Combine(Path.GetDirectoryName(launcher)!, "companion.ico"));
         if (minimized) WindowState = FormWindowState.Minimized;
@@ -96,8 +102,8 @@ internal sealed class CompanionWindow : Form
                 else if (args.PermissionKind != CoreWebView2PermissionKind.Microphone) args.State = CoreWebView2PermissionState.Deny;
             };
             core.WebMessageReceived += HandleMessage;
-            core.ProcessFailed += (_, _) => { status.Text = "The desktop view stopped. Close and reopen Minecraft Companion.\nYour companion's service is separate from this window."; status.Visible = true; status.BringToFront(); };
-            core.NavigationCompleted += (_, args) => { status.Visible = !args.IsSuccess; if (!args.IsSuccess) status.Text = "Could not load your workspace.\nClose and reopen Minecraft Companion to retry."; };
+            core.ProcessFailed += (_, _) => { status.Text = "The desktop view stopped. Close and reopen Player Two.\nYour companion's service is separate from this window."; status.Visible = true; status.BringToFront(); };
+            core.NavigationCompleted += (_, args) => { status.Visible = !args.IsSuccess; if (!args.IsSuccess) status.Text = "Could not load your workspace.\nClose and reopen Player Two to retry."; };
             await SetDesktopMetadata();
             core.Navigate(Dashboard);
         }

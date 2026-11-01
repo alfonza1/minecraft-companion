@@ -64,7 +64,7 @@ export function queryModelCatalog({ command, args = [], cwd, signal, timeoutMs =
       clearTimeout(timer); signal?.removeEventListener('abort', abort); lines.close();
       failure ? reject(failure) : result ? resolve(result) : reject(new Error('Codex model discovery ended before returning a model list.'));
     });
-    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'minecraft_companion', title: 'Minecraft Companion', version: '0.1.0' } } });
+    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'minecraft_companion', title: 'Player Two', version: '0.1.0' } } });
   });
 }
 

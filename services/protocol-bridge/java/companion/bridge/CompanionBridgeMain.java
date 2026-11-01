@@ -30,7 +30,7 @@ public final class CompanionBridgeMain {
             ViaProxy.main(args);
         } catch (Throwable failure) {
             // Parsing errors can contain source text; never forward their messages or stack traces.
-            System.err.println("Minecraft Companion protocol bridge could not start.");
+            System.err.println("Player Two protocol bridge could not start.");
             if (configuration != null) configuration.close();
             System.exit(1);
         }

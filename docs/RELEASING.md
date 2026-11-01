@@ -5,7 +5,7 @@ apps/website/dist. All nine pages are prerendered, with local fonts, metadata,
 sitemap and no runtime API client. No paid backend is required. Deploy only that
 directory, never the repository root or application data directory.
 
-WAYPOINT_SITE_BASE defaults to /minecraft-companion/ and WAYPOINT_SITE_ORIGIN
+PLAYER_TWO_SITE_BASE defaults to /minecraft-companion/ and PLAYER_TWO_SITE_ORIGIN
 to https://alfonza1.github.io. Set both at build time for another host. The build
 works as static files on GitHub Pages or a comparable host.
 
@@ -30,3 +30,6 @@ it is not a signed standalone desktop binary.
 
 Do not silently change repository visibility or default branch while deploying.
 Do not claim CI or a release succeeded until the remote run/artifact is verified.
+
+The previous `WAYPOINT_SITE_BASE` and `WAYPOINT_SITE_ORIGIN` variables remain
+accepted as fallbacks. New release archives use the `player-two-` prefix.

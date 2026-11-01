@@ -1,6 +1,6 @@
-# Contributing to Waypoint
+# Contributing to Player Two
 
-Waypoint is an open-source AI gaming companion platform. We want companions that
+Player Two is an open-source AI gaming companion platform. We want companions that
 are useful in a game and enjoyable to talk with. Minecraft Survival is the first
 and only playable integration. We build on Mineness and preserve its Apache-2.0
 attribution. New worlds need community engineering and evidence, not just a logo.

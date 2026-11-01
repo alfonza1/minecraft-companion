@@ -1,6 +1,6 @@
 # A gaming companion, on your terms
 
-Waypoint is an AI companion to play and talk with. Its behavior aims for relaxed,
+Player Two is an AI companion to play and talk with. Its behavior aims for relaxed,
 consistent conversation, occasional humor and honest disagreement. It must not
 claim human consciousness, exclusive friendship or feelings, discourage human
 relationships, invent shared adventures or reward dependency with relationship

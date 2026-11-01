@@ -31,7 +31,7 @@ export function CompanionAvatar({ status = "idle" }: { status?: string }) {
       role="img"
     >
       <span className="companion-callsign" aria-hidden="true">
-        W<span>/</span>
+        P<span>2</span>
       </span>
       <i className="ws-presence-light" />
     </div>
@@ -95,9 +95,9 @@ export function ModePicker({ state, mutate, busy }: Common) {
 }
 export function CompanionHome({ state, mutate, busy }: Common) {
   const profile = state.profile;
-  const [name, setName] = useState(profile?.name || "Waypoint"),
+  const [name, setName] = useState(profile?.name || "Player Two"),
     [saved, setSaved] = useState("");
-  useEffect(() => setName(profile?.name || "Waypoint"), [profile?.name]);
+  useEffect(() => setName(profile?.name || "Player Two"), [profile?.name]);
   const patch = (value: Record<string, unknown>) =>
     attempt(
       mutate("/companion/profile", value).then(() =>
@@ -110,7 +110,7 @@ export function CompanionHome({ state, mutate, busy }: Common) {
         <CompanionAvatar status={state.workspace?.activity.state} />
         <div>
           <span className="eyebrow">YOUR AI GAMING COMPANION</span>
-          <h2>{profile?.name || "Waypoint"}</h2>
+          <h2>{profile?.name || "Player Two"}</h2>
           <p>A teammate for the work. Company for the rest.</p>
           <Badge>
             {state.connection.status === "connected"
@@ -219,7 +219,7 @@ export function CompanionHome({ state, mutate, busy }: Common) {
             <a
               className="button"
               href="/api/companion/export"
-              download="waypoint-companion.json"
+              download="player-two-companion.json"
             >
               <Download size={14} />
               Export profile & moments

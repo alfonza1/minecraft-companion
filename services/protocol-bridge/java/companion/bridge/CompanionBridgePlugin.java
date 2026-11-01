@@ -24,7 +24,7 @@ public final class CompanionBridgePlugin extends ViaProxyPlugin {
     @EventHandler public void fillPlayerData(FillPlayerDataEvent event) {
         ProxyConnection connection = event.getProxyConnection();
         if (!isAuthorizedClient(connection)) {
-            connection.kickClient("Minecraft Companion rejected this local connection.");
+            connection.kickClient("Player Two rejected this local connection.");
             return;
         }
         this.acceptedConnections.add(connection);
@@ -38,7 +38,7 @@ public final class CompanionBridgePlugin extends ViaProxyPlugin {
         ProxyConnection connection = event.getProxyConnection();
         if (!this.acceptedConnections.contains(connection)) {
             event.setCancelled(true);
-            connection.kickClient("Minecraft Companion rejected this local connection.");
+            connection.kickClient("Player Two rejected this local connection.");
             return;
         }
         try {
@@ -66,6 +66,6 @@ public final class CompanionBridgePlugin extends ViaProxyPlugin {
 
     private void rejectSession(JoinServerRequestEvent event) {
         event.setCancelled(true);
-        event.getProxyConnection().kickClient("Minecraft Companion could not authorize the Minecraft session. Reconnect the account and try again.");
+        event.getProxyConnection().kickClient("Player Two could not authorize the Minecraft session. Reconnect the account and try again.");
     }
 }

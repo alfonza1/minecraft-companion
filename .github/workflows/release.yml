@@ -23,7 +23,7 @@ jobs:
       - run: npm run release:package
       - uses: actions/upload-artifact@v4
         with:
-          name: waypoint-source
+          name: player-two-source
           path: |
             release/*-source.zip
             release/SHA256SUMS

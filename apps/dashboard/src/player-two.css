@@ -1,4 +1,4 @@
-/* Shared Waypoint identity; existing runtime controls and layout stay intact. */
+/* Shared Player Two identity; existing runtime controls and layout stay intact. */
 :root{--emerald:#78d5c5;--gold:#d6b7c7;--bg:#101719;--panel:#172124}
 .sidebar .brand-mark{background:#213b37;color:#eef4ef;border:1px solid #3a5750;border-radius:8px}
 .sidebar .brand{letter-spacing:.02em}

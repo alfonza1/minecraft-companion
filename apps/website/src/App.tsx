@@ -8,6 +8,7 @@ import {
   source,
 } from "./content";
 import evaluation from "../public/evaluation.json";
+import PlayerTwoMark from "../../../packages/ui/PlayerTwoMark";
 export const base = import.meta.env.BASE_URL;
 const href = (path: string) => base + path.replace(/^\//, "");
 const sourceLink = (file: string) => source + "/" + file;
@@ -16,12 +17,9 @@ function Arrow() {
 }
 function Logo() {
   return (
-    <a className="wordmark" href={href("/")} aria-label="Waypoint home">
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M3 8h7l6 16 6-16h7L19 30h-6Z" fill="currentColor" />
-        <path d="m16 2 4 7-4 7-4-7Z" className="logo-accent" />
-      </svg>
-      waypoint
+    <a className="wordmark" href={href("/")} aria-label="Player Two home">
+      <PlayerTwoMark />
+      Player Two
     </a>
   );
 }
@@ -187,8 +185,8 @@ function ProductImage({ eager = false }: { eager?: boolean }) {
           loading={eager ? "eager" : "lazy"}
           alt={
             fixture
-              ? "Actual Waypoint application rendered with synthetic gathering test data; not recorded gameplay"
-              : "Actual Waypoint workspace in a disconnected test session; no live gameplay data is invented"
+              ? "Actual Player Two application rendered with synthetic gathering test data; not recorded gameplay"
+              : "Actual Player Two workspace in a disconnected test session; no live gameplay data is invented"
           }
         />
       </a>
@@ -209,7 +207,7 @@ function Home() {
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">
-            WAYPOINT / OPEN-SOURCE AI GAMING COMPANION
+            PLAYER TWO / OPEN-SOURCE AI GAMING COMPANION
           </span>
           <h1>
             Good company.
@@ -472,7 +470,7 @@ function GettingStarted() {
               <>
                 <p>
                   Select your existing Codex, Claude Code or OpenCode provider
-                  in Setup and complete its supported login. Waypoint never
+                  in Setup and complete its supported login. Player Two never
                   needs your provider account password.
                 </p>
                 <p className="fine">

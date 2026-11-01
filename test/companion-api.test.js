@@ -95,6 +95,6 @@ test('workspace and companion routes retain host and origin protection', async t
   ]) {
     assert.equal((await app.inject({method:'POST',url,payload,headers:{host:'localhost',origin:'https://evil.example'}})).statusCode,403);
   }
-  assert.equal((await app.inject('/api/companion/profile')).json().name,'Waypoint');
+  assert.equal((await app.inject('/api/companion/profile')).json().name,'Player Two');
   assert.equal((await app.inject('/api/state')).json().usage.requests,0);
 });

@@ -1,6 +1,6 @@
 # Architecture
 
-Waypoint is an AI gaming companion platform with Minecraft Survival as its first
+Player Two is an AI gaming companion platform with Minecraft Survival as its first
 and only playable environment. It separates shared workspace observations from
 game-specific execution without pretending the entire runtime is already generic.
 One backend owns one body. The installed app name and data folder remain stable.

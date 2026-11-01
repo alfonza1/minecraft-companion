@@ -27,7 +27,7 @@ import {
 import ToolMenu from "./ToolMenu";
 import SessionStage from "./SessionStage";
 import ResourceWorkbench from "./ResourceWorkbench";
-import WaypointMark from "../../../packages/ui/WaypointMark";
+import PlayerTwoMark from "../../../packages/ui/PlayerTwoMark";
 import { useCompanion } from "./api";
 import Companion from "./Companion";
 import Inventory from "./Inventory";
@@ -165,7 +165,7 @@ function Controls({ state, mutate, busy }: Common) {
 export default function App() {
   const { state, error, connected, busy, mutate, clearError } = useCompanion();
   const [page, setPage] = useState(() => {
-    const saved = sessionStorage.getItem("waypoint-page");
+    const saved = sessionStorage.getItem("player-two-page") ?? sessionStorage.getItem("waypoint-page");
     return navigation.some((item) => item.id === saved) ? saved! : "overview";
   });
   const [menu, setMenu] = useState(false),
@@ -175,7 +175,7 @@ export default function App() {
     setPage(id);
     setMenu(false);
     setConversation(false);
-    sessionStorage.setItem("waypoint-page", id);
+    sessionStorage.setItem("player-two-page", id);
     requestAnimationFrame(() =>
       document.querySelector<HTMLElement>("#workspace-main h1")?.focus(),
     );
@@ -210,10 +210,10 @@ export default function App() {
         <button
           className="play-wordmark"
           onClick={() => navigate("overview")}
-          aria-label="Waypoint home"
+          aria-label="Player Two home"
         >
-          <WaypointMark />
-          <span>waypoint</span>
+          <PlayerTwoMark />
+          <span>Player Two</span>
         </button>
         <button
           className="play-session-select"
@@ -384,7 +384,7 @@ export default function App() {
               ? "Connected to local runtime"
               : "Live updates reconnecting"}
           </span>
-          <span>Waypoint · early access</span>
+          <span>Player Two · early access</span>
         </footer>
       </main>
       <nav className="play-dock" aria-label="Play desk">

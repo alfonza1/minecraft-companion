@@ -1,6 +1,6 @@
 # Game adapters and workspace observations
 
-Waypoint is an AI gaming companion platform. Minecraft Survival is the only
+Player Two is an AI gaming companion platform. Minecraft Survival is the only
 playable integration. This release adds a small, tested **observation adapter**
 boundary; it does not claim the existing Minecraft executor can already control
 arbitrary games.

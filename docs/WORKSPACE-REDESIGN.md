@@ -1,8 +1,8 @@
-# Waypoint gaming companion redesign
+# Player Two gaming companion redesign
 
 ## Product
 
-Waypoint is a free, open-source AI gaming companion platform. Minecraft Survival
+Player Two is a free, open-source AI gaming companion platform. Minecraft Survival
 is the first and only playable integration. The relationship combines useful
 teamwork, optional casual conversation and transparent user-controlled memory.
 It does not imply consciousness, exclusive friendship or transferable abilities

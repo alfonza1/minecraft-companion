@@ -1,6 +1,6 @@
 # Release security and third-party review
 
-The project retains Apache-2.0 and NOTICE from Mineness. Original Waypoint additions
+The project retains Apache-2.0 and NOTICE from Mineness. Original Player Two additions
 use the same license. Dependencies, optional executables, model weights and game
 assets retain their own licenses. This is a technical inventory, not legal advice.
 
@@ -46,7 +46,7 @@ an experimental prerelease, not a vulnerability-free production certification.
   Source releases do not contain Minecraft server JARs or downloaded model binaries.
 
 A free source license does not make Minecraft accounts or hosted inference free.
-No trademark clearance or ownership of the common word “Waypoint” is claimed.
+No trademark clearance or ownership of the name “Player Two” is claimed.
 
 
 Claude Agent SDK is proprietary optional integration code, not relicensed as open source.

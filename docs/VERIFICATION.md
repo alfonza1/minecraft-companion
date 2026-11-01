@@ -390,3 +390,28 @@ Published Pages checked at desktop/mobile with HTTP 200, no errors, no overflow.
 Evidence: `.git/design-after/results-full-comparison.json`, `.git/design-lighthouse/`,
 `.git/verification/root-ui-review/recheck.json`, `.git/design-local-preservation.json`,
 `.git/design-gitleaks-staged.json`, and committed `tests/visual/snapshots/`.
+# Player Two rename verification — 0.4.1-alpha.1
+
+The rename passed 343 automated tests (4 optional speech tests skipped), TypeScript
+checks and both production builds. All 117 browser/axe cases passed at desktop,
+tablet and mobile sizes with zero reported accessibility violations; 12 focused
+cases also passed comparison against the refreshed captures. Reviewed the actual
+homepage, mobile session and companion profile screenshots.
+
+The Windows desktop build and minimized WebView2 launch passed, showing the new
+title and home control. Desktop/Start-menu shortcut targets and the existing
+taskbar pin were read back with the Player Two launcher, P2 icon and relaunch
+display name; the original AppID is retained. Repeated installer runs succeeded.
+An invalid shortcut exits with code 1 instead of waiting for a modal dialog.
+Encrypted Start-menu folders retain encryption: shortcut properties are registered
+in the application cache before copying to the destination.
+
+Local-service restart preserved settings, projects, memories and conversation
+hashes. The profile changed only from the old default name to Player Two; custom
+names and stored preferences are covered by a regression test. No Realm gameplay,
+account reauthentication or microphone capture was required for this rename.
+The current-tree credential/artifact audit reported no findings. Existing
+dependency limitations from the prior release still apply.
+
+Evidence: `.git/player-two-native.json`, `.git/player-two-preservation.json`,
+`.git/design-after/player-two-all-results.json` and the committed screenshot gallery.

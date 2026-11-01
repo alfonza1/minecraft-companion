@@ -1,6 +1,6 @@
-# Waypoint 0.4.0-alpha.1 — The shared play desk
+# Player Two 0.4.0-alpha.1 — The shared play desk
 
-Waypoint is an open-source AI gaming companion. Minecraft Survival remains its
+Player Two is an open-source AI gaming companion. Minecraft Survival remains its
 first and only playable game. This release replaces the previous visual direction
 without claiming new gameplay skills or a second integration.
 

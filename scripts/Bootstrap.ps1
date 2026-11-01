@@ -39,4 +39,4 @@ if ($DesktopShortcut) {
     & (Join-Path $PSScriptRoot 'Install-DesktopLauncher.ps1') -DesktopShortcut
 }
 & node (Join-Path $PSScriptRoot 'health.mjs')
-Write-Host 'Ready. Launch Start Minecraft Companion.cmd, then open http://127.0.0.1:4365'
+Write-Host 'Ready. Launch Start Player Two.cmd, then open http://127.0.0.1:4365'

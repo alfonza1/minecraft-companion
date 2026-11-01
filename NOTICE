@@ -15,7 +15,7 @@ projects and pinned changes by DallasCarraher. Their npm package licenses remain
 in the assembled installation. Exact repositories, commits and file hashes are
 recorded in services/native-26.3/dependencies.lock.json; see that folder's README.
 
-Waypoint platform additions and original website design are provided under the
+Player Two platform additions and original website design are provided under the
 Apache License, Version 2.0. Space Grotesk is distributed under the SIL Open Font
 License through @fontsource; its license remains in the installed package.
 Optional vendor integrations and model weights retain their own terms.

@@ -1,6 +1,6 @@
-# The Waypoint workspace
+# The Player Two workspace
 
-Waypoint is the shared home for an AI gaming companion. Minecraft Survival is the
+Player Two is the shared home for an AI gaming companion. Minecraft Survival is the
 only playable game. The workspace uses game-aware observations and keeps
 Minecraft-specific inventory and building controls in dedicated views.
 

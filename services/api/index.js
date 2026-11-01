@@ -134,7 +134,7 @@ export async function createApp(options = {}) {
   app.get('/api/codex/models', async () => modelCatalog.get());
   app.post('/api/codex/models/refresh', async () => modelCatalog.get({ refresh: true }));
   app.get('/api/desktop/revision', async () => ({ sourceFingerprint: runningSourceFingerprint }));
-  app.get('/api/health', async () => ({ name: 'Minecraft Companion', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: [nativeProtocol.installed ? 'Native 26.3 is installed; newly introduced materials and uncommon item codecs still require validation.' : '26.3 requires the optional protocol bridge; its projected view cannot support exact construction or resource reconciliation.', 'Full-cube construction on native connections only; oriented blocks, scaffolding and advanced progression require further gameplay validation.'] }));
+  app.get('/api/health', async () => ({ name: 'Player Two', node: process.versions.node, host: '127.0.0.1', supportedVersions, latestSupportedVersion: supportedVersions.at(-1), bridge: getBridgeStatus(), authStorage: 'Windows DPAPI CurrentUser outside repository', dataDirectory: store.directory, liveWorldObserved: Boolean(runtime.world), voice: voiceModule?.getVoiceStatus(), limitations: [nativeProtocol.installed ? 'Native 26.3 is installed; newly introduced materials and uncommon item codecs still require validation.' : '26.3 requires the optional protocol bridge; its projected view cannot support exact construction or resource reconciliation.', 'Full-cube construction on native connections only; oriented blocks, scaffolding and advanced progression require further gameplay validation.'] }));
   app.post('/api/auth/connect', async () => { connector.connectAccount(); return { started: true }; });
   registerPrivateAccountRoutes(app, context, options.privateBrowser);
   app.post('/api/realms/refresh', async () => { connector.connectAccount(); return { started: true }; });
@@ -215,7 +215,7 @@ export async function createApp(options = {}) {
   if (existsSync(dashboard)) {
     await app.register(staticFiles, { root: dashboard, prefix: '/' });
     app.setNotFoundHandler((request, reply) => request.url.startsWith('/api/') ? reply.code(404).send({ error: 'API endpoint not found.' }) : reply.sendFile('index.html'));
-  } else app.get('/', async (_, reply) => reply.type('text/plain').send('Minecraft Companion: run npm run build, then restart the launcher.'));
+  } else app.get('/', async (_, reply) => reply.type('text/plain').send('Player Two: run npm run build, then restart the launcher.'));
   app.addHook('onClose', async () => {
     clearInterval(heartbeat);
     idleWork.close();
@@ -238,6 +238,6 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   const shutdown = async () => { if (closing) return; closing = true; await app.close(); unlock(); };
   process.on('SIGINT', () => shutdown().catch(() => process.exitCode = 1));
   process.on('SIGTERM', () => shutdown().catch(() => process.exitCode = 1));
-  try { await app.listen({ host: '127.0.0.1', port: Number(process.env.COMPANION_PORT || 4365) }); console.log('Minecraft Companion: http://127.0.0.1:4365'); }
+  try { await app.listen({ host: '127.0.0.1', port: Number(process.env.COMPANION_PORT || 4365) }); console.log('Player Two: http://127.0.0.1:4365'); }
   catch (error) { await shutdown(); console.error(error.message); process.exitCode = 1; }
 }

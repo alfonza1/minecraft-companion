@@ -4,8 +4,8 @@ using System.IO;
 using System.Windows.Forms;
 using System.Reflection;
 
-[assembly: AssemblyTitle("Minecraft Companion")]
-[assembly: AssemblyProduct("Minecraft Companion")]
+[assembly: AssemblyTitle("Player Two")]
+[assembly: AssemblyProduct("Player Two")]
 
 internal static class Launcher
 {
@@ -27,6 +27,6 @@ internal static class Launcher
                 WindowStyle = ProcessWindowStyle.Hidden
             })) { process.WaitForExit(); }
         }
-        catch (Exception error) { MessageBox.Show(error.Message, "Minecraft Companion", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+        catch (Exception error) { MessageBox.Show(error.Message, "Player Two", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }
 }

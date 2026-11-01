@@ -1,4 +1,11 @@
-# Minecraft Companion technical guide
+# Player Two technical guide
+
+The product was previously called Waypoint / Minecraft Companion. Existing
+`MinecraftCompanion` data folders, application identity and repository URLs stay
+stable for compatibility. Old launch shortcuts still work; new desktop and
+Start-menu shortcuts are named Player Two. No account sign-in or data migration
+is required. The legacy default companion name displays as Player Two; custom
+names remain unchanged.
 
 Local Minecraft Java teammate and build workspace extending [Mineness](https://github.com/SpectrumTantrum/mineness). React/TypeScript, Mineflayer, Microsoft device authentication, Codex conversation/planning, local Whisper/Piper speech, SQLite and a real blueprint viewer.
 
@@ -8,7 +15,7 @@ Local Minecraft Java teammate and build workspace extending [Mineness](https://g
 
 **Teammate tools:** temporary requests now save and resume the previous job. In **Companion**, configure routines, named places, approved supply chests, update frequency and death recovery. Try “help me,” “get ready to mine,” “bring me a stack of oak logs,” or “resume previous task.” Stop clears saved tasks; Pause preserves them. [Controls, examples and tested limits](TEAMMATE.md).
 
-After setup, double-click **Start Minecraft Companion.cmd**, or:
+After setup, double-click **Start Player Two.cmd**, or:
 
 ```powershell
 .\scripts\Start.ps1
@@ -18,7 +25,7 @@ Open **http://127.0.0.1:4365**. No browser opens automatically. Keep the console
 
 Choose **Setup** in navigation whenever you need the guided checks. Overview and Settings show an issue banner only for confirmed account/service/Realm connection problems or a missing Realm selection. An offline/paused bot, unchecked startup session or disabled microphone does not mean setup is unfinished. Five steps check local services, display Microsoft device sign-in, select/ping invited Realms, test your own microphone/speakers and start a first session. Opening setup performs no login, microphone capture, gameplay or model request. Audio checks require an explicit click; leaving a wizard-owned offline audio session pauses it.
 
-The Windows desktop launcher is installed with `powershell -NoProfile -File scripts/Install-DesktopLauncher.ps1 -DesktopShortcut` (also used by Bootstrap's `-DesktopShortcut`). It opens a dedicated **Minecraft Companion** window using the installed Evergreen WebView2 runtime, with its own icon, application identity and isolated profile. It does not open an Edge browser window. The desktop, Start-menu and taskbar shortcuts target the stable launcher, which always reads this working copy. The taskbar pin was installed through Windows and its target/application identity verified during development.
+The Windows desktop launcher is installed with `powershell -NoProfile -File scripts/Install-DesktopLauncher.ps1 -DesktopShortcut` (also used by Bootstrap's `-DesktopShortcut`). It opens a dedicated **Player Two** window using the installed Evergreen WebView2 runtime, with its own icon, application identity and isolated profile. It does not open an Edge browser window. The desktop, Start-menu and taskbar shortcuts target the stable launcher, which always reads this working copy. The taskbar pin was installed through Windows and its target/application identity verified during development.
 
 Source fingerprints detect uncommitted dashboard/backend edits; opening the launcher rebuilds changes and starts the localhost service. Native desktop sources are also rebuilt into versioned directories, so the pinned target stays valid. Generated .NET `bin/obj` folders do not cause update loops. **Apply local updates** refreshes a disconnected service and the view; a live session is preserved and the bar explains that you must Stop before applying backend updates. Closing the window leaves the service running; use Stop to disconnect your teammate. Reopening with a saved Realm rechecks the selected account's cached Microsoft session. First-time sign-in remains an explicit setup action.
 

@@ -18,7 +18,7 @@ internal static class DesktopIdentity
         {
             SetString(store, 5, AppId);
             SetString(store, 2, "\"" + launcher + "\"");
-            SetString(store, 4, "Minecraft Companion");
+            SetString(store, 4, "Player Two");
             SetString(store, 3, Path.Combine(Path.GetDirectoryName(launcher)!, "companion.ico"));
         }
         finally { Marshal.ReleaseComObject(store); }
@@ -28,7 +28,12 @@ internal static class DesktopIdentity
     {
         var iid = StoreInterface;
         Marshal.ThrowExceptionForHR(SHGetPropertyStoreFromParsingName(filename, IntPtr.Zero, 2, ref iid, out var store));
-        try { SetString(store, 5, AppId); Marshal.ThrowExceptionForHR(store.Commit()); }
+        try
+        {
+            SetString(store, 5, AppId);
+            SetString(store, 4, "Player Two");
+            Marshal.ThrowExceptionForHR(store.Commit());
+        }
         finally { Marshal.ReleaseComObject(store); }
     }
 
