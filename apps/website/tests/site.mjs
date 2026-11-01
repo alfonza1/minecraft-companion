@@ -24,7 +24,7 @@ try {
   const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   page.on('pageerror',error=>errors.push(error.message));
   page.on('request',req=>requests.push(req.url()));
-  for(const route of ['', 'get-started/','how-it-works/','features/','docs/','engineering/','contribute/','roadmap/']){
+  for(const route of ['', 'get-started/','games/','how-it-works/','features/','docs/','engineering/','contribute/','roadmap/']){
     const response=await page.goto(origin+base+route);assert.equal(response.status(),200);
     await page.waitForLoadState('networkidle');
     assert.equal(await page.locator('h1').count(),1);
@@ -32,8 +32,8 @@ try {
     checked++;
   }
   await page.goto(origin+base);await page.waitForLoadState('networkidle');
-  assert.equal(await page.locator('.survival-scene img').evaluate(image=>image.complete && image.naturalWidth>0),true);
-  assert.match(await page.locator('.hero-copy').innerText(), /AI teammate/);
+  assert.equal(await page.locator('.workspace-preview img').evaluate(image=>image.complete && image.naturalWidth>0),true);
+  assert.match(await page.locator('.hero-copy').innerText(), /gaming buddy/);
   await page.screenshot({path:join(artifact,'home-desktop.png'),fullPage:true});
   await page.screenshot({path:join(artifact,'home-viewport.png')});
   await page.locator('.hero').screenshot({path:join(artifact,'hero.png')});
@@ -43,15 +43,15 @@ try {
   await page.goto(origin+base+'docs/');
   await page.getByRole('searchbox').fill('cancellation');assert.equal(await page.locator('.doc-list>a').count(),1);
   await page.getByRole('searchbox').fill('zzzz-no-guide');await page.getByRole('button',{name:'Clear search'}).click();
-  assert.equal(await page.locator('.doc-list>a').count(),12);
+  assert.equal(await page.locator('.doc-list>a').count(),15);
   await page.goto(origin+base+'get-started/');
   await page.getByRole('button',{name:'Linux',exact:true}).click();
   assert.match(await page.locator('.setup-steps').innerText(),/experimental path/);
   await page.getByRole('button',{name:'Existing subscription'}).click();
   assert.match(await page.locator('.setup-steps').innerText(),/External providers may require/);
-  for(const width of [390, 760]){
+  for(const width of [320, 375, 414, 768]){
     await page.setViewportSize({width,height:844});
-    for(const route of ['', 'get-started/','how-it-works/','features/','docs/','engineering/','contribute/','roadmap/']){
+    for(const route of ['', 'get-started/','games/','how-it-works/','features/','docs/','engineering/','contribute/','roadmap/']){
       await page.goto(origin+base+route);await page.waitForLoadState('networkidle');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,route+' mobile overflow');
       checked++;
@@ -65,7 +65,7 @@ try {
   await page.screenshot({path:join(artifact,'home-mobile.png'),fullPage:true});
   // Original social artwork rendered from this site's own components.
   await page.setViewportSize({width:1200,height:630});await page.goto(origin+base);
-  await page.addStyleTag({content:'body{padding:0}.header{height:70px}.hero{min-height:560px;padding:20px 0}.hero h1{font-size:64px}.survival-scene{max-width:520px}'});
+  await page.addStyleTag({content:'body{padding:0}.header{height:70px}.hero{min-height:560px;padding:20px 0}.hero.companion-hero{min-height:560px}.hero.companion-hero h1{font-size:64px}.companion-presence{transform:scale(.8)}'});
   await page.screenshot({path:resolve('apps/website/public/social.png')});
   assert.deepEqual(errors,[]);
   assert.equal(requests.some(url=>/\/api\/(state|events|settings)/.test(url)),false,'Public site contacted private runtime');

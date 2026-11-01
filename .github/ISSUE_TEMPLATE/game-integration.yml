@@ -1,0 +1,55 @@
+name: Game integration proposal
+description: Investigate a future game using permitted interfaces and a small cooperative goal
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Minecraft Survival is the only playable integration today. A proposal is not an announced integration or promised release. Do not include credentials, private chats or proprietary game files.
+  - type: input
+    id: game
+    attributes:
+      label: Game and platform
+      description: Include the game version or platform if it affects integration.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What could a player and companion do together?
+      description: Start with one small useful cooperative objective, not complete game mastery.
+    validations:
+      required: true
+  - type: textarea
+    id: integration
+    attributes:
+      label: Permitted integration mechanism
+      description: Link official APIs, supported mod interfaces or other authorization. Explain relevant terms and anti-cheat constraints. Bypassing enforcement is out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: observations
+    attributes:
+      label: Observations and available actions
+      description: What can the companion actually observe and do? How can success be confirmed? What remains unknown?
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Permissions, pause and failure recovery
+      description: Explain what can affect other players or valuable state, how execution stops, and when the human must approve or help.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: A small reproducible test
+      description: Describe an isolated fixture or authorized test environment. Distinguish mocked observations from actual gameplay.
+    validations:
+      required: true
+  - type: textarea
+    id: contribution
+    attributes:
+      label: How would you like to contribute?
+      description: Research, implementation, testing, documentation and accessibility work are welcome. No commitment is required.
