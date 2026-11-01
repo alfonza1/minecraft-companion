@@ -1,114 +1,79 @@
-# Waypoint 0.3.0-alpha.1 — Gaming companion workspace
+# Waypoint 0.4.0-alpha.1 — The shared play desk
 
-Waypoint is a free, open-source AI gaming companion platform: useful teamwork,
-casual conversation and user-controlled memories. **Minecraft Survival is the only
-playable integration.** Other games are community research, not available products.
+Waypoint is an open-source AI gaming companion. Minecraft Survival remains its
+first and only playable game. This release replaces the previous visual direction
+without claiming new gameplay skills or a second integration.
 
-- [Public website](https://alfonza1.github.io/minecraft-companion/)
+- [Website](https://alfonza1.github.io/minecraft-companion/)
 - [Source](https://github.com/alfonza1/minecraft-companion)
-- [Prerelease](https://github.com/alfonza1/minecraft-companion/releases/tag/v0.3.0-alpha.1)
-- [Install and update](INSTALLATION.md) · [Workspace](WORKSPACE.md)
-- [Architecture](ARCHITECTURE.md) · [Contribute](../CONTRIBUTING.md)
-- [Passing Windows/Linux CI](https://github.com/alfonza1/minecraft-companion/actions/runs/41299475153)
+- [Install](INSTALLATION.md) · [Workspace guide](WORKSPACE.md)
+- [Design audit and iteration](DESIGN-CORRECTION.md)
+- [Automated source verification](https://github.com/alfonza1/minecraft-companion/actions/runs/41302691217)
 
-## Delivered
+## What changed
 
-Nine public pages and a redesigned 16-screen local workspace share original
-Waypoint typography, colors and companion identity. The homepage distinguishes
-a companion identity illustration from its actual disconnected application screenshot.
-The static site never reads private local state.
+All nine public pages have new composition and copy. The mascot/concept artwork
+is removed. Product screenshots show the actual application; the optional
+populated gathering example is explicitly synthetic. Barlow Condensed, Space
+Grotesk and a restrained blue-black/copper palette unify the two surfaces.
 
-The workspace includes current activity, measured work progress, actual Minecraft
-slots and equipment, separate raw/placement resource views, persistent assistance,
-task ownership, mission checkpoints, conversation, personality, source-backed
-saved moments, setup, extensions and searchable diagnostics. Stream revisions
-prevent delayed HTTP responses replacing newer WebSocket observations; reconnect
-loads authoritative state. Storage observations and manual claims stay separate
-from current spendable inventory. Construction credit persists after materials
-are consumed without attributing those supplies to either participant.
+The workspace replaces its permanent sidebar with a compact bottom rail and
+searchable Ctrl/Command-K navigation. A contextual session stage brings forward
+actual gathering counts, the approved blueprint, observed position, conversations
+or the current blocker. The material shelf opens a focused accounting workbench.
+Settings has separate account, AI, voice and data sections. Conversation errors
+appear inside the focused dialog, and live updates preserve 3D inspection controls.
 
-Teammate and Hangout suppress optional background chores while keeping explicit
-tasks. Adventure permits bounded nearby scouting when safely equipped; Autonomous
-uses existing common-supply routines. Mode selection does not grant terrain,
-rare-resource or destructive-action permissions. Proactive remarks are opt-in.
-Memory can be disabled, exported and deleted; disabling or deleting saved context
-cancels a pending model reply/current speech. Already-delivered provider input
-cannot be recalled. Current conversation and operational checkpoints remain usable.
+Inventory, projects, assignments, assistance, memory, existing voice preferences,
+model selection, pause/stop and runtime routes are retained. The 26.3 texture fix
+only changes presentation; exact item names and game observations are untouched.
+The local desktop update preserved hashes of settings, profile, projects, memories
+and conversations. It did not join a Realm or alter the Minecraft installation.
 
-The versioned game adapter separates game observations and workspace projections.
-The working strategy example is deliberately non-playable. Minecraft execution
-tools remain game-specific; this is an extension foundation, not a completed
-universal game controller. See [game adapters](GAME-ADAPTERS.md).
+## Validation
 
-Existing Microsoft device authentication, native 26.3 body, local voice, selected
-providers, model settings, task interruption/resume and approved building workflow
-are preserved. Account/data paths retain MinecraftCompanion for compatibility.
+| Check                       | Result                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| Default regression suite    | 346 tests: 342 passed, 4 optional speech checks skipped                                  |
+| TypeScript and builds       | Dashboard and 9-page static website pass                                                 |
+| Visual regression           | 117 screenshots compared successfully at 1440/768/390                                    |
+| Accessibility               | All 117 axe reports contain zero violations                                              |
+| Existing workspace behavior | 80 viewport checks plus setup/runtime integration pass                                   |
+| Website interactions        | 45 page/viewport and 12 interaction checks pass                                          |
+| Review fixes                | Navigation names, modal error visibility, WebGL persistence and image recovery rechecked |
+| Local Lighthouse            | Website 100/100/100/100; workspace 99 performance, 100 accessibility, 100 best-practices |
+| Security checks             | Staged Gitleaks/current-tree scans clean; 12 existing moderate npm advisories            |
 
-## Verification scope
+The Lighthouse run used unthrottled local Chromium at 1440×1000. Scores are not
+field performance or AI response-time benchmarks. Linux CI runs the same browser
+behavior/accessibility checks without comparing Windows raster baselines.
 
-Measured locally on Windows, 2026-11-01:
+[Desktop session](../tests/visual/snapshots/desktop-1440/screens.spec.mjs/workspace-overview.png) ·
+[Resources](../tests/visual/snapshots/desktop-1440/screens.spec.mjs/workspace-resources.png) ·
+[Construction](../tests/visual/snapshots/desktop-1440/screens.spec.mjs/context-building.png) ·
+[Mobile](../tests/visual/snapshots/mobile-390/screens.spec.mjs/workspace-overview.png)
 
-| Check | Result and limits |
-| --- | --- |
-| Regression suite | 344 tests: 340 passed, four opt-in speech checks skipped in the default run |
-| TypeScript and production builds | Dashboard and static website pass |
-| Workspace browser | 16 routes × five widths = 80 layout checks; 11 interaction assertions, no page errors |
-| Existing setup/build browser flows | Real local API/SQLite, blueprint import/approval, manual shares, memory and pause/resume pass |
-| Public website | Nine pages × five widths = 45 layout checks; seven interaction flows; no private API requests or page errors |
-| Optional local speech | Seven targeted checks pass: actual neural TTS-to-STT, streamed WAVs, cancellation and synthetic device failures; no physical microphone capture |
-| Native gameplay | 17 checks on disposable localhost-only official 26.3 survival server; server exits after testing |
-| Security | Current-tree/history Gitleaks and artifact scan: no findings; npm audit: 12 moderate, zero high/critical |
+The complete 117-image set and reproduction commands are in
+[tests/visual](../tests/visual/README.md). These populated screenshots use explicit
+test observations through the actual API, SQLite and projection/accounting code.
+They are not evidence of live Realm success.
 
-Browser gameplay observations and model output are explicit isolated fixtures.
-Real gameplay is tested separately: crafting, gathering, navigation, authoritative
-inventory, six-block construction checkpoint resume, physical drop/pickup, supply
-chest withdrawal, temporary-task interruption/resume, approved build resume,
-death-item recovery and reconnect to a paused state. This is controlled terrain,
-not an unsupervised Realm survival benchmark.
+## Limits that remain
 
-The engineering page publishes a reproducible contract subset with its own commit,
-date, scope and raw JSON. It is not a broad task success rate or model leaderboard.
-See [verification history](VERIFICATION.md) and [evaluation methodology](EVALUATION.md).
+This is an experimental prerelease. Fresh Realm authentication, physical
+microphone/headphone interaction, voice naturalness, difficult terrain and new
+video reconstruction trials were not rerun for this design release. Earlier
+controlled gameplay/speech evidence is recorded in [verification history](VERIFICATION.md).
+There is no claim that this redesign improves agent intelligence or gameplay speed.
 
-## Required scenario coverage
+Windows remains the full desktop target. macOS/Linux offline browser planning is
+experimental. No signed standalone installer, unrestricted cave mining, arbitrary
+house supply chain, general world map, multi-body team or second playable game is
+provided. The Three.js preview remains a separately loaded approximately 506 KB
+chunk. The public site is static; it never connects to a player's private service.
 
-- **A, gathering:** native axe/log collection plus fixture-driven live inventory and progress UI.
-- **B, shared build:** real local blueprint import, exact saved-design counts, approval,
-  resource split and native construction. No new image/video model-analysis trial.
-- **C, assistance:** real API persistence, ownership, revision conflicts and UI decisions.
-- **D, stuck work:** bounded recovery/task-stack tests and visible blocked-work requests;
-  difficult real-world terrain remains a validation gap.
-- **E, recovery:** browser reopening, saved state and native paused reconnect.
-- **F, changed responsibilities:** task ownership, serialized changes, plan holds and
-  resource transfer tests, including repeated clicks and concurrent source updates.
-- **G, future environment:** non-playable strategy adapter fixture validated by contracts.
-- **H, contributors:** working observer extension, game fixture and linked guide tests.
+## Useful next contributions
 
-## Remaining limits
-
-This is an experimental prerelease, not a claim that every acceptance criterion
-for a consumer-ready autonomous companion has been achieved. Full Realm auth and
-native voice require Windows; macOS/Linux browser/offline planning is experimental.
-There is no signed standalone installer, unrestricted cave/branch mining, arbitrary
-house supply chain, playable second game or multiple embodied companions. Some
-help actions can find a resource source but cannot gather/process that material.
-Timed reminders and general world maps are not implemented. Reference estimates
-cannot recover hidden geometry exactly. Fresh Microsoft/Realm login, physical
-microphone/headphone interaction, adverse-terrain missions and personality quality
-across real model providers need user trials. No inference-quality or latency gain
-is claimed from a UI redesign. [Capabilities](CAPABILITIES.md).
-
-## Evidence-backed portfolio wording
-
-- Built an event-driven gaming companion workspace integrating live world
-  observations, structured model plans, cancellable skills and persistent goals.
-- Implemented revision-checked human assistance, task ownership and conservative
-  resource accounting that preserves verified construction progress.
-- Added source-backed companion memory controls, personality preferences and
-  behavior modes with lifecycle cancellation and permission boundaries.
-- Created versioned game-observation adapters, a non-playable extension fixture,
-  reproducible local survival checks and Windows/Linux source verification.
-
-Priority contributions: adverse-terrain gameplay fixtures, cross-platform secure
-credentials/voice, accessible workspace refinements, additional permitted game
-adapters, broader crafting supply chains and consumer installation packages.
+Broader terrain/gameplay evaluation; cross-platform secure credentials and voice;
+more crafting supply chains; game adapters backed by permitted automation; and
+continued interaction testing with real players. See [Contributing](../CONTRIBUTING.md).

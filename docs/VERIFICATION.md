@@ -365,3 +365,28 @@ verification/workspace/results.json, website-checks/, native-game-results.json,
 waypoint-local-speech.log and waypoint-gitleaks-*.json. These reports do not contain
 or claim fresh Realm authentication, physical headset operation, model quality,
 video reconstruction accuracy or general unsupervised survival reliability.
+
+## 2026-11-01 — Shared play desk redesign (0.4)
+
+Code 3a4a95d: all 346 default tests (342 pass, 4 optional speech skips), both builds and
+TypeScript passed. Existing workspace 80 viewport checks and real API setup/lifecycle
+flows passed. Public website 45 viewport and 12 interaction checks passed. 117 golden
+screenshots compared across 1440/768/390 with zero axe violations, page errors,
+overflow or flaky cases. These are explicitly synthetic observations in isolated
+real API/SQLite sessions; no Realm gameplay or physical audio trial was performed.
+
+Actual render review found and corrected mobile progress below the fold, repetitive
+headings, 26.3 texture fallback, settings density, inaccessible labels, dim captions,
+hidden conversation errors and reset WebGL inspection. Four review findings were
+rechecked in Chromium. Local Lighthouse: public site 100 in all 4 categories; private
+workspace 99 performance / 100 accessibility / 100 best-practices. Font preloading lowered
+website CLS from 0.12984 to 0.000116. These local scores are not field or AI benchmarks.
+
+Gitleaks staged scan/current-tree artifact scan found no secrets. Audit retains 12
+moderate upstream dependency findings with no high/critical. Local launcher updated
+while disconnected; settings/profile/projects/memories/conversation hashes match.
+Published Pages checked at desktop/mobile with HTTP 200, no errors, no overflow.
+
+Evidence: `.git/design-after/results-full-comparison.json`, `.git/design-lighthouse/`,
+`.git/verification/root-ui-review/recheck.json`, `.git/design-local-preservation.json`,
+`.git/design-gitleaks-staged.json`, and committed `tests/visual/snapshots/`.
