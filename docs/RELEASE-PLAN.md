@@ -41,7 +41,7 @@ Published 2026-11-01: GitHub Pages, reviewed source branch and v0.2.0-alpha.1
 source prerelease. Windows/Linux CI passed. The reviewed feature branch is the
 repository default; the original main branch was preserved.
 
-## Design direction
+## Historical design direction (superseded)
 
 Your supplied reference informs the near-black canvas, large geometric sculpture,
 editorial whitespace, subtle surface lighting and clipped white controls. Original
@@ -53,7 +53,7 @@ agent lifecycle, explicitly labeled an explanatory visualization, not live play.
 No invented ratings, testimonials, benchmark wins or public access to local state.
 Launch as an experimental open-source release, not a claim of consumer maturity.
 
-## Positioning refinement
+## Historical positioning refinement (superseded)
 
 The homepage leads with “Minecraft survival. Better together.” and immediately
 describes an AI teammate. Gathering, mining, crafting, building, natural voice and
@@ -62,3 +62,10 @@ shared work remain visible alongside the open-source agent engineering.
 The abstract voxel sculpture was replaced after owner feedback with original
 Minecraft survival teammate concept artwork: two cooperative characters, supplies,
 ore and a cottage. It is labeled illustration, never live gameplay.
+
+## Current design correction
+
+Version 0.4 removes the concept artwork and permanent sidebar. The shared play
+desk uses real application captures, contextual work, an item-focused resource
+workbench, a compact bottom rail and searchable navigation. See
+[the three-direction comparison and browser iteration log](DESIGN-CORRECTION.md).

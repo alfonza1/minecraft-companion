@@ -13,48 +13,48 @@ html,
 body {
   overflow-x: clip;
 }
-.ws-shell {
+.play-desk {
   min-height: 100vh;
   font-size: 13px;
   background: var(--wp-bg);
   color: var(--wp-ink);
 }
-.ws-shell h1,
-.ws-shell h2,
-.ws-shell h3 {
+.play-desk h1,
+.play-desk h2,
+.play-desk h3 {
   font-family: var(--wp-display);
   font-style: normal;
   letter-spacing: -0.025em;
   overflow-wrap: anywhere;
 }
-.ws-shell h1 {
+.play-desk h1 {
   font-size: 30px;
   line-height: 1.2;
   font-weight: 500;
   margin: 7px 0;
 }
-.ws-shell h2 {
+.play-desk h2 {
   font-size: 20px;
   font-weight: 500;
 }
-.ws-shell h3 {
+.play-desk h3 {
   font-size: 15px;
   font-weight: 500;
 }
-.ws-shell p {
+.play-desk p {
   line-height: 1.65;
 }
-.ws-shell small {
+.play-desk small {
   color: var(--wp-muted);
   font-size: 11px;
   line-height: 1.6;
 }
-.ws-shell .eyebrow {
+.play-desk .eyebrow {
   font: 10px var(--wp-detail);
   letter-spacing: 0.1em;
   color: var(--wp-muted);
 }
-.ws-shell .button {
+.play-desk .button {
   border-radius: 8px;
   background: var(--wp-raised);
   border: 1px solid var(--wp-border);
@@ -66,25 +66,25 @@ body {
   line-height: 1.4;
   color: var(--wp-ink);
 }
-.ws-shell .button.primary {
+.play-desk .button.primary {
   background: var(--wp-mint);
   color: var(--wp-bg);
   border-color: var(--wp-mint);
   font-weight: 650;
 }
-.ws-shell .button:not(:disabled):hover {
+.play-desk .button:not(:disabled):hover {
   border-color: var(--wp-mint);
   filter: brightness(1.06);
 }
-.ws-shell .text-button {
+.play-desk .text-button {
   color: var(--wp-mint);
   font-size: 12px;
   line-height: 1.6;
 }
-.ws-shell .danger-text {
+.play-desk .danger-text {
   color: var(--wp-danger);
 }
-.ws-shell .panel {
+.play-desk .panel {
   background: var(--wp-surface);
   border: 1px solid var(--wp-border);
   border-radius: 14px;
@@ -92,54 +92,54 @@ body {
   box-shadow: none;
   margin-bottom: 20px;
 }
-.ws-shell .panel-heading h2 {
+.play-desk .panel-heading h2 {
   font-size: 17px;
 }
-.ws-shell .panel-heading .eyebrow {
+.play-desk .panel-heading .eyebrow {
   font-size: 9px;
   color: var(--wp-muted);
   letter-spacing: 0.11em;
 }
-.ws-shell .panel-heading {
+.play-desk .panel-heading {
   align-items: flex-start;
 }
-.ws-shell .badge {
+.play-desk .badge {
   font-size: 10px;
   padding: 5px 8px;
   border-radius: 6px;
   line-height: 1.5;
   white-space: normal;
 }
-.ws-shell .badge.green {
+.play-desk .badge.green {
   background: var(--wp-mint-surface);
   color: var(--wp-mint);
 }
-.ws-shell .empty {
+.play-desk .empty {
   padding: 30px 12px;
 }
-.ws-shell .empty p {
+.play-desk .empty p {
   max-width: 400px;
   font-size: 12px;
 }
-.ws-shell input,
-.ws-shell select,
-.ws-shell textarea {
+.play-desk input,
+.play-desk select,
+.play-desk textarea {
   background: var(--wp-bg);
   border-color: var(--wp-border);
   color: var(--wp-ink);
   border-radius: 8px;
   font-size: 13px;
 }
-.ws-shell .note,
-.ws-shell .quiet-empty {
+.play-desk .note,
+.play-desk .quiet-empty {
   color: var(--wp-muted);
   font-size: 12px;
 }
-.ws-shell summary {
+.play-desk summary {
   cursor: pointer;
   line-height: 1.7;
 }
-.ws-shell progress {
+.play-desk progress {
   accent-color: var(--wp-mint);
   height: 5px;
   width: 100%;
@@ -148,14 +148,14 @@ body {
   overflow: hidden;
   background: var(--wp-border);
 }
-.ws-shell progress::-webkit-progress-bar {
+.play-desk progress::-webkit-progress-bar {
   background: var(--wp-border);
 }
-.ws-shell progress::-webkit-progress-value {
+.play-desk progress::-webkit-progress-value {
   background: var(--wp-mint);
   border-radius: 10px;
 }
-.ws-shell progress::-moz-progress-bar {
+.play-desk progress::-moz-progress-bar {
   background: var(--wp-mint);
 }
 .ws-sidebar {
@@ -1673,31 +1673,31 @@ body {
   overflow-wrap: anywhere;
   min-width: 0;
 }
-.ws-shell .section-toolbar {
+.play-desk .section-toolbar {
   flex-wrap: wrap;
   gap: 12px;
 }
-.ws-shell .section-toolbar .search-field {
+.play-desk .section-toolbar .search-field {
   flex: 1;
   min-width: 160px;
 }
-.ws-shell .section-toolbar > select {
+.play-desk .section-toolbar > select {
   width: auto;
   max-width: 180px;
 }
-.ws-shell .section-toolbar .ws-filter-pills {
+.play-desk .section-toolbar .ws-filter-pills {
   margin: 0;
 }
-.ws-shell .studio-layout {
+.play-desk .studio-layout {
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
 }
-.ws-shell .kanban {
+.play-desk .kanban {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.ws-shell .assignment-grid {
+.play-desk .assignment-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
 }
-.ws-shell .assignment-card {
+.play-desk .assignment-card {
   background: var(--wp-bg);
   border: 1px solid var(--wp-border);
   border-radius: 12px;
@@ -1867,7 +1867,7 @@ body {
   .ws-game-card > div:last-child {
     padding: 24px;
   }
-  .ws-shell .studio-layout {
+  .play-desk .studio-layout {
     grid-template-columns: minmax(0, 1fr);
   }
   .ws-footer {
@@ -1882,13 +1882,13 @@ body {
   .ws-content {
     padding: 20px 12px 0;
   }
-  .ws-shell h1 {
+  .play-desk h1 {
     font-size: 27px;
   }
   .ws-page-heading {
     gap: 18px;
   }
-  .ws-shell .panel {
+  .play-desk .panel {
     padding: 17px;
     border-radius: 11px;
   }
@@ -2006,7 +2006,7 @@ body {
   .ws-filter-pills button {
     padding: 7px 10px;
   }
-  .ws-shell .kanban {
+  .play-desk .kanban {
     grid-template-columns: minmax(0, 1fr);
   }
   .ws-extension {
@@ -2033,7 +2033,7 @@ body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ws-shell * {
+  .play-desk * {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

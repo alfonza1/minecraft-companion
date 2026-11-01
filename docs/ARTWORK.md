@@ -1,21 +1,22 @@
-# Original website artwork
+# Product visuals and provenance
 
-The homepage's survival-teammates.png was generated with the built-in image
-generation tool for this project. It is a concept illustration, not a screenshot,
-validated build or evidence of gameplay. No third-party artist reference was used.
-The owner's supplied website reference informed layout, not copied artwork.
+The public site uses browser captures of the actual Waypoint application. The
+previous generated concept illustration and unused voxel scene have been removed.
+No gameplay footage, unrelated robot mascot, paid stock art or third-party design
+artwork is used.
 
-Final prompt: Original isometric voxel diorama for Waypoint, an open-source AI
-Minecraft survival teammate. Transparent background, one natural grass-and-earth
-chunk, partly built medieval cottage, leafy tree, exposed iron, storage chest and
-warm furnace. Two cooperative blocky characters: a human carrying logs and an AI
-teammate in charcoal/mint clothing with a stone pickaxe. Original voxel textures,
-polished editorial 3D render, natural colors, readable silhouettes. No logos,
-words, UI, watermark, branded character skins or fake gameplay screenshot.
+- `apps/website/public/dashboard.png`: actual disconnected application, isolated
+  temporary test data. No invented inventory or completed gameplay.
+- `apps/website/public/gathering-fixture.png`: actual application rendering
+  deterministic **synthetic** game observations through the real API and resource
+  accounting. The image and website label it as a design fixture, not live play.
+- `apps/website/public/social.png`: browser capture of the public homepage.
+- The Waypoint mark is original source SVG. Item textures are supplied by the
+  existing minecraft-assets package. The interface does not claim ownership of
+  Minecraft artwork or affiliation with Mojang/Microsoft.
+- Space Grotesk and Barlow Condensed are self-hosted OFL fonts; their licenses are
+  included in `apps/website/public/font-license.txt`.
 
-Asset: apps/website/public/survival-teammates.png. The social preview is a browser
-capture of the actual website. The Waypoint mark is original source SVG.
-
-The Features page includes dashboard.png, an actual screenshot of the local
-application against an empty disposable SQLite test session. It is explicitly
-disconnected, with no fabricated health, inventory or completed work.
+References influenced composition and information hierarchy, not copied imagery.
+See [design research and iteration](DESIGN-CORRECTION.md) and the
+[reproducible screenshot gallery](../tests/visual/README.md).

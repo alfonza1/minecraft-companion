@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,copyFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -19,7 +20,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1050},reducedMotio
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 const routes=['Overview','My companion','Current mission','Tasks & plans','Inventory','Resources','Collaboration','Activity','Communication','Build studio','Games','Extensions','Community','Settings','Setup','Diagnostics & logs'];
 const post=async(path,body={})=>{const response=await fetch(base+'/api'+path,{method:'POST',headers:{'content-type':'application/json',origin:base},body:JSON.stringify(body)});const data=await response.json();assert.equal(response.ok,true,JSON.stringify(data));return data;};
-async function navigate(label){if(page.viewportSize().width<=800)await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:label,exact:true}).click();await page.getByRole('heading',{level:1,name:label,exact:true}).waitFor();}
+async function navigate(label){return navigateWorkspace(page,label);}
 try{
   await page.goto(base);await page.getByText('Connected to local runtime',{exact:true}).waitFor();
   for(const width of [1440,768,414,375,320]){
@@ -52,7 +53,7 @@ try{
   await page.getByRole('button',{name:'Send message',exact:true}).click();
   // Curly apostrophe may use model routing; explicit mode command is deterministic.
   await post('/conversation',{text:'switch to hangout mode'});assert.equal(store.get('companionProfile')[0].mode,'hangout');
-  await page.getByRole('button',{name:/Save message from/}).first().click();
+  await page.getByRole('button',{name:/Remember this message from/}).first().click();
   await navigate('My companion');await page.getByRole('heading',{name:'A conversation to remember',exact:true}).waitFor();
   await page.getByRole('checkbox',{name:'Use saved memories',exact:true}).click();
   await expect(page.getByRole('checkbox',{name:'Use saved memories',exact:true})).not.toBeChecked();

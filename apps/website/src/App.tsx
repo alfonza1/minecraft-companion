@@ -1,78 +1,1436 @@
-import { useState } from 'react';
-import { contributions, docs, features, lifecycle, pages, repository, source } from './content';
-import evaluation from '../public/evaluation.json';
-
+import { useState, type ReactNode } from "react";
+import {
+  contributions,
+  docs,
+  lifecycle,
+  pages,
+  repository,
+  source,
+} from "./content";
+import evaluation from "../public/evaluation.json";
 export const base = import.meta.env.BASE_URL;
-const href = (path: string) => `${base}${path.replace(/^\//, '')}`;
-const sourceLink = (file: string) => `${source}/${file}`;
-function Arrow() { return <span aria-hidden="true">↗</span>; }
-function Logo() { return <a className="wordmark" href={href('/')} aria-label="Waypoint home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 8h7l6 16 6-16h7L19 30h-6Z" fill="currentColor"/><path d="m16 2 4 7-4 7-4-7Z" className="logo-accent"/></svg>waypoint<span className="wordmark-dot">/</span></a>; }
-function LinkButton({ to, children, quiet = false }: { to: string; children: React.ReactNode; quiet?: boolean }) { return <a className={`button ${quiet ? 'quiet' : ''}`} href={to}>{children}<Arrow/></a>; }
+const href = (path: string) => base + path.replace(/^\//, "");
+const sourceLink = (file: string) => source + "/" + file;
+function Arrow() {
+  return <span aria-hidden="true">↗</span>;
+}
+function Logo() {
+  return (
+    <a className="wordmark" href={href("/")} aria-label="Waypoint home">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M3 8h7l6 16 6-16h7L19 30h-6Z" fill="currentColor" />
+        <path d="m16 2 4 7-4 7-4-7Z" className="logo-accent" />
+      </svg>
+      waypoint
+    </a>
+  );
+}
+function LinkButton({
+  to,
+  children,
+  quiet = false,
+}: {
+  to: string;
+  children: ReactNode;
+  quiet?: boolean;
+}) {
+  return (
+    <a className={"button" + (quiet ? " quiet" : "")} href={to}>
+      {children}
+      <Arrow />
+    </a>
+  );
+}
 function Header({ route }: { route: string }) {
-  const [open,setOpen]=useState(false);
-  return <header className="header"><Logo/><button className="menu-toggle" aria-expanded={open} aria-controls="primary-navigation" onClick={()=>setOpen(!open)}>{open?'Close':'Menu'}</button><nav id="primary-navigation" className={open?'open':''} aria-label="Main navigation">{[['/games/','Games'],['/how-it-works/','How it works'],['/features/','Companion'],['/docs/','Docs']].map(([path,label])=><a key={path} href={href(path)} aria-current={route===path?'page':undefined}>{label}</a>)}<a href={source}>GitHub <Arrow/></a></nav><a className="header-cta" href={href('/get-started/')}>Meet your companion <Arrow/></a></header>;
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="header">
+      <Logo />
+      <span className="brand-context">A shared place to play.</span>
+      <button
+        className="menu-toggle"
+        aria-expanded={open}
+        aria-controls="primary-navigation"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? "Close" : "Menu"}
+      </button>
+      <nav
+        id="primary-navigation"
+        className={open ? "open" : ""}
+        aria-label="Main navigation"
+      >
+        {[
+          ["/games/", "Games"],
+          ["/features/", "Workspace"],
+          ["/how-it-works/", "How it works"],
+          ["/docs/", "Docs"],
+        ].map(([path, label]) => (
+          <a
+            key={path}
+            href={href(path)}
+            aria-current={route === path ? "page" : undefined}
+          >
+            {label}
+          </a>
+        ))}
+        <a href={source}>
+          GitHub <Arrow />
+        </a>
+      </nav>
+      <a className="header-cta" href={href("/get-started/")}>
+        Get started <Arrow />
+      </a>
+    </header>
+  );
 }
-function Footer() { return <><section className="closing"><div><span className="eyebrow">THE NEXT STEP IS YOURS</span><h2>Good company.<br/>Great adventures.</h2></div><div><LinkButton to={href('/get-started/')}>Get started — free</LinkButton><a className="text-link" href={href('/contribute/')}>Build with us <Arrow/></a></div></section><footer><div><Logo/><p>Your companion. Our open world.<br/>Built together, for playing together.</p></div><div className="footer-links">{pages.filter(([path])=>path!=='/').map(([path,title])=><a key={path} href={href(path)}>{title}</a>)}<a href={source}>GitHub</a><a href={sourceLink('SECURITY.md')}>Security</a><a href={sourceLink('LICENSE')}>Apache-2.0</a><a href={`${base}font-license.txt`}>Font license</a></div><p className="legal">Independent project. Not affiliated with Mojang or Microsoft. Minecraft Java Edition and a separate licensed bot account are required for Realm play. Software is free; optional providers and hosting may charge. No ads, license keys or feature unlocks.</p></footer></>; }
-function Intro({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) { return <section className="page-intro"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{children}</p></section>; }
-function Lifecycle() {
-  const [active,setActive]=useState(0);
-  return <div className="lifecycle"><div className="lifecycle-rail" aria-label="Agent lifecycle stages">{lifecycle.map((stage,i)=><button key={stage.name} aria-pressed={active===i} onClick={()=>setActive(i)}><span>0{i+1}</span>{stage.name}<span aria-hidden="true">→</span></button>)}</div><div className="lifecycle-detail" aria-live="polite"><span className="eyebrow">{lifecycle[active].code}</span><h3>{lifecycle[active].name}</h3><p>{lifecycle[active].text}</p><a className="text-link" href={sourceLink(lifecycle[active].file)}>Inspect implementation <Arrow/></a></div></div>;
+function Footer() {
+  return (
+    <footer>
+      <div className="footer-top">
+        <div>
+          <Logo />
+          <p>
+            An open-source AI gaming companion.
+            <br />
+            Minecraft Survival today. More worlds to investigate together.
+          </p>
+        </div>
+        <div className="footer-links">
+          {pages
+            .filter(([path]) => path !== "/")
+            .map(([path, title]) => (
+              <a key={path} href={href(path)}>
+                {title}
+              </a>
+            ))}
+          <a href={source}>GitHub</a>
+          <a href={sourceLink("SECURITY.md")}>Security</a>
+          <a href={sourceLink("LICENSE")}>Apache-2.0</a>
+          <a href={base + "font-license.txt"}>Font licenses</a>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span>Free software. No ads or feature unlocks.</span>
+        <p>
+          Independent project, not affiliated with Mojang or Microsoft.
+          Minecraft Java Edition and a separate licensed bot account are
+          required for Realm play. Optional models and services may charge
+          separately.
+        </p>
+      </div>
+    </footer>
+  );
 }
-const workflow = [
-  ['“Find iron.”', 'A recognized goal enters the deterministic get_iron skill. This request does not need a model plan.'],
-  ['Prepare the prerequisites', 'Check approved remembered chests. Obtain food, basic tools and torches; make charcoal when needed.'],
-  ['Search and act', 'Look for reachable exposed ore along a bounded route. Dig only eligible observed blocks and confirm pickup.'],
-  ['Return, smelt, reconcile', 'Retrace the route, cook the raw iron and confirm delivery to approved storage. Pause saves progress.'],
-];
-function WorkspacePreview() { return <figure className="workspace-preview"><a href={`${base}dashboard.png`} aria-label="Open actual companion workspace screenshot"><img src={`${base}dashboard.png`} width="1440" height="1050" loading="lazy" alt="Actual Waypoint local workspace in a disconnected test session. No live inventory or gameplay is fabricated."/></a><figcaption><span className="status-light"/> ACTUAL APPLICATION <span>Disconnected test session · open image for detail</span></figcaption></figure>; }
-function GameEcosystem({ full = false }: { full?: boolean }) { return <div className="game-ecosystem"><article className="available-game"><div className="game-art"><img src={`${base}survival-teammates.png`} width="1280" height="1280" loading="lazy" alt="Original concept illustration of two companions gathering resources beside a Minecraft-style cottage"/></div><div className="game-description"><span className="pill">FIRST SUPPORTED GAME · EARLY ACCESS</span><h2>Minecraft Survival</h2><p>A world to explore together. Gather supplies, share a build, talk while you play and lend each other a hand.</p><ul className="capability-tags"><li>Bounded survival skills</li><li>Natural voice</li><li>Shared build plans</li><li>Observed inventory</li></ul><a className="text-link" href={href('/get-started/')}>Set up Minecraft <Arrow/></a><p className="fine">Java Edition · Windows for full Realm and desktop voice support. Separate licensed bot account required. Illustration, not recorded gameplay.</p></div></article><article className="future-worlds"><div className="world-path" aria-hidden="true"><span>W</span><i/><span>?</span><i/><span>?</span></div><div><span className="eyebrow">FUTURE WORLDS / COMMUNITY RESEARCH</span><h2>Where should we<br/>play next?</h2><p>No other playable integration is available today. Help investigate a game with a permitted automation interface, propose its capabilities and build the next adapter with us.</p><a className="text-link" href={`${repository}/issues/new/choose`}>Propose a game <Arrow/></a><a className="text-link" href={href('/contribute/')}>Help build an integration <Arrow/></a></div></article>{full&&<div className="game-boundary"><span className="eyebrow">AN INTERFACE IS NOT AN INTEGRATION</span><h3>A foundation for more worlds.</h3><p>The adapter contract separates game identity, capabilities and workspace observations. A non-playable strategy fixture tests the shape of a second environment. Minecraft execution still uses its existing game-specific skills; other games need their own legitimate connection, actions and safety tests.</p><a className="text-link" href={sourceLink('docs/GAME-ADAPTERS.md')}>Read the adapter guide <Arrow/></a></div>}</div>; }
-function Home() { return <>
-  <section className="hero companion-hero"><div className="hero-copy"><div className="release-label"><span className="status-light"/> OPEN-SOURCE AI GAMING COMPANION <span>EARLY ACCESS</span></div><h1>Your next<br/>gaming buddy<br/>is <em>AI.</em></h1><p>Play, explore, build and talk with a companion that can lend a hand. Starting with Minecraft Survival. More worlds to discover, together with the community.</p><div className="hero-actions"><LinkButton to={href('/get-started/')}>Meet your companion</LinkButton><a className="text-link" href={source}>Explore on GitHub <Arrow/></a></div><div className="hero-note">FREE SOFTWARE <span>·</span> LOCAL MODEL OPTION <span>·</span> YOUR CONTROL</div></div><div className="companion-presence"><div className="presence-orbit" aria-hidden="true"><div className="companion-emblem"><svg viewBox="0 0 160 160"><path d="M40 25h80l25 34v65l-30 18H45l-30-18V59Z"/><path d="M38 66h84v40H38Z" className="visor"/><path d="M53 78v15M107 78v15" className="eyes"/><path d="M67 120h26" className="smile"/></svg></div><span className="orbit-point first"/><span className="orbit-point second"/></div><div className="presence-caption"><span className="eyebrow">MEET WAYPOINT</span><p>A teammate for the mission.<br/>Company for the adventure.</p><small>Companion identity illustration</small></div></div></section>
-  <section className="companion-pillars"><div><span>Play together</span><p>Share the work.<br/>Enjoy the world.</p></div><div><span>Talk naturally</span><p>Game plans, jokes<br/>and everything between.</p></div><div><span>Make memories</span><p>Keep the moments<br/>you choose to save.</p></div><div><span>Build it together</span><p>Open source.<br/>Open possibilities.</p></div></section>
-  <section className="section workspace-intro"><div className="section-heading"><div><span className="eyebrow">YOUR COMPANION’S HOME BASE</span><h2>Less guessing.<br/>More playing together.</h2></div><p>See what your companion is doing, what you both need and where a little help would go a long way. Conversation stays close. Technical logs stay out of the way.</p></div><WorkspacePreview/><div className="workspace-caption"><span>One shared place for goals, supplies and conversations.</span><a className="text-link" href={href('/features/')}>Explore your workspace <Arrow/></a></div></section>
-  <section className="section games-section"><div className="section-heading"><div><span className="eyebrow">STARTING IN MINECRAFT. LOOKING BEYOND.</span><h2>One companion.<br/>An open horizon.</h2></div><a className="text-link" href={href('/games/')}>Explore the games <Arrow/></a></div><GameEcosystem/></section>
-  <section className="friendship-story"><span className="eyebrow">GOOD COMPANY, ON YOUR TERMS</span><h2>Some nights, you have a plan.<br/>Others, you just want to <em>hang out.</em></h2><div><p>Ask for help with a build, talk about something completely unrelated, or enjoy a quieter session. Tune the communication style, decide what gets remembered and stay in charge of every permission.</p><p>Waypoint is an AI, not a person. Personality should make play more enjoyable — without invented shared history, emotional pressure or a score for your friendship.</p></div><a className="text-link" href={href('/features/')}>Meet the companion controls <Arrow/></a></section>
-  <section className="section workflow-section"><div className="section-heading"><div><span className="eyebrow">REAL SKILLS / MINECRAFT SURVIVAL</span><h2>“I’ll build. You get the iron.”</h2></div><a className="text-link" href={href('/engineering/')}>See how we test it <Arrow/></a></div><div className="workflow"><div className="goal-note"><span className="eyebrow">A SHARED GOAL</span><blockquote>A little less busywork.<br/>A little more adventure.</blockquote><span className="pill">Bounded surface iron skill</span><p>Illustrated walkthrough of implemented code. Not a live session or a guarantee of success in every world.</p></div><ol>{workflow.map(([title,text],i)=><li key={title}><span className="step-number">0{i+1}</span><div><h3>{title}</h3><p>{text}</p></div></li>)}</ol></div></section>
-  <section className="section"><div className="section-heading"><div><span className="eyebrow">INTELLIGENCE YOU CAN INSPECT</span><h2>From a player’s goal<br/>to an action in the world.</h2></div><p>Planning, perception, memory and feedback. Real engineering beneath the conversation.</p></div><Lifecycle/><a className="text-link section-link" href={href('/how-it-works/')}>Walk through the architecture <Arrow/></a></section>
-  <section className="open-source"><span className="eyebrow">THE FUTURE IS A CO-OP PROJECT</span><h2>More worlds.<br/>More ideas.<br/><em>Room for you.</em></h2><p>Add a capability, improve a voice interaction, test a tricky recovery or investigate the next game. No invented contributor counts. Just open code and useful work to do together.</p><div><LinkButton to={href('/contribute/')}>Build with the community</LinkButton><a className="text-link" href={source}>Star on GitHub <Arrow/></a></div></section>
-  </>; }
-function Games() { return <><Intro eyebrow="GAMES / ONE WORLD TODAY, MORE TO EXPLORE" title="Find your next shared adventure.">Minecraft Survival is the first supported game. New worlds are a community ambition, not a list of integrations we pretend already exist.</Intro><GameEcosystem full/><section className="section"><h2>What makes a good next world?</h2><div className="technical-rows"><section><h3>A permitted way to play</h3><p>An official API, a supported mod interface or another authorized integration. Respect the game’s terms, other players and anti-cheat requirements.</p></section><section><h3>Observable actions</h3><p>The adapter needs to distinguish what the companion knows, what it tries and what the game confirms. A convincing animation is not evidence of a successful action.</p></section><section><h3>Something worth sharing</h3><p>Start with a small cooperative objective and a tested way to pause, ask for help and recover. Broader support can grow from a useful, trustworthy foundation.</p></section></div><LinkButton to={`${repository}/issues/new/choose`}>Suggest a world</LinkButton></section></>; }
-
+function Intro({
+  label,
+  title,
+  children,
+}: {
+  label: string;
+  title: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="page-intro">
+      <span className="eyebrow">{label}</span>
+      <div>
+        <h1>{title}</h1>
+        <p>{children}</p>
+      </div>
+    </section>
+  );
+}
+function SectionHeading({
+  label,
+  title,
+  children,
+}: {
+  label: string;
+  title: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="section-heading">
+      <div>
+        <span className="eyebrow">{label}</span>
+        <h2>{title}</h2>
+      </div>
+      {children && <div className="section-aside">{children}</div>}
+    </div>
+  );
+}
+function ProductImage({ eager = false }: { eager?: boolean }) {
+  const [fixture, setFixture] = useState(false);
+  const filename = fixture ? "gathering-fixture.png" : "dashboard.png";
+  return (
+    <figure className="workspace-preview">
+      <div className="preview-toolbar">
+        <span>INSIDE THE WORKSPACE</span>
+        <div aria-label="Workspace screenshot">
+          <button aria-pressed={!fixture} onClick={() => setFixture(false)}>
+            Disconnected session
+          </button>
+          <button aria-pressed={fixture} onClick={() => setFixture(true)}>
+            Gathering test fixture
+          </button>
+        </div>
+      </div>
+      <a
+        href={base + filename}
+        aria-label="Open actual companion workspace screenshot"
+      >
+        <img
+          src={base + filename}
+          width="1440"
+          height="1050"
+          loading={eager ? "eager" : "lazy"}
+          alt={
+            fixture
+              ? "Actual Waypoint application rendered with synthetic gathering test data; not recorded gameplay"
+              : "Actual Waypoint workspace in a disconnected test session; no live gameplay data is invented"
+          }
+        />
+      </a>
+      <figcaption>
+        <strong>The local workspace / actual application</strong>
+        <span>
+          {fixture
+            ? "Synthetic test fixture · not recorded gameplay"
+            : "Disconnected test session · open image for detail"}
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+function Home() {
+  return (
+    <>
+      <section className="hero">
+        <div className="hero-copy">
+          <span className="eyebrow">
+            WAYPOINT / OPEN-SOURCE AI GAMING COMPANION
+          </span>
+          <h1>
+            Good company.
+            <br />
+            <em>Better games.</em>
+          </h1>
+        </div>
+        <div className="hero-brief">
+          <p>
+            An AI companion to share the work, talk through a plan, or just hang
+            out while you play.
+          </p>
+          <p className="hero-game">
+            Starting with <strong>Minecraft Survival.</strong>
+            <br />
+            Future games will take community work.
+          </p>
+          <LinkButton to={href("/get-started/")}>Get started — free</LinkButton>
+          <a className="text-link" href={source}>
+            Explore the source <Arrow />
+          </a>
+        </div>
+      </section>
+      <ProductImage eager />
+      <div className="product-caption">
+        <span>YOUR GAME. YOUR COMPANION. ONE SHARED DESK.</span>
+        <a className="text-link" href={href("/features/")}>
+          Take a closer look <Arrow />
+        </a>
+      </div>
+      <section className="section play-notes">
+        <SectionHeading
+          label="WHAT IT’S LIKE TO PLAY TOGETHER"
+          title={
+            <>
+              You keep playing.
+              <br />
+              Stay in the picture.
+            </>
+          }
+        />
+        <div className="play-notes-body">
+          <article>
+            <h3>Give it a useful job.</h3>
+            <p>
+              Gather supplies, prepare for a trip or work on an approved build.
+              See what is happening, what comes next and where it needs a hand.
+            </p>
+          </article>
+          <article>
+            <h3>Keep a conversation going.</h3>
+            <p>
+              Talk about the game or something else entirely. Adjust the tone
+              and talkativeness; save the moments you want it to remember.
+            </p>
+          </article>
+          <article>
+            <h3>Make the decisions together.</h3>
+            <p>
+              Split resources, change a responsibility or pause the whole
+              session. Help requests explain the blocker before asking you to
+              act.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section className="home-game">
+        <div>
+          <span className="eyebrow">FIRST SUPPORTED GAME / EARLY ACCESS</span>
+          <h2>
+            Minecraft
+            <br />
+            Survival.
+          </h2>
+          <p>
+            Gather, craft, build and explore through a legitimate Java client.
+            It is a bounded, experimental teammate — not a promise of unattended
+            mastery.
+          </p>
+          <a className="text-link" href={href("/games/")}>
+            See what is supported <Arrow />
+          </a>
+        </div>
+        <dl className="spec-list">
+          <div>
+            <dt>Playing together</dt>
+            <dd>Shared goals, resource assignments and voice conversation</dd>
+          </div>
+          <div>
+            <dt>What it observes</dt>
+            <dd>Its inventory, nearby entities and loaded world state</dd>
+          </div>
+          <div>
+            <dt>What you control</dt>
+            <dd>Permissions, plans, memories and when it stops</dd>
+          </div>
+          <div>
+            <dt>Getting connected</dt>
+            <dd>Windows · Minecraft Java · separate licensed account</dd>
+          </div>
+        </dl>
+      </section>
+      <section className="open-invitation">
+        <span className="eyebrow">
+          THE PLATFORM GROWS WITH ITS CONTRIBUTORS
+        </span>
+        <h2>
+          Bring a good idea.
+          <br />
+          Build one useful thing.
+        </h2>
+        <div>
+          <p>
+            A clearer observation. A better recovery. A permitted way into
+            another game. The code, contracts and tests are here for you to
+            inspect and improve.
+          </p>
+          <LinkButton to={href("/contribute/")} quiet>
+            Find your contribution
+          </LinkButton>
+          <a className="text-link" href={href("/how-it-works/")}>
+            Understand the engineering <Arrow />
+          </a>
+        </div>
+      </section>
+    </>
+  );
+}
 function Code({ children }: { children: string }) {
-  const [message,setMessage]=useState('Copy');
-  async function copy() { try { await navigator.clipboard.writeText(children); setMessage('Copied'); } catch { setMessage('Select and copy the code'); } }
-  return <div className="code-block"><button onClick={()=>void copy()}>{message}</button><pre><code>{children}</code></pre></div>;
+  const [message, setMessage] = useState("Copy");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(children);
+      setMessage("Copied");
+    } catch {
+      setMessage("Select and copy the code");
+    }
+  }
+  return (
+    <div className="code-block">
+      <button onClick={() => void copy()}>{message}</button>
+      <pre
+        tabIndex={0}
+        role="region"
+        aria-label="Commands; scroll horizontally if needed"
+      >
+        <code>{children}</code>
+      </pre>
+    </div>
+  );
 }
 function GettingStarted() {
-  const [os,setOs]=useState('Windows'), [provider,setProvider]=useState('Local Ollama');
-  return <><Intro eyebrow="GET STARTED / FREE SOFTWARE" title="Your machine. Your companion.">Choose Minecraft Survival, then set up a companion for your first shared session. Windows has the supported desktop and Realm setup. Portable browser planning is experimental.</Intro><div className="setup-layout"><aside className="setup-sidebar"><span className="eyebrow">BEFORE YOU START</span><h3>A world for two.</h3><p>For Realm play, you need Minecraft Java Edition, a separate licensed bot account and an invitation to your Realm.</p><p>Start in a disposable world. The agent is experimental and can lose items.</p><a className="text-link" href={sourceLink('docs/TROUBLESHOOTING.md')}>Troubleshooting <Arrow/></a></aside><div className="setup-steps">
-    <section><span className="eyebrow">01 / INSTALL THE APPLICATION</span><h2>Choose your platform.</h2><div className="segmented" aria-label="Operating system">{['Windows','macOS','Linux'].map(name=><button key={name} aria-pressed={os===name} onClick={()=>setOs(name)}>{name}</button>)}</div><p>{os==='Windows'?'Install Git and Node.js 24 LTS, then run these commands in PowerShell. The setup script installs project dependencies and builds the dashboard.':'Install Git and Node.js 24 LTS, then run these commands in your terminal. This experimental path supports browser planning; encrypted Realm login and native desktop voice still require Windows.'}</p><Code>{`git clone --branch feat/minecraft-companion --recurse-submodules ${repository}.git\ncd minecraft-companion\nnpm run install:agent\nnpm start`}</Code><p className="fine">Prefer a download? Use the <a href={`${repository}/releases`}>versioned source releases</a>, extract the archive and run the last two commands in its folder. No signed standalone installer is available yet.</p><p><a href="https://nodejs.org/en/download">Get Node.js</a> · <a href="https://git-scm.com/downloads">Get Git</a></p></section>
-    <section><span className="eyebrow">02 / CHOOSE INTELLIGENCE</span><h2>Local or connected.</h2><div className="segmented" aria-label="Model provider">{['Local Ollama','Existing subscription'].map(name=><button key={name} aria-pressed={provider===name} onClick={()=>setProvider(name)}>{name}</button>)}</div>{provider==='Local Ollama'?<><p>Install <a href="https://ollama.com/download">Ollama</a> and download a locally runnable model that fits your hardware. In the dashboard’s Setup page, choose <strong>Ollama (local, free)</strong>, refresh models and select the installed model.</p><Code>{'ollama pull qwen3:8b'}</Code><p className="fine">Example model, not a performance guarantee. Check its license and memory requirements. The app only contacts 127.0.0.1:11434 and excludes cloud-tagged models. Do not configure Ollama to proxy private prompts to a hosted service.</p></>:<><p>Choose Codex, Claude Code or OpenCode in Setup. Use the provider’s own supported login. Waypoint does not request your account password and has no mandatory subscription.</p><p className="fine">External providers may require a subscription or charge for usage. Your selected provider receives the context needed for that request. YouTube/vision analysis has separate supported providers and explicit sharing consent.</p></>}</section>
-    <section><span className="eyebrow">03 / CONNECT SECURELY</span><h2>Meet in your world.</h2><p>Open <code>http://127.0.0.1:4365</code> and choose Setup. Click <strong>Connect Minecraft account</strong>. Complete the official Microsoft device-code flow using the bot’s account, including MFA. Select its invited Realm, check compatibility, then start the first session.</p><div className="callout">Windows stores account tokens with DPAPI outside the repository. Never put passwords, recovery codes or tokens into chat, source files or issue reports.</div></section>
-    <section><span className="eyebrow">04 / VOICE, MEMORY & FIRST GOAL</span><h2>Find your way to hang out.</h2><p>On Windows, the optional speech setup installs local Whisper and Kokoro/Piper. Choose the microphone, output device and push-to-talk key in Settings. Test audio explicitly. Save Home and approve supply chests before resource trips.</p><Code>{os==='Windows'?'.\\scripts\\Bootstrap.ps1 -SkipBridge -DesktopShortcut':'npm run check:install'}</Code><p>Try “follow me,” then a small gathering goal. Use Pause to preserve work; Stop disconnects. Use companion controls to choose your communication style and manage saved moments. Memories are optional and inspectable; no shared adventure is invented.</p></section>
-    <section><span className="eyebrow">05 / KEEP IT CURRENT</span><h2>Update deliberately.</h2><p>Back up data in Settings and stop the companion. For a clean Git checkout, fast-forward the same branch and rerun installation. If you have local edits, commit or stash them first.</p><Code>{'git pull --ff-only\nnpm run install:agent\nnpm start'}</Code><p className="fine">Data stays outside the source folder. Never overwrite your private database with someone else’s example state. Docker is not a supported desktop/audio installation.</p></section>
-  </div></div></>;
+  const [os, setOs] = useState("Windows"),
+    [provider, setProvider] = useState("Local Ollama");
+  return (
+    <>
+      <Intro
+        label="GET STARTED"
+        title={
+          <>
+            Set up your
+            <br />
+            side of the desk.
+          </>
+        }
+      >
+        Install locally, choose a model and meet your companion in Minecraft.
+        The software is free. A game account and optional hosted inference are
+        separate.
+      </Intro>
+      <div className="setup-layout">
+        <aside className="setup-sidebar">
+          <h2>Before you begin</h2>
+          <ul className="checklist">
+            <li>Git and Node.js 24 LTS</li>
+            <li>Minecraft Java Edition</li>
+            <li>A separate licensed bot account</li>
+            <li>An invitation to your Realm</li>
+          </ul>
+          <p>
+            Windows supports the full Realm and desktop-voice setup. macOS/Linux
+            currently support experimental browser planning.
+          </p>
+          <a className="text-link" href={sourceLink("docs/TROUBLESHOOTING.md")}>
+            Troubleshooting <Arrow />
+          </a>
+          <a className="text-link" href={repository + "/releases"}>
+            Source releases <Arrow />
+          </a>
+        </aside>
+        <div className="setup-steps">
+          <section>
+            <span className="step-label">01 / INSTALL</span>
+            <h2>Start with your operating system.</h2>
+            <div className="segmented" aria-label="Operating system">
+              {["Windows", "macOS", "Linux"].map((name) => (
+                <button
+                  key={name}
+                  aria-pressed={os === name}
+                  onClick={() => setOs(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            <p>
+              {os === "Windows"
+                ? "Install Git and Node.js 24 LTS, then use PowerShell. The setup script installs locked project dependencies, verifies the Minecraft adapter and builds the workspace."
+                : "Install Git and Node.js 24 LTS, then use your terminal. This experimental path supports browser planning. Secure Realm authentication and native desktop voice still require Windows."}
+            </p>
+            <Code>
+              {"git clone --branch feat/minecraft-companion --recurse-submodules " +
+                repository +
+                ".git\ncd minecraft-companion\nnpm run install:agent\nnpm start"}
+            </Code>
+            <p className="fine">
+              You can also extract a versioned source release and run the last
+              two commands inside its folder. There is no signed standalone
+              installer yet.
+            </p>
+            <p className="inline-links">
+              <a href="https://nodejs.org/en/download">
+                Install Node.js <Arrow />
+              </a>
+              <a href="https://git-scm.com/downloads">
+                Install Git <Arrow />
+              </a>
+            </p>
+          </section>
+          <section>
+            <span className="step-label">02 / MODEL</span>
+            <h2>Choose where it thinks.</h2>
+            <div className="segmented" aria-label="Model provider">
+              {["Local Ollama", "Existing subscription"].map((name) => (
+                <button
+                  key={name}
+                  aria-pressed={provider === name}
+                  onClick={() => setProvider(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            {provider === "Local Ollama" ? (
+              <>
+                <p>
+                  Install <a href="https://ollama.com/download">Ollama</a> and a
+                  locally runnable model that fits your hardware. In Setup,
+                  choose <strong>Ollama (local, free)</strong>, refresh the
+                  model list and select the installed model.
+                </p>
+                <Code>{"ollama pull qwen3:8b"}</Code>
+                <p className="fine">
+                  An example, not a performance guarantee. Check the model’s
+                  license and memory requirements. The adapter contacts
+                  127.0.0.1:11434 and excludes cloud-tagged models. Do not
+                  configure your local service to forward private prompts
+                  elsewhere without understanding the consequences.
+                </p>
+              </>
+            ) : (
+              <>
+                <p>
+                  Select your existing Codex, Claude Code or OpenCode provider
+                  in Setup and complete its supported login. Waypoint never
+                  needs your provider account password.
+                </p>
+                <p className="fine">
+                  External providers may require a subscription or charge for
+                  usage. They receive the context needed for each request.
+                  Claude’s proprietary SDK is an optional separate installation.
+                  Video and image analysis use their own supported provider and
+                  sharing controls.
+                </p>
+                <Code>{"npm run setup:claude"}</Code>
+                <p className="fine">
+                  Only run this optional command when choosing the Claude
+                  provider and accepting its vendor terms.
+                </p>
+              </>
+            )}
+          </section>
+          <section>
+            <span className="step-label">03 / GAME</span>
+            <h2>Meet in Minecraft.</h2>
+            <p>
+              Open <code>http://127.0.0.1:4365</code>, choose Minecraft
+              Survival, then Setup. Select{" "}
+              <strong>Connect Minecraft account</strong> and complete
+              Microsoft’s official device-code flow with the bot’s account.
+              Select an invited Realm and check compatibility before joining.
+            </p>
+            <div className="callout">
+              <strong>Your credentials stay yours.</strong>
+              <p>
+                Complete password and MFA prompts on Microsoft’s site. Windows
+                protects cached tokens with DPAPI outside the repository. Never
+                paste credentials into chat or a project file.
+              </p>
+            </div>
+          </section>
+          <section>
+            <span className="step-label">04 / FIRST SESSION</span>
+            <h2>Check the sound. Pick a small goal.</h2>
+            <p>
+              On Windows, optional local speech setup installs Whisper and
+              Kokoro/Piper. Choose a microphone, output device and push-to-talk
+              binding. Test the audio, save Home and approve supply chests.
+            </p>
+            <Code>
+              {os === "Windows"
+                ? ".\\scripts\\Bootstrap.ps1 -SkipBridge -DesktopShortcut"
+                : "npm run check:install"}
+            </Code>
+            <p>
+              Try “follow me,” then a small gathering request in a disposable
+              world. Pause preserves work. Stop disconnects. My companion holds
+              the mode, personality and memory controls.
+            </p>
+          </section>
+          <section>
+            <span className="step-label">05 / UPDATES</span>
+            <h2>Keep the work. Update the code.</h2>
+            <p>
+              Back up your data in Settings and stop the companion. In a clean
+              checkout, fast-forward the same branch and rerun installation.
+              Preserve local changes before updating.
+            </p>
+            <Code>
+              {"git pull --ff-only\nnpm run install:agent\nnpm start"}
+            </Code>
+            <p className="fine">
+              Private data lives outside the source folder. Docker is not a
+              supported replacement for the full desktop audio/authentication
+              setup.
+            </p>
+          </section>
+        </div>
+      </div>
+    </>
+  );
 }
-function Architecture() { return <><Intro eyebrow="HOW IT WORKS / SYSTEM DESIGN" title="From intent to an observed result.">One body. Several layers of control. A language model helps choose the work; explicit contracts and server observations decide what actually happened.</Intro><Lifecycle/><section className="section"><div className="section-heading"><h2>The system, end to end.</h2><span className="eyebrow">IMPLEMENTATION MAP</span></div><div className="architecture-map"><div><span>HUMAN INTERFACE</span><strong>Dashboard + voice</strong><p>React, WebSocket state, local speech</p></div><b aria-hidden="true">↓</b><div><span>LOCAL CONTROL PLANE</span><strong>Fastify + orchestrator</strong><p>Intent routing · bounded context · provider adapters</p></div><b aria-hidden="true">↓</b><div className="architecture-split"><div><span>PERSISTENCE</span><strong>SQLite</strong><p>Notes, plans, approvals, reservations, checkpoints</p></div><div><span>EXECUTION</span><strong>Companion runtime</strong><p>Action validation, one body, pause gates, deterministic skills</p></div></div><b aria-hidden="true">↓ ↑</b><div><span>FIRST ENVIRONMENT</span><strong>Mineflayer → Minecraft Java</strong><p>Legitimate survival protocol · observed server events</p></div></div></section><div className="technical-rows">{[
-    ['Planning without a polling loop','Explicit messages and useful events trigger reasoning. Recognized direct commands skip the model. Structured plans contain at most six allowed actions; general conversation cannot invoke gameplay tools. Failed plans do not become arbitrary shell commands.'],
-    ['Memory with provenance','SQLite stores structured records and bounded recent conversation. Relevant notes are retrieved by the orchestrator. Chest snapshots have observation times and permission scopes; user reports and inferred references are distinguished from observed facts. Automatic long-term conversation summarization is not implemented.'],
-    ['Perception with a horizon','The client knows loaded chunks, nearby entities and its own inventory. It cannot inspect a distant base or your full inventory. Exact resource operations pause when server inventory confirmation is missing. A translated protocol view cannot stand in for exact native identities.'],
-    ['Execution that can be interrupted','The runtime owns gameplay operations until they settle. Pause blocks new work before cancellation, preserves tasks and requires explicit resume. Pending library cleanup can delay resume. Temporary requests can save and resume the previous task; reconnection is bounded and returns paused.'],
-    ['Human collaboration','Blueprint approval, resource assignments, protected locations and approved supply chests are explicit records. Exact placement counts come from the stored design. Unsupported materials are assigned to the human with a reason; observed deliveries reconcile progress.'],
-    ['Shared workspace, game-specific execution','The game adapter contract describes identity, capabilities and normalized workspace observations. Minecraft is the first concrete adapter; a test-only strategy fixture checks extensibility. Actual gameplay execution remains in the Minecraft runtime. A second playable game requires its own actions, connection and safety validation.'],
-  ].map(([title,text])=><section key={title}><h3>{title}</h3><p>{text}</p></section>)}</div><a className="text-link" href={sourceLink('docs/ARCHITECTURE.md')}>Read the complete architecture guide <Arrow/></a></>; }
-function Features() { return <><Intro eyebrow="CAPABILITIES / CURRENT RELEASE" title="A teammate when you need one. Company along the way.">A gaming companion with useful skills, natural conversation and clear boundaries. Minecraft Survival is the first game; the shared workspace is built to grow alongside future integrations.</Intro><figure className="dashboard-proof"><a href={`${base}dashboard.png`}><img src={`${base}dashboard.png`} width="1440" height="1050" loading="lazy" alt="Actual local dashboard in a disconnected disposable test session, with empty observed inventory and disabled gameplay controls"/></a><figcaption>Actual application screenshot · disconnected test session · no invented inventory or gameplay. Open image for full detail.</figcaption></figure><div className="feature-list">{features.map((feature,i)=><section key={feature.title}><span className="feature-index">{['↗','⌘','≈','◎','◇','↳'][i % 6]}</span><div><span className="eyebrow">{feature.tag}</span><h2>{feature.title}</h2><p>{feature.text}</p></div><aside><span>BOUNDARY</span><p>{feature.limit}</p></aside></section>)}</div><div className="callout">Current environment: Minecraft Java, with the pinned native 26.3 adapter. Version support is checked before connection. A historical local fixture pass does not prove every action on a live Realm.</div></>; }
+function Games() {
+  return (
+    <>
+      <Intro
+        label="GAMES"
+        title={
+          <>
+            One game today.
+            <br />
+            Room for the next.
+          </>
+        }
+      >
+        Minecraft Survival is playable in early access. Everything beyond it
+        needs a real integration, permission to use it and evidence that it
+        works.
+      </Intro>
+      <section className="game-spec">
+        <div className="game-name">
+          <span className="availability">AVAILABLE / EARLY ACCESS</span>
+          <h2>
+            Minecraft
+            <br />
+            Survival
+          </h2>
+          <LinkButton to={href("/get-started/")}>Set up Minecraft</LinkButton>
+        </div>
+        <div>
+          <dl className="spec-list">
+            <div>
+              <dt>Edition</dt>
+              <dd>Java Edition · invited Realms</dd>
+            </div>
+            <div>
+              <dt>Account</dt>
+              <dd>Separate licensed bot account · Microsoft device login</dd>
+            </div>
+            <div>
+              <dt>Primary platform</dt>
+              <dd>Windows desktop and native voice</dd>
+            </div>
+            <div>
+              <dt>Version</dt>
+              <dd>Pinned native 26.3 adapter; checked before connection</dd>
+            </div>
+          </dl>
+          <p className="fine">
+            macOS/Linux browser planning is experimental. A compatible protocol
+            is necessary, not proof that every skill works in every world.
+          </p>
+        </div>
+      </section>
+      <div className="support-table">
+        <div>
+          <h3>Useful today</h3>
+          <p>
+            Bounded gathering, food preparation, gear upkeep, exposed surface
+            iron, observed inventory, shared resource plans and approved
+            blueprint construction.
+          </p>
+        </div>
+        <div>
+          <h3>Still needs a human</h3>
+          <p>
+            Unrestricted cave mining, difficult supply chains, arbitrary terrain
+            changes and unseen reference geometry. You approve permissions and
+            designs before work begins.
+          </p>
+        </div>
+      </div>
+      <section className="proposal-brief">
+        <div>
+          <span className="eyebrow">FUTURE GAMES / OPEN RESEARCH</span>
+          <h2>
+            Pick a world.
+            <br />
+            Start with a<br />
+            cooperative task.
+          </h2>
+        </div>
+        <div>
+          <p>
+            A game name in a menu does not make an integration. Bring a small
+            objective and a permitted interface; we can investigate the rest
+            together.
+          </p>
+          <ol>
+            <li>
+              <strong>Connect legitimately.</strong>
+              <span>
+                Use official APIs, supported mod interfaces or other authorized
+                access. Respect terms and anti-cheat.
+              </span>
+            </li>
+            <li>
+              <strong>Observe an outcome.</strong>
+              <span>
+                Define what the companion can know, change and verify.
+              </span>
+            </li>
+            <li>
+              <strong>Stop and recover.</strong>
+              <span>
+                Test permissions, cancellation and what happens when the plan
+                fails.
+              </span>
+            </li>
+          </ol>
+          <div className="inline-links">
+            <a
+              className="text-link"
+              href={repository + "/issues/new?template=game-integration.yml"}
+            >
+              Propose an integration <Arrow />
+            </a>
+            <a className="text-link" href={sourceLink("docs/GAME-ADAPTERS.md")}>
+              Read the contract <Arrow />
+            </a>
+          </div>
+        </div>
+      </section>
+      <p className="callout">
+        The repository includes a non-playable strategy fixture for testing a
+        second observation shape. It has no game client and is not available in
+        the production game selector.
+      </p>
+    </>
+  );
+}
+function Lifecycle() {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="lifecycle">
+      <div className="lifecycle-rail" aria-label="Agent lifecycle stages">
+        {lifecycle.map((stage, i) => (
+          <button
+            key={stage.name}
+            aria-pressed={active === i}
+            onClick={() => setActive(i)}
+          >
+            <span>{String(i + 1).padStart(2, "0")}</span>
+            {stage.name}
+            <span aria-hidden="true">→</span>
+          </button>
+        ))}
+      </div>
+      <div className="lifecycle-detail" aria-live="polite">
+        <div>
+          <span className="eyebrow">{lifecycle[active].code}</span>
+          <h3>{lifecycle[active].name}</h3>
+        </div>
+        <div>
+          <p>{lifecycle[active].text}</p>
+          <a className="text-link" href={sourceLink(lifecycle[active].file)}>
+            Inspect this implementation <Arrow />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+function Architecture() {
+  return (
+    <>
+      <Intro
+        label="HOW IT WORKS"
+        title={
+          <>
+            Follow one
+            <br />
+            request.
+          </>
+        }
+      >
+        A player asks for help. The companion works with what it can actually
+        observe, executes bounded actions and checks what changed.
+      </Intro>
+      <div className="request-example">
+        <span className="eyebrow">EXAMPLE REQUEST / NOT A LIVE SESSION</span>
+        <blockquote>
+          “Get eight oak logs.
+          <br />
+          I’ll work on the house.”
+        </blockquote>
+        <p>
+          A recognized command can skip model planning. The same execution,
+          permission and observation boundaries still apply.
+        </p>
+      </div>
+      <Lifecycle />
+      <section className="section">
+        <SectionHeading
+          label="THE ACTUAL IMPLEMENTATION"
+          title={
+            <>
+              A shared workspace.
+              <br />A game-specific body.
+            </>
+          }
+        />
+        <div className="architecture-flow">
+          <div>
+            <span>Player</span>
+            <strong>Voice + workspace</strong>
+            <small>Goals, conversation, approvals</small>
+          </div>
+          <b aria-hidden="true">→</b>
+          <div>
+            <span>Core</span>
+            <strong>Orchestrator + state</strong>
+            <small>Context, validation, tasks</small>
+          </div>
+          <b aria-hidden="true">→</b>
+          <div>
+            <span>Minecraft</span>
+            <strong>Skills + Mineflayer</strong>
+            <small>Actions and server feedback</small>
+          </div>
+        </div>
+        <p className="architecture-caption">
+          Observed events return through the game adapter to missions, resources
+          and assistance. SQLite preserves tasks, projects and user-controlled
+          memories.
+        </p>
+      </section>
+      <div className="explanation-list">
+        {[
+          [
+            "Plans have limits.",
+            "Models return structured actions, not shell commands. The validator rejects unsupported tools and invalid arguments. General conversation cannot invoke gameplay tools. Permissions and actual state are checked again during execution.",
+          ],
+          [
+            "Memory has a source.",
+            "Explicit notes and saved moments remain inspectable. A conversation quote proves what was said, not that an adventure happened. Disabling memory removes retained notes and moments from prompts while preserving operational safety context.",
+          ],
+          [
+            "The world is only partly visible.",
+            "The client observes loaded terrain, nearby entities and its own items. It cannot know your full inventory or inspect an unloaded chest. Freshness and provenance belong beside every resource count.",
+          ],
+          [
+            "Work can be interrupted.",
+            "The runtime owns each operation until it settles. Pause closes admission gates before cancellation. Temporary requests can preserve prior work, and reconnection returns paused rather than silently resuming in a changed world.",
+          ],
+          [
+            "More games need more engineering.",
+            "The observation adapter declares identity, capabilities and workspace data. Minecraft actions and navigation remain specific to Minecraft. A new playable game needs its own permitted connection, executor and safety validation.",
+          ],
+        ].map(([title, text]) => (
+          <section key={title}>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </section>
+        ))}
+      </div>
+      <div className="page-end-link">
+        <LinkButton to={sourceLink("docs/ARCHITECTURE.md")} quiet>
+          Read the architecture guide
+        </LinkButton>
+      </div>
+    </>
+  );
+}
+const situations = [
+  {
+    name: "Gather supplies",
+    title: "Know what is in the bag.",
+    text: "Current work, observed pickups and the remaining requirement stay together. Carried items, stored snapshots and resources assigned to each player are distinct.",
+    limit:
+      "A gathering delta can include a handoff. Unknown or stale stock stays unknown; no invented completion percentage.",
+    file: "docs/WORKSPACE.md",
+  },
+  {
+    name: "Build together",
+    title: "Turn a reference into a shared plan.",
+    text: "Import a supported schematic or analyze an authorized reference. Review the actual blueprint, divide materials and approve construction. The workspace tracks verified sections and requests missing supplies.",
+    limit:
+      "Counts can be exact for the saved blueprint. A video cannot reveal every hidden block. Construction and supply-chain limits still apply.",
+    file: "services/build-planner/README.md",
+  },
+  {
+    name: "Talk & remember",
+    title: "Leave room for a conversation.",
+    text: "Talk while safe work continues, choose a communication style and keep a quote or completed task as a memory. Change modes when you want focused teamwork or a quieter hangout.",
+    limit:
+      "The companion is AI. No human feelings, exclusive friendship or invented shared history. Voice latency depends on your hardware and provider.",
+    file: "docs/COMPANION-PERSONALITY.md",
+  },
+  {
+    name: "Lend a hand",
+    title: "See the blocker. Make a decision.",
+    text: "A persistent help request explains the missing material or failed step. Claim the work, assign a supported task, defer it or hold the plan for new instructions.",
+    limit:
+      "Accepting responsibility does not verify delivery. A rare-resource search finds a source; it does not promise to acquire the material.",
+    file: "docs/GAME-ADAPTERS.md",
+  },
+];
+function Features() {
+  const [selected, setSelected] = useState(0),
+    item = situations[selected];
+  return (
+    <>
+      <Intro
+        label="THE WORKSPACE"
+        title={
+          <>
+            Less checking in.
+            <br />
+            More playing.
+          </>
+        }
+      >
+        A shared desk for the current session: the companion’s work, your
+        responsibilities and the conversation. Technical logs have their own
+        place.
+      </Intro>
+      <div className="situation-tabs" aria-label="Workspace situations">
+        {situations.map((s, i) => (
+          <button
+            key={s.name}
+            aria-pressed={selected === i}
+            onClick={() => setSelected(i)}
+          >
+            {s.name}
+          </button>
+        ))}
+      </div>
+      <section className="situation-detail">
+        <div>
+          <span className="eyebrow">{item.name}</span>
+          <h2>{item.title}</h2>
+        </div>
+        <div>
+          <p>{item.text}</p>
+          <p className="fine">{item.limit}</p>
+          <a className="text-link" href={sourceLink(item.file)}>
+            Read the behavior guide <Arrow />
+          </a>
+        </div>
+      </section>
+      <ProductImage />
+      <section className="workspace-functions">
+        <div>
+          <span className="eyebrow">DURING A SESSION</span>
+          <h2>
+            Keep the useful
+            <br />
+            things close.
+          </h2>
+        </div>
+        <dl className="spec-list">
+          <div>
+            <dt>Session stage</dt>
+            <dd>Current activity, objective and observed progress</dd>
+          </div>
+          <div>
+            <dt>Material workbench</dt>
+            <dd>
+              Raw and crafted requirements, allocations and storage provenance
+            </dd>
+          </div>
+          <div>
+            <dt>Conversation</dt>
+            <dd>Text, configured voice, personality and retained moments</dd>
+          </div>
+          <div>
+            <dt>Human assistance</dt>
+            <dd>Persistent requests with real ownership and task updates</dd>
+          </div>
+          <div>
+            <dt>Developer tools</dt>
+            <dd>Searchable logs, model identity, timing and reported usage</dd>
+          </div>
+        </dl>
+      </section>
+      <section className="plain-split">
+        <h2>
+          Your control
+          <br />
+          does not disappear.
+        </h2>
+        <div>
+          <p>
+            Pause stops new gameplay and model work. Stop disconnects. Blueprint
+            approval, mining permissions and resource protections remain
+            explicit. The workspace reflects the authoritative backend after
+            reconnect.
+          </p>
+          <p className="fine">
+            No safety controller guarantees survival. Start with small goals in
+            a disposable world and supervise valuable projects.
+          </p>
+          <LinkButton to={href("/get-started/")} quiet>
+            Set up your first session
+          </LinkButton>
+        </div>
+      </section>
+    </>
+  );
+}
 function Documentation() {
-  const [query,setQuery]=useState('');
-  const filtered=docs.filter(doc=>`${doc.title} ${doc.group} ${doc.text}`.toLowerCase().includes(query.toLowerCase()));
-  return <><Intro eyebrow="DOCUMENTATION / YOUR FIELD GUIDE" title="Understand it. Then extend it.">Start with a first session, trace an action through the system, or find the contract for your next contribution.</Intro><label className="doc-search"><span>Search documentation</span><input type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Try cancellation, voice, API or security…"/></label><p className="fine" role="status">{filtered.length} guides · full source documentation opens on GitHub</p><div className="doc-list">{filtered.map(doc=><a key={doc.file} href={sourceLink(doc.file)}><span className="eyebrow">{doc.group}</span><h2>{doc.title}<Arrow/></h2><p>{doc.text}</p></a>)}</div>{!filtered.length&&<div className="callout">No matching guide. Try a broader topic such as “setup,” “model” or “build.” <button className="text-link" onClick={()=>setQuery('')}>Clear search</button></div>}<section className="section"><h2>Where the code lives.</h2><Code>{'apps/dashboard              local control interface\napps/website                static public site\nservices/agent-orchestrator  intent, plans and providers\nservices/companion-runtime   one body and lifecycle\nservices/skill-executor      deterministic gameplay\nservices/build-*            blueprints and construction\nservices/world-state        current observations\nservices/memory             SQLite persistence\npackages/agent-extensions   observation contract\ntest/                       automated regression suite'}</Code></section></>;
+  const [query, setQuery] = useState(""),
+    [route, setRoute] = useState("All guides");
+  const belongs = (group: string) =>
+    route === "All guides" ||
+    (route === "For players"
+      ? ["Start here", "Use the companion", "Use the agent"].includes(group)
+      : ["Develop", "Understand", "Maintain", "Research"].includes(group));
+  const filtered = docs.filter(
+    (doc) =>
+      belongs(doc.group) &&
+      (doc.title + " " + doc.group + " " + doc.text)
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
+  return (
+    <>
+      <Intro
+        label="DOCUMENTATION"
+        title={
+          <>
+            Find your way.
+            <br />
+            Then go deeper.
+          </>
+        }
+      >
+        Start a session, understand a count or follow an action into the source.
+        These guides describe the software that exists today.
+      </Intro>
+      <div className="docs-tools">
+        <div className="segmented" aria-label="Documentation audience">
+          {["All guides", "For players", "For developers"].map((value) => (
+            <button
+              key={value}
+              aria-pressed={route === value}
+              onClick={() => setRoute(value)}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+        <label className="doc-search">
+          <span>Search documentation</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Try voice, cancellation or resources"
+          />
+        </label>
+      </div>
+      <p className="fine doc-count" role="status">
+        {filtered.length} guides · opens source documentation on GitHub
+      </p>
+      <div className="doc-list">
+        {filtered.map((doc) => (
+          <a key={doc.file} href={sourceLink(doc.file)}>
+            <span className="eyebrow">{doc.group}</span>
+            <div>
+              <h2>{doc.title}</h2>
+              <p>{doc.text}</p>
+            </div>
+            <Arrow />
+          </a>
+        ))}
+      </div>
+      {!filtered.length && (
+        <div className="callout">
+          <p>
+            No matching guide. Try a broader topic or another reading route.
+          </p>
+          <button
+            className="text-link"
+            onClick={() => {
+              setQuery("");
+              setRoute("All guides");
+            }}
+          >
+            Clear search
+          </button>
+        </div>
+      )}
+      <section className="reading-route">
+        <h2>New to the code?</h2>
+        <p>
+          Read Architecture, run the observation extension example, then inspect
+          the game adapter contract. That gives you one small path through the
+          system before tackling gameplay execution.
+        </p>
+        <a className="text-link" href={sourceLink("docs/EXTENSIONS.md")}>
+          Start with an observer <Arrow />
+        </a>
+      </section>
+    </>
+  );
 }
-function Engineering() { return <><Intro eyebrow="ENGINEERING / REPRODUCIBLE EVIDENCE" title="Show the work. Measure the result.">No invented success rates. Published measurements identify the fixture, scope and date. A passing contract test is not evidence of general intelligence or reliable unattended play.</Intro><section className="evidence"><div><span className="eyebrow">LATEST PUBLISHED EVALUATION</span><h2>{evaluation.status==='measured'?'A reproducible baseline.':'Ready to measure.'}</h2><p>{evaluation.summary}</p><a className="text-link" href={`${base}evaluation.json`}>Read the raw report <Arrow/></a></div><div className="evidence-facts"><div><span>Scope</span><strong>{evaluation.scope}</strong></div><div><span>Measured at</span><strong>{evaluation.measuredAt || 'Not yet published'}</strong></div><div><span>Model comparison</span><strong>Not benchmarked</strong></div><div><span>Inference cost</span><strong>Unknown unless reported</strong></div></div></section><section className="section"><h2>Reproduce the evaluation.</h2><Code>{'npm ci --ignore-scripts\nnpm run setup:native\nnpm test\nnpm run typecheck\nnpm run build\nnpm run evaluate'}</Code><p>The evaluation harness runs deterministic fixture goals through real validation and observation modules and records outcomes, elapsed time and attempts. It uses synthetic observations, no personal account and no paid model calls. Optional local-server fixtures test real survival behavior separately.</p><a className="text-link" href={sourceLink('docs/EVALUATION.md')}>Methodology and gameplay fixtures <Arrow/></a></section><div className="technical-rows">{[
-    ['State synchronization','Inventory events can arrive after an action resolves. Confirmed counts, freshness labels and reservation accounting prevent optimistic allocation from becoming false progress.'],
-    ['Latency without speculation','Fast intent paths and persistent speech workers reduce avoidable overhead. Per-stage timing records median and p95 samples, with bounded sample windows. No guaranteed instant-response claim.'],
-    ['Recovery is part of the task','Local survival fixtures cover interrupted construction and iron smelting. Checkpoints record observed work; reconnect does not silently resume actions in a changed world.'],
-    ['What still needs research','Model quality across hardware, long-horizon survival, adverse terrain and player collaboration need larger repeatable trials. Model comparison, broad success rates and cost-per-task remain unmeasured.'],
-  ].map(([title,text])=><section key={title}><h3>{title}</h3><p>{text}</p></section>)}</div></>; }
-function Contribute() { return <><Intro eyebrow="CONTRIBUTE / EXTEND THE AGENT" title="Help build the next great gaming buddy.">Start small. Make an observation clearer, a recovery safer or a tool more reliable. Evidence and useful boundaries matter more than a long feature list.</Intro><div className="contribute-intro"><div><h2>A working extension,<br/>not just an idea.</h2><p>The v1 observer interface receives a cloned world snapshot and returns schema-validated data. It has no bot mutation handle. The included inventory summary is registered in the local API and tested against unknown and observed inventory.</p><a className="text-link" href={sourceLink('examples/extensions/inventory-summary.js')}>Open the working example <Arrow/></a></div><Code>{`registry.register({\n  id: 'inventory-summary',\n  apiVersion: 1,\n  kind: 'observer',\n  input: inputSchema,\n  output: outputSchema,\n  observe(args, world, signal) {\n    return summarizeObservedItems(world);\n  }\n});`}</Code></div><p className="fine">Abbreviated contract illustration. See the linked example for runnable code. Extensions are trusted source, not a sandbox. New action modules require runtime integration and gameplay tests.</p><section className="section"><h2>Find your first contribution.</h2><div className="contribution-list">{contributions.map(([level,title,text])=><article key={title}><span className="pill">{level}</span><h3>{title}</h3><p>{text}</p></article>)}</div><div className="hero-actions"><LinkButton to={`${repository}/issues`}>Browse issues</LinkButton><a className="text-link" href={sourceLink('CONTRIBUTING.md')}>Contributor guide <Arrow/></a></div></section><section className="section"><h2>Where to go deeper.</h2><p>Provider adapters, planning strategies, memory retrieval, perception, voice and build planners each have dedicated modules. A second playable game and multi-body collaboration remain proposed work; there is no fabricated agent team behind this interface.</p><a className="text-link" href={sourceLink('docs/EXTENSIONS.md')}>Read extension contracts and boundaries <Arrow/></a></section></>; }
-function Roadmap() { const columns=[['Minecraft Survival today','Validated actions and one-body lifecycle','Bounded gathering, cooking and surface iron','Approved blueprint construction and recovery','Shared resources, help requests and observed inventory','Local speech and provider selection'],['Release priorities','Secure credential adapters for macOS/Linux','Signed, packaged installers','Wider reproducible gameplay evaluation','Dependency advisory reduction','User-controlled memories and richer communication'],['Research directions','Safer cave and branch mining','Broader construction states and supply chains','Measured model comparisons','Community-proposed game integrations','Multi-body coordination with explicit ownership']];return <><Intro eyebrow="ROADMAP / OPEN DIRECTION" title="A useful foundation. An open horizon.">Priorities follow reproducible failures and contributor capacity. Planned work is not a delivery commitment, and proposed integrations are not existing capabilities.</Intro><div className="roadmap">{columns.map(([title,...items],i)=><section key={title}><span className={`roadmap-dot tone-${i}`}/><h2>{title}</h2><ul>{items.map(item=><li key={item}>{item}</li>)}</ul></section>)}</div><p>Have evidence for a different priority? Open a focused issue with your environment, a minimal reproduction and the result you expected. Omit account tokens, private chats and real-world personal information.</p><LinkButton to={`${repository}/issues/new/choose`}>Propose the next step</LinkButton></>; }
-export default function App({ route }: { route: string }) { const content:Record<string,React.ReactNode>={'/':<Home/>,'/get-started/':<GettingStarted/>,'/games/':<Games/>,'/how-it-works/':<Architecture/>,'/features/':<Features/>,'/docs/':<Documentation/>,'/engineering/':<Engineering/>,'/contribute/':<Contribute/>,'/roadmap/':<Roadmap/>};return <><a className="skip-link" href="#main">Skip to content</a><div className="site-shell"><Header route={route}/><main id="main">{content[route] || <Intro eyebrow="PAGE NOT FOUND" title="Let’s find your way back."><a href={href('/')}>Return to the homepage</a></Intro>}</main><Footer/></div></>; }
+function Engineering() {
+  return (
+    <>
+      <Intro
+        label="ENGINEERING"
+        title={
+          <>
+            Show the evidence.
+            <br />
+            Keep the limits.
+          </>
+        }
+      >
+        A reproducible contract test is useful. It is not a survival benchmark.
+        Every published number below belongs to a named report and a bounded
+        method.
+      </Intro>
+      <section className="evaluation-record">
+        <div className="report-title">
+          <span className="eyebrow">PUBLISHED CONTRACT EVALUATION</span>
+          <h2>
+            {evaluation.passed}
+            <span>checks passed</span>
+          </h2>
+          <p>{evaluation.scope}</p>
+        </div>
+        <dl className="report-details">
+          <div>
+            <dt>Failed / skipped</dt>
+            <dd>
+              {evaluation.failed} / {evaluation.skipped}
+            </dd>
+          </div>
+          <div>
+            <dt>Recorded</dt>
+            <dd>{evaluation.measuredAt}</dd>
+          </div>
+          <div>
+            <dt>Source commit</dt>
+            <dd>
+              <a href={repository + "/commit/" + evaluation.sourceCommit}>
+                {evaluation.sourceCommit.slice(0, 12)} <Arrow />
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt>Game / model requests</dt>
+            <dd>
+              {evaluation.gameplayActions} / {evaluation.modelRequests}
+            </dd>
+          </div>
+          <div>
+            <dt>Method</dt>
+            <dd>Synthetic contract fixtures; no game connection</dd>
+          </div>
+        </dl>
+        <a className="text-link report-link" href={base + "evaluation.json"}>
+          Inspect the raw report <Arrow />
+        </a>
+      </section>
+      <section className="reproduce">
+        <div>
+          <span className="eyebrow">RUN IT YOURSELF</span>
+          <h2>
+            Same source.
+            <br />
+            Visible checks.
+          </h2>
+          <p>
+            The report includes the environment, selected suites and measurement
+            scope. Suite wall time is not model planning latency.
+          </p>
+          <a className="text-link" href={sourceLink("docs/EVALUATION.md")}>
+            Full methodology <Arrow />
+          </a>
+        </div>
+        <Code>
+          {
+            "npm ci --ignore-scripts\nnpm run setup:native\nnpm test\nnpm run typecheck\nnpm run build\nnpm run evaluate"
+          }
+        </Code>
+      </section>
+      <section className="section">
+        <SectionHeading
+          label="WHAT THE REPORT CAN TELL YOU"
+          title="Measured, observed, or still unknown."
+        />
+        <div className="measurement-table">
+          <div>
+            <strong>Automated contracts</strong>
+            <span className="evidence-state">Measured in the report</span>
+            <p>
+              Validation, lifecycle gates, resource accounting and synthetic
+              recovery cases.
+            </p>
+          </div>
+          <div>
+            <strong>Real survival behavior</strong>
+            <span className="evidence-state">Separate local fixtures</span>
+            <p>
+              Specific controlled gameplay scenarios, with their own setup and
+              limitations.
+            </p>
+          </div>
+          <div>
+            <strong>General reliability</strong>
+            <span className="evidence-state pending">Not established</span>
+            <p>
+              No broad success rate across arbitrary seeds, terrain or
+              long-running missions.
+            </p>
+          </div>
+          <div>
+            <strong>Model comparisons</strong>
+            <span className="evidence-state pending">Not benchmarked</span>
+            <p>
+              No model leaderboard or monetary estimate inferred from token
+              counts.
+            </p>
+          </div>
+        </div>
+      </section>
+      <div className="explanation-list">
+        <section>
+          <h3>Resource truth arrives late.</h3>
+          <p>
+            Inventory events may arrive after an action finishes. Server
+            confirmation, reservation ownership and freshness labels prevent
+            optimistic updates from becoming false progress.
+          </p>
+        </section>
+        <section>
+          <h3>Failure is part of execution.</h3>
+          <p>
+            Tasks carry checkpoints and bounded recovery. A blocker becomes
+            visible work for the player, not an endless model retry loop.
+          </p>
+        </section>
+        <section>
+          <h3>Latency has several owners.</h3>
+          <p>
+            Direct commands and deterministic skills avoid unnecessary
+            inference. Speech, model generation and game execution still need
+            separate measurements; an instant reply is not promised.
+          </p>
+        </section>
+      </div>
+    </>
+  );
+}
+function Contribute() {
+  return (
+    <>
+      <Intro
+        label="CONTRIBUTE"
+        title={
+          <>
+            Make one
+            <br />
+            thing better.
+          </>
+        }
+      >
+        A useful contribution can be a clearer error, a tested recovery or a
+        better way to work together. Start with a real problem and a small,
+        reviewable change.
+      </Intro>
+      <section className="contribution-start">
+        <div>
+          <span className="eyebrow">A RUNNABLE FIRST STEP</span>
+          <h2>
+            Observe something.
+            <br />
+            Explain it well.
+          </h2>
+          <p>
+            The included inventory observer receives a copied world snapshot and
+            returns validated output. It has no bot mutation handle. Follow the
+            example, change its summary and test unknown as well as observed
+            inventory.
+          </p>
+          <a
+            className="text-link"
+            href={sourceLink("examples/extensions/inventory-summary.js")}
+          >
+            Open the example <Arrow />
+          </a>
+        </div>
+        <div>
+          <Code>
+            {
+              "node --test test/extensions.test.js\nnode --test test/workspace.test.js"
+            }
+          </Code>
+          <p className="fine">
+            Installed extensions are trusted code, not a sandbox. New action
+            modules require runtime integration, permissions and actual gameplay
+            tests.
+          </p>
+          <a className="text-link" href={sourceLink("docs/EXTENSIONS.md")}>
+            Read the extension contract <Arrow />
+          </a>
+        </div>
+      </section>
+      <section className="section">
+        <SectionHeading
+          label="CONTRIBUTION PATHS"
+          title="Find a problem worth solving."
+        >
+          <a className="text-link" href={repository + "/issues"}>
+            Browse issues <Arrow />
+          </a>
+        </SectionHeading>
+        <div className="contribution-list">
+          {contributions.map(([level, title, text]) => (
+            <article key={title}>
+              <span className="level-label">{level}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="contribution-rules">
+        <h2>
+          Before you send
+          <br />a pull request.
+        </h2>
+        <ol>
+          <li>Describe the observed problem and expected behavior.</li>
+          <li>
+            Preserve permissions, cancellation and truthful resource counts.
+          </li>
+          <li>
+            Add evidence appropriate to the change; label fixtures as fixtures.
+          </li>
+          <li>
+            Leave secrets, private conversations and game assets out of Git.
+          </li>
+        </ol>
+        <LinkButton to={sourceLink("CONTRIBUTING.md")} quiet>
+          Read the contributor guide
+        </LinkButton>
+      </section>
+      <section className="plain-split">
+        <h2>
+          Thinking about
+          <br />
+          another game?
+        </h2>
+        <div>
+          <p>
+            Start with a permitted connection and one cooperative task. The
+            shared observation contract is ready to inspect; Minecraft’s action
+            executor is not a universal game controller.
+          </p>
+          <a
+            className="text-link"
+            href={repository + "/issues/new?template=game-integration.yml"}
+          >
+            Write a game proposal <Arrow />
+          </a>
+        </div>
+      </section>
+    </>
+  );
+}
+function Roadmap() {
+  const groups = [
+    {
+      label: "IN YOUR HANDS",
+      title: "The current foundation.",
+      summary: "Minecraft Survival and the shared companion workspace.",
+      items: [
+        "Bounded survival skills and approved construction",
+        "Actual inventory, resource plans and assistance",
+        "Conversation, local voice and optional saved moments",
+        "Tested game-observation and extension contracts",
+      ],
+    },
+    {
+      label: "NEXT USEFUL WORK",
+      title: "Make the first world better.",
+      summary: "Priorities, not dated delivery promises.",
+      items: [
+        "Wider controlled survival tests and clearer recovery",
+        "Secure macOS/Linux credential and voice support",
+        "Signed installers and clean-machine setup validation",
+        "Dependency advisory reduction and accessibility fixes",
+      ],
+    },
+    {
+      label: "OPEN RESEARCH",
+      title: "Earn the next capability.",
+      summary: "These are investigations, not available features.",
+      items: [
+        "A second game with a permitted integration",
+        "Safer cave mining and broader build supply chains",
+        "Measured model and hardware comparisons",
+        "Multiple embodied agents with explicit ownership",
+      ],
+    },
+  ];
+  return (
+    <>
+      <Intro
+        label="ROADMAP"
+        title={
+          <>
+            Keep it useful.
+            <br />
+            Open the next door.
+          </>
+        }
+      >
+        The direction is a companion for more games. Progress starts by
+        improving the world it can play in now and making each new claim earn
+        its evidence.
+      </Intro>
+      <div className="roadmap">
+        {groups.map((group) => (
+          <section key={group.label}>
+            <div>
+              <span className="eyebrow">{group.label}</span>
+              <h2>{group.title}</h2>
+              <p>{group.summary}</p>
+            </div>
+            <ul>
+              {group.items.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      <section className="roadmap-invitation">
+        <h2>Bring a concrete proposal.</h2>
+        <p>
+          Explain the cooperative goal, the interface it could use and how we
+          could test the result. GitHub issues are the current public proposal
+          system. There are no invented vote counts or unannounced release
+          dates.
+        </p>
+        <LinkButton to={repository + "/issues/new/choose"}>
+          Propose the next step
+        </LinkButton>
+        <a className="text-link" href={sourceLink("docs/ROADMAP.md")}>
+          Read the development roadmap <Arrow />
+        </a>
+      </section>
+    </>
+  );
+}
+export default function App({ route }: { route: string }) {
+  const content: Record<string, ReactNode> = {
+    "/": <Home />,
+    "/get-started/": <GettingStarted />,
+    "/games/": <Games />,
+    "/how-it-works/": <Architecture />,
+    "/features/": <Features />,
+    "/docs/": <Documentation />,
+    "/engineering/": <Engineering />,
+    "/contribute/": <Contribute />,
+    "/roadmap/": <Roadmap />,
+  };
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <div className="site-shell">
+        <Header route={route} />
+        <main id="main">
+          {content[route] || (
+            <Intro label="PAGE NOT FOUND" title="Find your way back.">
+              <a href={href("/")}>Return to the homepage</a>
+            </Intro>
+          )}
+        </main>
+        <Footer />
+      </div>
+    </>
+  );
+}

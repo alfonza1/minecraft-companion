@@ -30,19 +30,9 @@ export function CompanionAvatar({ status = "idle" }: { status?: string }) {
       aria-label={`AI companion · ${status}`}
       role="img"
     >
-      <svg viewBox="0 0 160 160" aria-hidden="true">
-        <path
-          className="avatar-shell"
-          d="M42 24 112 24 137 53 137 112 109 138 45 138 23 111 23 53Z"
-        />
-        <path
-          className="avatar-face"
-          d="M43 55 117 55 117 101 104 113 53 113 40 101 40 62Z"
-        />
-        <path className="avatar-eyes" d="M54 72h13v19H54zm39 0h13v19H93z" />
-        <path className="avatar-smile" d="M70 100h19M71 24V14h19v10" />
-        <path className="avatar-cheek" d="M31 67v25m98-25v25" />
-      </svg>
+      <span className="companion-callsign" aria-hidden="true">
+        W<span>/</span>
+      </span>
       <i className="ws-presence-light" />
     </div>
   );
@@ -418,7 +408,7 @@ export function ConversationPane({
               <p>{message.text}</p>
               <button
                 className="text-button ws-save-message"
-                aria-label={`Save message from ${time(message.at)}`}
+                aria-label={`Remember this message from ${time(message.at)}`}
                 disabled={busy || state.profile?.memoryEnabled === false}
                 onClick={() =>
                   attempt(

@@ -36,6 +36,8 @@ jobs:
         if: runner.os == 'Linux'
       - run: npm run test:workspace
         if: runner.os == 'Linux'
+      - run: npm run test:visual -- --ignore-snapshots
+        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -44,4 +46,11 @@ jobs:
             release/source-audit.json
             release/dependency-licenses.json
             evaluations/local/latest.json
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Linux'
+        with:
+          name: browser-design-review
+          path: .git/design-after/
+          include-hidden-files: true
           retention-days: 14

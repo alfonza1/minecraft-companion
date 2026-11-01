@@ -67,7 +67,7 @@ export default function Inventory({ state }: { state: CompanionState }) {
               aria-label={
                 value
                   ? `Slot ${slot}: ${value.count} ${human(value.name)}`
-                  : `Slot ${slot}: empty`
+                  : `${start === 36 ? `Hotbar ${slot - 35} · ` : ""}Slot ${slot}: empty`
               }
               onClick={() => setSelected(slot)}
             >

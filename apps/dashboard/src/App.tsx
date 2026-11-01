@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   Backpack,
@@ -24,6 +24,9 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+import ToolMenu from "./ToolMenu";
+import SessionStage from "./SessionStage";
+import ResourceWorkbench from "./ResourceWorkbench";
 import WaypointMark from "../../../packages/ui/WaypointMark";
 import { useCompanion } from "./api";
 import Companion from "./Companion";
@@ -166,299 +169,294 @@ export default function App() {
     return navigation.some((item) => item.id === saved) ? saved! : "overview";
   });
   const [menu, setMenu] = useState(false),
-    [rail, setRail] = useState(
-      () => localStorage.getItem("waypoint-chat") === "open",
-    );
-  const navigate = (value: string) => {
-    setPage(value);
+    [conversation, setConversation] = useState(false);
+  const conversationDialog = useRef<HTMLDialogElement>(null);
+  const navigate = (id: string) => {
+    setPage(id);
     setMenu(false);
-    sessionStorage.setItem("waypoint-page", value);
+    setConversation(false);
+    sessionStorage.setItem("waypoint-page", id);
+    requestAnimationFrame(() =>
+      document.querySelector<HTMLElement>("#workspace-main h1")?.focus(),
+    );
   };
   useEffect(() => {
-    localStorage.setItem("waypoint-chat", rail ? "open" : "closed");
-  }, [rail]);
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setMenu((value) => !value);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    if (conversation) conversationDialog.current?.showModal();
+    else conversationDialog.current?.close();
+  }, [conversation]);
   const title = navigation.find((item) => item.id === page)?.name || "Overview";
-  const help =
+  const common = state ? { state, mutate, busy } : null;
+  const pending =
     state?.workspace?.assistance.filter(
       (request) => request.status === "pending",
     ).length || 0;
-  const name = state?.profile?.name || state?.auth.username || "Your companion";
-  const common = state ? { state, mutate, busy } : null;
   return (
-    <div className={`ws-shell ${rail ? "with-conversation" : ""}`}>
+    <div className="play-desk">
       <a className="skip-link" href="#workspace-main">
         Skip to workspace
       </a>
-      {menu ? (
+      <DesktopBar />
+      <header className="play-header">
         <button
-          className="ws-scrim"
-          aria-label="Close navigation"
-          onClick={() => setMenu(false)}
-        />
-      ) : null}
-      <aside className={`ws-sidebar ${menu ? "open" : ""}`}>
-        <button
-          className="ws-brand"
+          className="play-wordmark"
           onClick={() => navigate("overview")}
           aria-label="Waypoint home"
         >
           <WaypointMark />
-          <span>
-            waypoint<small>AI gaming companion</small>
-          </span>
+          <span>waypoint</span>
         </button>
-        <button className="ws-game-select" onClick={() => navigate("games")}>
-          <span className="ws-game-icon">
-            <Gamepad2 size={20} />
-          </span>
-          <span>
-            Minecraft Survival<small>First supported world</small>
-          </span>
+        <button
+          className="play-session-select"
+          onClick={() => navigate("games")}
+        >
+          <Gamepad2 size={17} />
+          <span>{state?.workspace?.game.name || "Minecraft Survival"}</span>
           <ChevronRight size={14} />
         </button>
-        <nav aria-label="Main navigation">
-          {navigation.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.id}>
-                {navigation[index - 1]?.group !== item.group ? (
-                  <p className="ws-nav-label">{item.group}</p>
-                ) : null}
-                <button
-                  className={`ws-nav-item ${page === item.id ? "selected" : ""}`}
-                  aria-current={page === item.id ? "page" : undefined}
-                  aria-label={item.name}
-                  onClick={() => navigate(item.id)}
-                >
-                  <Icon size={17} />
-                  <span>{item.name}</span>
-                  {item.id === "collaboration" && help ? <b>{help}</b> : null}
-                </button>
-              </div>
-            );
-          })}
-        </nav>
-        <div className="ws-sidebar-foot">
-          <span className={`status-dot ${connected ? "online" : ""}`} />
-          <span>
-            {connected ? "Local workspace online" : "Reconnecting…"}
-            <small>Free. Open source. Yours.</small>
-          </span>
-        </div>
-      </aside>
-      <div className="ws-main-shell">
-        <DesktopBar />
-        <header className="ws-topbar">
-          <button
-            className="icon-button ws-menu"
-            aria-label="Open navigation"
-            onClick={() => setMenu(!menu)}
-          >
-            <Menu size={20} />
+        <span className="play-connection">
+          <i
+            className={state?.connection.status === "connected" ? "online" : ""}
+          />
+          {state
+            ? state.connection.status !== "connected" &&
+              state.state === "ACTIVE"
+              ? "Offline planning"
+              : human(state.connection.status)
+            : "Connecting"}
+        </span>
+        <div className="play-header-tools">
+          <button className="text-button" onClick={() => navigate("settings")}>
+            Settings
           </button>
-          <div className="ws-breadcrumb">
-            <Gamepad2 size={17} />
-            <span>Minecraft Survival</span>
-            <ChevronRight size={13} />
-            <strong>{title}</strong>
-          </div>
-          <div className="ws-top-actions">
-            <Badge
-              tone={
-                state?.connection.status === "connected" ? "green" : "muted"
-              }
-            >
-              {state ? human(state.connection.status) : "Connecting"}
-            </Badge>
-            <button
-              className="icon-button ws-help-button"
-              aria-label={`Needs your help${help ? ` (${help})` : ""}`}
-              onClick={() => navigate("collaboration")}
-            >
-              <Bell size={18} />
-              {help ? <i /> : null}
-            </button>
-            <button
-              className="icon-button"
-              aria-label={
-                rail ? "Close conversation panel" : "Open conversation panel"
-              }
-              aria-expanded={rail}
-              onClick={() => setRail(!rail)}
-            >
-              <MessageCircle size={18} />
-            </button>
-            <button
-              className="icon-button danger-text"
-              aria-label="Emergency stop companion"
-              title="Emergency stop companion"
-              disabled={!state}
-              onClick={() =>
-                attempt(mutate("/control", { command: "emergency" }))
-              }
-            >
-              <ShieldAlert size={18} />
-            </button>
-            <button
-              className="ws-initials"
-              onClick={() => navigate("companion")}
-              aria-label="Companion profile"
-            >
-              {name.slice(0, 2).toUpperCase()}
-            </button>
-          </div>
-        </header>
-        <div className="ws-body">
-          <main id="workspace-main" className="ws-content">
-            <div className="ws-page-heading">
-              <div>
-                <span className="eyebrow">
-                  {page === "studio"
-                    ? "MINECRAFT MODULE"
-                    : "YOUR COMPANION WORKSPACE"}
-                </span>
-                <h1>{title}</h1>
-                <p>{descriptions[page]}</p>
-              </div>
-              {common ? <Controls {...common} /> : null}
-            </div>
-            {error ? (
-              <div className="error-banner" role="alert">
-                <ShieldAlert size={18} />
-                <span>{error}</span>
-                <button aria-label="Dismiss error" onClick={clearError}>
-                  <X size={16} />
-                </button>
-              </div>
-            ) : null}
-            {state && !connected ? (
-              <div className="info-note gold" role="status">
-                Live updates interrupted. Showing the last received state;
-                actions may be unavailable until reconnection.
-              </div>
-            ) : null}
-            {connected && state?.world && state.workspace?.session.stale ? (
-              <div className="info-note gold" role="status">
-                Game observations are out of date. Inventory and position show
-                the last observation; available project supplies are unverified.
-              </div>
-            ) : null}
-            {!common ? (
-              <Panel>
-                <Empty title="Connecting to your workspace">
-                  Start the local launcher. This page reconnects automatically.
-                </Empty>
-              </Panel>
-            ) : (
-              <>
-                {page === "overview" || page === "settings" ? (
-                  <SetupIssues state={state!} navigate={navigate} />
-                ) : null}
-                {state!.connection.projected ? (
-                  <div className="info-note gold">
-                    Translated connection. Inventory and construction quantities
-                    are unverified; exact operations are disabled.
-                  </div>
-                ) : null}
-                {state!.planning ? (
-                  <div className="ws-session-note">
-                    <Compass size={15} />
-                    Offline conversation session · no game actions available
-                  </div>
-                ) : null}
-                {page === "overview" ? (
-                  <WorkspaceOverview {...common} navigate={navigate} />
-                ) : null}
-                {page === "mission" ? <Mission {...common} /> : null}
-                {page === "resources" ? <Resources {...common} /> : null}
-                {page === "inventory" ? <Inventory state={state!} /> : null}
-                {page === "tasks" ? (
-                  <>
-                    <Mission {...common} compact />
-                    <SharedTasks {...common} />
-                  </>
-                ) : null}
-                {page === "collaboration" ? (
-                  <>
-                    <Assistance {...common} />
-                    <SharedTasks {...common} />
-                  </>
-                ) : null}
-                {page === "activity" ? <ActivityFeed state={state!} /> : null}
-                {page === "companion" ? (
-                  <>
-                    <CompanionHome {...common} />
-                    <details className="ws-advanced">
-                      <summary>
-                        Gameplay preferences, locations & operational memory
-                      </summary>
-                      <Companion {...common} settingsOnly />
-                    </details>
-                  </>
-                ) : null}
-                {page === "communication" ? (
-                  <ConversationPane {...common} />
-                ) : null}
-                {page === "studio" ? <Studio {...common} /> : null}
-                {page === "games" ? (
-                  <Games {...common} navigate={navigate} />
-                ) : null}
-                {page === "extensions" ? <Extensions {...common} /> : null}
-                {page === "community" ? <Community /> : null}
-                {page === "diagnostics" ? <Diagnostics {...common} /> : null}
-                {page === "settings" ? (
-                  <Settings {...common} navigate={navigate} />
-                ) : null}
-                {page === "setup" ? (
-                  <>
-                    <div className="ws-session-note">
-                      <Gamepad2 size={16} />
-                      Selected game: Minecraft Survival ·{" "}
-                      <button
-                        className="text-button"
-                        onClick={() => navigate("games")}
-                      >
-                        View games
-                      </button>
-                    </div>
-                    <Setup {...common} navigate={navigate} />
-                  </>
-                ) : null}
-                {page !== "setup" ? (
-                  <VoiceBridge state={state!} mutate={mutate} />
-                ) : null}
-                <footer className="ws-footer">
-                  <span>
-                    <i className={`status-dot ${connected ? "online" : ""}`} />
-                    {connected
-                      ? "Connected to local runtime"
-                      : "Live updates reconnecting"}
-                  </span>
-                  <span>Waypoint · Minecraft Survival · early access</span>
-                </footer>
-              </>
-            )}
-          </main>
-          {rail && common ? (
-            <aside
-              className="ws-conversation-rail"
-              aria-label="Companion conversation"
-            >
-              <div className="ws-rail-heading">
-                <span>Stay in the conversation</span>
-                <button
-                  className="icon-button"
-                  aria-label="Close conversation panel"
-                  onClick={() => setRail(false)}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <ConversationPane {...common} compact />
-            </aside>
+          <button
+            className="button play-tools-button"
+            aria-label="Open navigation"
+            aria-keyshortcuts="Control+k Meta+k"
+            aria-haspopup="dialog"
+            onClick={() => setMenu(true)}
+          >
+            <Menu size={16} />
+            <span>Navigation</span>
+          </button>
+          <kbd className="navigation-shortcut" aria-hidden="true">
+            Ctrl K
+          </kbd>
+        </div>
+      </header>
+      <main id="workspace-main" className={`play-main page-${page}`}>
+        <div className="play-workarea-heading">
+          <h1 tabIndex={-1}>{title}</h1>
+          {common ? (
+            <>
+              <Controls {...common} />
+              <button
+                className="icon-button danger-text"
+                aria-label="Emergency stop companion"
+                title="Emergency stop companion"
+                onClick={() =>
+                  attempt(mutate("/control", { command: "emergency" }))
+                }
+              >
+                <ShieldAlert size={17} />
+              </button>
+            </>
           ) : null}
         </div>
-      </div>
+        {error ? (
+          <div className="error-banner" role="alert">
+            <ShieldAlert size={18} />
+            <span>{error}</span>
+            <button aria-label="Dismiss error" onClick={clearError}>
+              <X size={17} />
+            </button>
+          </div>
+        ) : null}
+        {state && !connected ? (
+          <div className="info-note gold" role="status">
+            Live updates interrupted. Showing the last received state; actions
+            may be unavailable until reconnection.
+          </div>
+        ) : null}
+        {connected && state?.world && state.workspace?.session.stale ? (
+          <div className="info-note gold" role="status">
+            Game observations are out of date. Inventory and position show the
+            last observation; project supplies need rechecking.
+          </div>
+        ) : null}
+        {state?.connection.projected ? (
+          <div className="info-note gold">
+            Translated connection. Exact inventory and construction are
+            unavailable.
+          </div>
+        ) : null}
+        {!common ? (
+          <div className="play-loading">
+            <span className="eyebrow">LOCAL CONNECTION</span>
+            <h2>Opening your play desk.</h2>
+            <p>Start the local launcher if this takes more than a moment.</p>
+          </div>
+        ) : (
+          <>
+            {page === "overview" || page === "settings" ? (
+              <SetupIssues state={state!} navigate={navigate} />
+            ) : null}
+            {page === "overview" ? (
+              <SessionStage
+                {...common}
+                navigate={navigate}
+                talk={() => setConversation(true)}
+              />
+            ) : null}
+            {page === "mission" ? <Mission {...common} /> : null}
+            {page === "resources" ? (
+              <ResourceWorkbench
+                {...common}
+                onOpenStudio={() => navigate("studio")}
+              />
+            ) : null}
+            {page === "inventory" ? <Inventory state={state!} /> : null}
+            {page === "tasks" ? (
+              <>
+                <Mission {...common} compact />
+                <SharedTasks {...common} />
+              </>
+            ) : null}
+            {page === "collaboration" ? (
+              <>
+                <Assistance {...common} />
+                <SharedTasks {...common} />
+              </>
+            ) : null}
+            {page === "activity" ? <ActivityFeed state={state!} /> : null}
+            {page === "companion" ? (
+              <>
+                <CompanionHome {...common} />
+                <details className="ws-advanced">
+                  <summary>
+                    Gameplay preferences, locations & operational memory
+                  </summary>
+                  <Companion {...common} settingsOnly />
+                </details>
+              </>
+            ) : null}
+            {page === "communication" ? <ConversationPane {...common} /> : null}
+            {page === "studio" ? <Studio {...common} /> : null}
+            {page === "games" ? (
+              <Games {...common} navigate={navigate} />
+            ) : null}
+            {page === "extensions" ? <Extensions {...common} /> : null}
+            {page === "community" ? <Community /> : null}
+            {page === "diagnostics" ? <Diagnostics {...common} /> : null}
+            {page === "settings" ? (
+              <Settings {...common} navigate={navigate} />
+            ) : null}
+            {page === "setup" ? (
+              <Setup {...common} navigate={navigate} />
+            ) : null}
+            {page !== "setup" ? (
+              <details className="play-voice" open={page === "communication"}>
+                <summary>
+                  Voice connection{" "}
+                  <span>
+                    {state!.voice.available
+                      ? "Local voice available"
+                      : "Setup needed"}
+                  </span>
+                </summary>
+                <VoiceBridge state={state!} mutate={mutate} />
+              </details>
+            ) : null}
+          </>
+        )}
+        <footer className="play-footer">
+          <span>
+            {connected
+              ? "Connected to local runtime"
+              : "Live updates reconnecting"}
+          </span>
+          <span>Waypoint · early access</span>
+        </footer>
+      </main>
+      <nav className="play-dock" aria-label="Play desk">
+        {[
+          ["overview", "Session"],
+          ["mission", "Plan"],
+          ["resources", "Supplies"],
+          ["communication", "Talk"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            aria-current={page === id ? "page" : undefined}
+            onClick={() => navigate(id)}
+          >
+            <span>{label}</span>
+          </button>
+        ))}
+        <button
+          className={pending ? "has-request" : ""}
+          onClick={() => navigate("collaboration")}
+        >
+          {pending ? <b>{pending}</b> : null}
+          <span>Together</span>
+        </button>
+        <button
+          className="play-talk-toggle"
+          aria-label="Open conversation panel"
+          onClick={() => setConversation(true)}
+        >
+          <MessageCircle size={18} />
+        </button>
+      </nav>
+      <ToolMenu
+        open={menu}
+        close={() => setMenu(false)}
+        navigate={navigate}
+        items={navigation}
+      />
+      <dialog
+        className="conversation-sheet"
+        ref={conversationDialog}
+        onClose={() => setConversation(false)}
+        aria-label="Companion conversation"
+      >
+        <header>
+          <span>On the same channel.</span>
+          <button
+            className="icon-button"
+            aria-label="Close conversation panel"
+            onClick={() => setConversation(false)}
+          >
+            <X size={20} />
+          </button>
+        </header>
+        {error ? (
+          <div className="error-banner" role="alert">
+            <ShieldAlert size={18} />
+            <span>{error}</span>
+            <button
+              aria-label="Dismiss conversation error"
+              onClick={clearError}
+            >
+              <X size={17} />
+            </button>
+          </div>
+        ) : null}
+        {common ? (
+          <aside aria-label="Companion conversation">
+            <ConversationPane {...common} />
+          </aside>
+        ) : null}
+      </dialog>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import { expect } from '@playwright/test';
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
@@ -41,10 +42,7 @@ try {
     ["My companion", "My companion"],
     ["Settings", "Settings"],
   ]) {
-    await page
-      .getByRole("navigation")
-      .getByRole("button", { name: label, exact: true })
-      .click();
+    await navigateWorkspace(page, label);
     await page
       .getByRole("heading", { name: heading, exact: true, level: 1 })
       .waitFor();
@@ -66,10 +64,7 @@ try {
   evidenceLines.push(
     "All six pages render against a real local API and SQLite store; no page errors or desktop overflow.",
   );
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "My companion", exact: true })
-    .click();
+  await navigateWorkspace(page, "My companion");
   await page.getByText('Gameplay preferences, locations & operational memory', { exact: true }).click();
   const travelPace = page.getByRole('combobox', { name: 'Travel pace', exact: true });
   await travelPace.selectOption('normal');
@@ -96,10 +91,7 @@ try {
   evidenceLines.push(
     "Memory creation/deletion is persisted through actual API requests.",
   );
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "Build studio", exact: true })
-    .click();
+  await navigateWorkspace(page, "Build studio");
   await page
     .getByRole("textbox", { name: "New project name" })
     .fill("QA isolated blueprint");
@@ -138,10 +130,7 @@ try {
     path: join(evidence, "blueprint-actual.png"),
     fullPage: true,
   });
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "Tasks & plans", exact: true })
-    .click();
+  await navigateWorkspace(page, "Tasks & plans");
   await page.getByRole("button", { name: "Apply split", exact: true }).click();
   await page.getByText("Oak Log", { exact: true }).waitFor();
   const count = page.getByRole("spinbutton", {
@@ -161,10 +150,7 @@ try {
   evidenceLines.push(
     "Created a project, imported actual 2-block blueprint, rendered preview and exact counts, approved revision, blocked offline construction, split 50/50 and persisted manual user progress. World remains null and model usage zero.",
   );
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "My companion", exact: true })
-    .click();
+  await navigateWorkspace(page, "My companion");
   await page.getByText('Gameplay preferences, locations & operational memory', { exact: true }).click();
   await page.getByRole("spinbutton", { name: "Mining area x" }).fill("120");
   await page.getByRole("spinbutton", { name: "Mining area radius" }).fill("8");
@@ -179,13 +165,15 @@ try {
   evidenceLines.push(
     "Mining permission is an explicit UI action, persisted by the backend, and revocable while offline. No blocks are changed by approval.",
   );
-  await page.getByRole("navigation").getByRole("button", {name:"Communication",exact:true}).click();
+  await navigateWorkspace(page, "Communication");
   await page
     .getByRole("button", { name: "Start planning offline", exact: true })
     .click();
-  await page
-    .getByText("Offline conversation session · no game actions available", { exact: true })
-    .waitFor();
+  await page.waitForFunction(async () => {
+    const state = await (await fetch('/api/state')).json();
+    return state.state === 'ACTIVE' && state.connection.status !== 'connected';
+  });
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.getByRole("button", { name: "Resume companion", exact: true })).toBeEnabled();
   await page
@@ -210,11 +198,7 @@ try {
     "My companion",
     "Settings",
   ]) {
-    await page.getByRole("button", {name:"Open navigation",exact:true}).click();
-    await page
-      .getByRole("navigation")
-      .getByRole("button", { name: label, exact: true })
-      .click();
+    await navigateWorkspace(page, label);
     await page
       .getByRole("heading", { name: label, exact: true, level: 1 })
       .waitFor();

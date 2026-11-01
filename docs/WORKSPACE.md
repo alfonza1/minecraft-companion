@@ -31,8 +31,13 @@ turning low-level execution logs into chat.
 | Settings / Setup | Existing model, Realm, voice, permissions and installation controls |
 | Diagnostics | Searchable logs, service status, model usage and technical errors |
 
-The conversation side panel can be collapsed. Small displays use responsive
-navigation and stacked content. Reduced-motion preferences are respected.
+There is no permanent navigation sidebar. The bottom rail opens Session, Plan,
+Supplies, Talk and Together; **Navigation** or **Ctrl/⌘K** opens a searchable tool
+menu. Escape closes the native dialog and returns keyboard focus. The conversation
+button opens a focused conversation window; failed requests appear inside it.
+Settings separates Game account, AI & usage, Voice & devices and Data & diagnostics.
+Small displays use compact resource progress and stacked work areas. Reduced-motion
+preferences are respected.
 Your model, voice devices, account and existing private data are preserved.
 
 ## Start, pause and resume
@@ -71,7 +76,8 @@ items in a way the companion can observe.
 at different production stages. Do not add them together: logs may become the
 planks in the other view. Version-specific recipes retain crafting yields.
 
-Each row separates:
+Select an item on the material shelf to inspect its accounting and crafting
+steps. The focused workbench separates:
 
 - Required raw ingredients or finished crafted items.
 - Verified construction coverage, retained after supplies are consumed.

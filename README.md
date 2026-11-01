@@ -1,6 +1,6 @@
 # Waypoint
 
-**Your next gaming buddy is AI.**
+**Good company. Better games.**
 
 Waypoint is a free, open-source **AI gaming companion platform**: a companion to
 play with, talk to, share goals with and improve together. **Minecraft Survival is
@@ -17,14 +17,17 @@ emotional pressure or claims of unattended human-level gameplay.
 [Get started](docs/INSTALLATION.md) · [Workspace](docs/WORKSPACE.md) · [Architecture](docs/ARCHITECTURE.md) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap](docs/ROADMAP.md)
 
-![Waypoint public website — companion identity illustration, not gameplay](apps/website/public/social.png)
+![Waypoint public website — actual application preview, not gameplay footage](apps/website/public/social.png)
 
 ## Play together. Talk naturally. Keep the good bits.
 
 The shared workspace puts your companion, current activity, mission, resources,
 help requests and conversation together. Adjust its name, style and talkativeness;
 save a real conversation or completed task as a moment; inspect or delete it later.
-No friendship scores, fabricated memories or fake live telemetry.
+A compact tool rail keeps the session in view. Press **Ctrl+K** (or **⌘K**) for
+the full navigation menu. Gathering, construction, exploration and blockers each
+bring different information forward. No friendship scores, fabricated memories
+or fake live telemetry.
 
 ![Actual Waypoint workspace in a disconnected test session](apps/website/public/dashboard.png)
 
@@ -43,7 +46,7 @@ npm run install:agent
 npm start
 ```
 
-Open **http://127.0.0.1:4365 → Games → Minecraft Survival**, then **Setup**. Select an installed local Ollama model for
+Open **http://127.0.0.1:4365 → Navigation → Games → Minecraft Survival**, then **Navigation → Setup**. Select an installed local Ollama model for
 no-subscription inference, or configure an existing supported provider account.
 Connect a separate licensed Minecraft Java account through Microsoft's device-code
 flow. Choose its invited Realm and check compatibility before joining.

@@ -34,7 +34,7 @@ an experimental prerelease, not a vulnerability-free production certification.
 - Application and original upstream: Apache-2.0; retain LICENSE and NOTICE.
 - Prismarine/Mineflayer ecosystem: installed package notices plus pinned native
   adapter repository/file hashes; do not strip licenses when packaging.
-- Space Grotesk fonts: SIL Open Font License, distributed via @fontsource.
+- Space Grotesk and Barlow Condensed fonts: SIL Open Font License, distributed via @fontsource.
 - range 0.0.3 lacks a package.json license field; installed LICENSE is FreeBSD
   (BSD-2-Clause). It is a development dependency through flying-squid.
 - Optional Piper runtime may use GPL terms; speech is a separate optional process.
@@ -52,3 +52,9 @@ No trademark clearance or ownership of the common word “Waypoint” is claimed
 Claude Agent SDK is proprietary optional integration code, not relicensed as open source.
 Run `npm run setup:claude` only if choosing that provider; it installs outside the
 repository. The free local Ollama path and core installation do not require it.
+
+The 0.4 design tools are pinned development dependencies. Lighthouse 13.5.0
+was selected after 13.6.0 introduced an additional vulnerable development chain;
+the final npm audit remains at the existing 12 moderate findings, no high/critical.
+The new fixture server never connects a game/account/model or opens the microphone.
+Public screenshots contain only empty or explicitly synthetic test sessions.

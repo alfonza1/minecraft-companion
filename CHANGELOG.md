@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0-alpha.1 — The shared play desk
+
+- Replaced the permanent sidebar with a searchable keyboard tool menu, compact
+  session rail and contextual activity stage. Gathering, construction, exploration,
+  waiting and disconnected sessions use actual runtime observations.
+- Rebuilt resource navigation as an item shelf and focused accounting workbench.
+  Kept raw ingredients, observed stock, construction credit and player reports separate.
+- Added focused settings sections and an integrated conversation dialog with visible
+  request errors. Retained voice configuration, lifecycle controls and local data.
+- Replaced the public website's mascot/concept art with real application captures;
+  rewrote all nine pages, added shared typography and labeled synthetic demonstrations.
+- Fixed missing item textures on newer protocol versions without changing game state.
+- Added isolated browser fixture scenarios, screenshot comparisons, axe audits and
+  reproducible Lighthouse checks. Fonts preload without shifting the page.
+
+This is a design and usability release. It adds no second playable game and does
+not establish new gameplay, speech-quality or unattended-build benchmarks.
+
 ## 0.3.0-alpha.1 — Your companion, across the adventure
 
 - Redesigned the public website and 16-screen local workspace around a gaming

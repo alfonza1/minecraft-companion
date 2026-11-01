@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -27,7 +28,7 @@ page.on('request', request => { if (request.method() === 'POST') mutations.push(
 try {
   await page.goto(base);
   await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await navigateWorkspace(page, 'Setup');
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   await page.getByRole('heading', { name: 'Check your local services', exact: true }).waitFor();
   await page.getByText(/Showing existing service status|Status checked/).waitFor();
@@ -57,7 +58,7 @@ try {
   assert.equal(state.planning, true); assert.equal(state.state, 'ACTIVE'); assert.equal(state.world, null); assert.equal(state.usage.requests, 0);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   state = await (await fetch(`${base}/api/state`)).json(); assert.equal(state.state, 'PAUSED');
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await navigateWorkspace(page, 'Setup');
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /Voice check/ }).click();
   assert.equal(await page.getByRole('button', { name: 'Start local audio checks', exact: true }).isDisabled(), true);
   await page.getByRole('button', { name: 'Stop and disconnect', exact: true }).click();
@@ -67,11 +68,11 @@ try {
     await page.getByRole('button', { name: 'Start local audio checks', exact: true }).click();
     await page.getByText('Microphone permission denied by setup test', { exact: true }).waitFor();
     assert.equal(await page.evaluate(() => window.__setupMicRequests), 1);
-    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Overview', exact: true }).click();
+    await navigateWorkspace(page, 'Overview');
     await page.getByRole('button', { name: 'Resume companion', exact: true }).waitFor();
     assert.equal((await (await fetch(`${base}/api/state`)).json()).state, 'PAUSED');
     await page.getByRole('button', { name: 'Stop and disconnect', exact: true }).click();
-    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+    await navigateWorkspace(page, 'Setup');
     checks.push('An explicit audio check alone requests microphone permission. A denial fixture captures no audio; leaving pauses the wizard-owned offline session.');
   }
   await page.setViewportSize({ width: 390, height: 844 });
@@ -80,10 +81,8 @@ try {
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false, `${step} mobile overflow`);
     await page.screenshot({ path: join(evidence, `${step.replaceAll(' ', '-').toLowerCase()}-mobile.png`), fullPage: true });
   }
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await navigateWorkspace(page, 'Settings');
+  await navigateWorkspace(page, 'Setup');
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   assert.deepEqual(errors, []);
   state = await (await fetch(`${base}/api/state`)).json();

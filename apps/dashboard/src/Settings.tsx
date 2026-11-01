@@ -11,12 +11,12 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import PrivateAccountActions from './PrivateAccountActions';
-import ModelSettings from './ModelSettings';
-import LowTokenMode from './LowTokenMode';
-import { desktopVoiceLabel } from './desktop-voice-status';
-import { PushToTalkSetting, VoiceSelection } from './VoicePreferences';
-import { formatHotkey } from '../../../packages/shared-types/hotkeys';
+import PrivateAccountActions from "./PrivateAccountActions";
+import ModelSettings from "./ModelSettings";
+import LowTokenMode from "./LowTokenMode";
+import { desktopVoiceLabel } from "./desktop-voice-status";
+import { PushToTalkSetting, VoiceSelection } from "./VoicePreferences";
+import { formatHotkey } from "../../../packages/shared-types/hotkeys";
 import type { CompanionState } from "../../../packages/shared-types";
 import { api } from "./api";
 import {
@@ -29,15 +29,38 @@ import {
   type Common,
   type Mutate,
 } from "./shared";
-export default function Settings({ state, mutate, busy, navigate }: Common & { navigate: (page: string) => void }) {
+export default function Settings({
+  state,
+  mutate,
+  busy,
+  navigate,
+}: Common & { navigate: (page: string) => void }) {
   const [player, setPlayer] = useState(state.settings.playerName);
   const [copied, setCopied] = useState(false);
+  const [area, setArea] = useState("account");
   const [diagnostics, setDiagnostics] = useState<any>(null);
   const accountReady = state.auth.status === "connected";
   return (
-    <div className="settings-grid">
+    <div className={`settings-grid settings-workbench area-${area}`}>
+      <div className="settings-area-switch" aria-label="Settings sections">
+        {[
+          ["account", "Game account"],
+          ["models", "AI & usage"],
+          ["voice", "Voice & devices"],
+          ["data", "Data & diagnostics"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            aria-pressed={area === id}
+            onClick={() => setArea(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="settings-column">
         <Panel
+          className="settings-account"
           title="Minecraft account"
           eyebrow="YOUR COMPANION’S IDENTITY"
           action={
@@ -59,8 +82,21 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               </p>
             </div>
           </div>
-          {state.auth.error ? <p className="inline-error" role="alert">{state.auth.error}</p> : null}
-          {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? <a className="button" href="https://www.minecraft.net/en-us/msaprofile/mygames" target="_blank" rel="noreferrer">Open Minecraft account setup <ArrowRight size={14} /></a> : null}
+          {state.auth.error ? (
+            <p className="inline-error" role="alert">
+              {state.auth.error}
+            </p>
+          ) : null}
+          {state.auth.issue === "JAVA_PROFILE_REQUIRED" ? (
+            <a
+              className="button"
+              href="https://www.minecraft.net/en-us/msaprofile/mygames"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open Minecraft account setup <ArrowRight size={14} />
+            </a>
+          ) : null}
           {state.auth.device ? (
             <div className="device-code">
               <p>
@@ -106,14 +142,14 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               {state.auth.issue === "JAVA_PROFILE_REQUIRED"
                 ? "Check Java profile again"
                 : state.auth.username
-                ? "Reconnect Minecraft account"
-                : "Connect Minecraft account"}
+                  ? "Reconnect Minecraft account"
+                  : "Connect Minecraft account"}
             </button>
           )}
           <PrivateAccountActions state={state} mutate={mutate} busy={busy} />
           <p className="note">
-            Sessions are cached outside the repository. Never share a password or
-            authentication token in chat.
+            Sessions are cached outside the repository. Never share a password
+            or authentication token in chat.
           </p>
           <div className="settings-divider" />
           <div className="panel-heading">
@@ -134,7 +170,9 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
                 value={state.settings.realmId || ""}
                 onChange={(e) =>
                   attempt(
-                    mutate("/settings", { realmId: e.target.value ? Number(e.target.value) : null }),
+                    mutate("/settings", {
+                      realmId: e.target.value ? Number(e.target.value) : null,
+                    }),
                   )
                 }
               >
@@ -170,11 +208,51 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
             <p className="inline-error">{state.connection.error}</p>
           ) : null}
         </Panel>
-        <Panel title="AI models & reasoning" eyebrow="THINK WHEN IT MATTERS">
+        <Panel
+          className="settings-models"
+          title="AI models & reasoning"
+          eyebrow="THINK WHEN IT MATTERS"
+        >
           <ModelSettings state={state} mutate={mutate} />
-          <label className="toggle-row"><span>Faster conversation replies<small>Uses low Codex reasoning for conversation. Architecture keeps its normal reasoning. Unrelated coding-skill instructions are excluded.</small></span><input type="checkbox" checked={state.settings.fastResponses!==false} onChange={event=>attempt(mutate('/settings',{fastResponses:event.target.checked}))} /></label>
+          <label className="toggle-row">
+            <span>
+              Faster conversation replies
+              <small>
+                Uses low Codex reasoning for conversation. Architecture keeps
+                its normal reasoning. Unrelated coding-skill instructions are
+                excluded.
+              </small>
+            </span>
+            <input
+              type="checkbox"
+              checked={state.settings.fastResponses !== false}
+              onChange={(event) =>
+                attempt(
+                  mutate("/settings", { fastResponses: event.target.checked }),
+                )
+              }
+            />
+          </label>
           <LowTokenMode state={state} mutate={mutate} />
-          <label className="toggle-row"><span>Limit input tokens<small>Optional local cap. Off by default; provider limits still apply.</small></span><input type="checkbox" checked={state.settings.inputTokenLimitEnabled===true} onChange={event=>attempt(mutate('/settings',{inputTokenLimitEnabled:event.target.checked}))} /></label>
+          <label className="toggle-row">
+            <span>
+              Limit input tokens
+              <small>
+                Optional local cap. Off by default; provider limits still apply.
+              </small>
+            </span>
+            <input
+              type="checkbox"
+              checked={state.settings.inputTokenLimitEnabled === true}
+              onChange={(event) =>
+                attempt(
+                  mutate("/settings", {
+                    inputTokenLimitEnabled: event.target.checked,
+                  }),
+                )
+              }
+            />
+          </label>
           <div className="two-inputs">
             <label className="field-label">
               Requests per hour
@@ -199,7 +277,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
                 min="0"
                 step="1000"
                 value={state.settings.maxInputTokens}
-                disabled={state.settings.inputTokenLimitEnabled!==true}
+                disabled={state.settings.inputTokenLimitEnabled !== true}
                 onChange={(e) =>
                   attempt(
                     mutate("/settings", {
@@ -210,24 +288,56 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
               />
             </label>
           </div>
-          {state.settings.inputTokenLimitEnabled===true ? <><p className="note">Current local budget: {(state.usage.inputBudgetUsed ?? state.usage.inputTokens).toLocaleString()} / {state.settings.maxInputTokens.toLocaleString()} reported input tokens. Renewing starts another budget at the same limit and preserves lifetime usage.</p><button className="button" disabled={Boolean(state.ai?.modelState?.active)} onClick={() => attempt(mutate('/usage/renew-budget', {}))}>Start new token budget</button></> : <p className="note" role="status">No local token cap. Usage is still tracked. The separate hourly request limit and your provider’s account limits still apply.</p>}
+          {state.settings.inputTokenLimitEnabled === true ? (
+            <>
+              <p className="note">
+                Current local budget:{" "}
+                {(
+                  state.usage.inputBudgetUsed ?? state.usage.inputTokens
+                ).toLocaleString()}{" "}
+                / {state.settings.maxInputTokens.toLocaleString()} reported
+                input tokens. Renewing starts another budget at the same limit
+                and preserves lifetime usage.
+              </p>
+              <button
+                className="button"
+                disabled={Boolean(state.ai?.modelState?.active)}
+                onClick={() => attempt(mutate("/usage/renew-budget", {}))}
+              >
+                Start new token budget
+              </button>
+            </>
+          ) : (
+            <p className="note" role="status">
+              No local token cap. Usage is still tracked. The separate hourly
+              request limit and your provider’s account limits still apply.
+            </p>
+          )}
           <div className="usage-box">
             <div>
               <span>Requests</span>
               <strong>{state.usage.requests}</strong>
             </div>
             <div>
-              <span>{state.usage.unreportedRequests ? 'Reported input tokens' : 'Input tokens'}</span>
+              <span>
+                {state.usage.unreportedRequests
+                  ? "Reported input tokens"
+                  : "Input tokens"}
+              </span>
               <strong>{state.usage.inputTokens.toLocaleString()}</strong>
             </div>
             <div>
-              <span>{state.usage.unreportedRequests ? 'Reported output tokens' : 'Output tokens'}</span>
+              <span>
+                {state.usage.unreportedRequests
+                  ? "Reported output tokens"
+                  : "Output tokens"}
+              </span>
               <strong>{state.usage.outputTokens.toLocaleString()}</strong>
             </div>
           </div>
           <p className="note">
-            Request counts include attempts; tokens come from reported responses. Account limits and billing
-            cost are{" "}
+            Request counts include attempts; tokens come from reported
+            responses. Account limits and billing cost are{" "}
             {state.usage.billingCost === null
               ? "not provided by the provider"
               : `$${state.usage.billingCost}`}
@@ -235,7 +345,9 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
           </p>
           <button
             className="button danger full"
-            onClick={() => attempt(mutate("/control", { command: "emergency" }))}
+            onClick={() =>
+              attempt(mutate("/control", { command: "emergency" }))
+            }
           >
             <ShieldAlert size={15} />
             Emergency stop
@@ -244,6 +356,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
       </div>
       <div className="settings-column">
         <Panel
+          className="settings-voice"
           title="Voice & audio"
           eyebrow="HEARD, WHEREVER YOU ARE"
           action={
@@ -255,6 +368,7 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
           <VoiceSettings state={state} mutate={mutate} />
         </Panel>
         <Panel
+          className="settings-data"
           title="Diagnostics"
           eyebrow="A HEALTHY LOCAL WORKSPACE"
           action={
@@ -268,8 +382,42 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
           }
         >
           <h3>Where time goes</h3>
-          <p className="note">Measured locally since this service started. Timings can overlap; they are not token costs. P95 uses the latest 100 samples per stage.</p>
-          {state.performance?.length ? <div className="table-scroll"><table><thead><tr><th>Stage</th><th>Last</th><th>Median</th><th>P95</th><th>Runs / failures</th></tr></thead><tbody>{state.performance.map(row => <tr key={row.stage}><td>{row.stage}</td><td>{(row.lastMs/1000).toFixed(2)}s</td><td>{(row.medianMs/1000).toFixed(2)}s</td><td>{(row.p95Ms/1000).toFixed(2)}s</td><td>{row.count} / {row.failures}</td></tr>)}</tbody></table></div> : <p className="quiet-empty">No timing samples yet. Talk or run a task to measure it.</p>}
+          <p className="note">
+            Measured locally since this service started. Timings can overlap;
+            they are not token costs. P95 uses the latest 100 samples per stage.
+          </p>
+          {state.performance?.length ? (
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Stage</th>
+                    <th>Last</th>
+                    <th>Median</th>
+                    <th>P95</th>
+                    <th>Runs / failures</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.performance.map((row) => (
+                    <tr key={row.stage}>
+                      <td>{row.stage}</td>
+                      <td>{(row.lastMs / 1000).toFixed(2)}s</td>
+                      <td>{(row.medianMs / 1000).toFixed(2)}s</td>
+                      <td>{(row.p95Ms / 1000).toFixed(2)}s</td>
+                      <td>
+                        {row.count} / {row.failures}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="quiet-empty">
+              No timing samples yet. Talk or run a task to measure it.
+            </p>
+          )}
           {diagnostics ? (
             <pre className="diagnostic-output">
               {JSON.stringify(diagnostics, null, 2)}
@@ -292,7 +440,9 @@ export default function Settings({ state, mutate, busy, navigate }: Common & { n
                 .map((log, i) => (
                   <div key={i}>
                     <time>{time(log.at)}</time>
-                    <span className={log.level === "error" ? "danger-text" : ""}>
+                    <span
+                      className={log.level === "error" ? "danger-text" : ""}
+                    >
                       {log.message}
                     </span>
                   </div>
@@ -317,24 +467,52 @@ function VoiceSettings({
   const [audioError, setAudioError] = useState("");
   const [choosingOutput, setChoosingOutput] = useState(false);
   const voice = state.settings.voice;
-  const outputPicker = navigator.mediaDevices as MediaDevices & { selectAudioOutput?: (options?: { deviceId?: string }) => Promise<MediaDeviceInfo> };
+  const outputPicker = navigator.mediaDevices as MediaDevices & {
+    selectAudioOutput?: (options?: {
+      deviceId?: string;
+    }) => Promise<MediaDeviceInfo>;
+  };
   useEffect(() => {
     let disposed = false;
-    const refresh = () => { void navigator.mediaDevices?.enumerateDevices().then(value => { if (!disposed) setDevices(value); }).catch(() => {}); };
-    refresh(); navigator.mediaDevices?.addEventListener('devicechange', refresh);
-    return () => { disposed = true; navigator.mediaDevices?.removeEventListener('devicechange', refresh); };
+    const refresh = () => {
+      void navigator.mediaDevices
+        ?.enumerateDevices()
+        .then((value) => {
+          if (!disposed) setDevices(value);
+        })
+        .catch(() => {});
+    };
+    refresh();
+    navigator.mediaDevices?.addEventListener("devicechange", refresh);
+    return () => {
+      disposed = true;
+      navigator.mediaDevices?.removeEventListener("devicechange", refresh);
+    };
   }, []);
   async function chooseOutput() {
     if (!outputPicker?.selectAudioOutput) return;
-    setChoosingOutput(true); setAudioError('');
+    setChoosingOutput(true);
+    setAudioError("");
     try {
-      const selected = await outputPicker.selectAudioOutput({ deviceId: voice.outputDevice || '' });
-      setDevices(value => [...value.filter(device => device.deviceId !== selected.deviceId), selected]);
-      await mutate('/settings', { voice: { outputDevice: selected.deviceId } });
+      const selected = await outputPicker.selectAudioOutput({
+        deviceId: voice.outputDevice || "",
+      });
+      setDevices((value) => [
+        ...value.filter((device) => device.deviceId !== selected.deviceId),
+        selected,
+      ]);
+      await mutate("/settings", { voice: { outputDevice: selected.deviceId } });
     } catch (error) {
       const problem = error as Error;
-      if (problem.name !== 'AbortError') setAudioError(['NotAllowedError', 'SecurityError'].includes(problem.name) ? 'Speaker selection was not allowed. You can use System default without granting microphone access.' : problem.message);
-    } finally { setChoosingOutput(false); }
+      if (problem.name !== "AbortError")
+        setAudioError(
+          ["NotAllowedError", "SecurityError"].includes(problem.name)
+            ? "Speaker selection was not allowed. You can use System default without granting microphone access."
+            : problem.message,
+        );
+    } finally {
+      setChoosingOutput(false);
+    }
   }
   async function inspectDevices() {
     try {
@@ -384,7 +562,17 @@ function VoiceSettings({
         value={voice.outputDevice || ""}
         options={{
           "": "System default",
-          ...(voice.outputDevice && !devices.some(device => device.kind === 'audiooutput' && device.deviceId === voice.outputDevice) ? { [voice.outputDevice]: 'Saved speakers · choose again in this app' } : {}),
+          ...(voice.outputDevice &&
+          !devices.some(
+            (device) =>
+              device.kind === "audiooutput" &&
+              device.deviceId === voice.outputDevice,
+          )
+            ? {
+                [voice.outputDevice]:
+                  "Saved speakers · choose again in this app",
+              }
+            : {}),
           ...Object.fromEntries(
             devices
               .filter((d) => d.kind === "audiooutput")
@@ -395,8 +583,20 @@ function VoiceSettings({
           attempt(mutate("/settings", { voice: { outputDevice } }))
         }
       />
-      {outputPicker?.selectAudioOutput ? <button className="button full" disabled={choosingOutput} onClick={() => void chooseOutput()}>{choosingOutput ? 'Choosing audio output…' : 'Choose audio output'}</button> : null}
-      <p className="note">Speaker choices are specific to this app or browser. If saved speakers stop working after reopening or switching browsers, choose them again or select System default. Desktop voice has its own speaker selector below.</p>
+      {outputPicker?.selectAudioOutput ? (
+        <button
+          className="button full"
+          disabled={choosingOutput}
+          onClick={() => void chooseOutput()}
+        >
+          {choosingOutput ? "Choosing audio output…" : "Choose audio output"}
+        </button>
+      ) : null}
+      <p className="note">
+        Speaker choices are specific to this app or browser. If saved speakers
+        stop working after reopening or switching browsers, choose them again or
+        select System default. Desktop voice has its own speaker selector below.
+      </p>
       <label className="field-label">
         Speech speed <span className="range-label">{voice.speed}×</span>
         <input
@@ -460,7 +660,13 @@ function VoiceSettings({
   );
 }
 
-function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate }) {
+function NativeVoice({
+  state,
+  mutate,
+}: {
+  state: CompanionState;
+  mutate: Mutate;
+}) {
   const hotkey = formatHotkey(state.settings.voice.pushToTalk);
   const [running, setRunning] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -474,17 +680,47 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
       hostapi: number;
     }[]
   >([]);
-  const inputPreference=state.settings.voice.desktopInputDevice;
-  const outputPreference=state.settings.voice.desktopOutputDevice;
-  const deviceValue=(preference:typeof inputPreference)=>preference ? String(devices.find(device=>device.name===preference.name&&device.hostapi===preference.hostapi)?.id ?? 'saved') : '';
-  useEffect(()=>{void api('/voice/devices').then(setDevices).catch(error=>setError(error.message));},[]);
-  async function saveDevice(field:'desktopInputDevice'|'desktopOutputDevice',id:string){
-    setBusy(true);setError('');
-    const device=devices.find(value=>String(value.id)===id);
-    try {await mutate('/settings',{voice:{[field]:device?{name:device.name,hostapi:device.hostapi}:null}});}
-    catch(error){setError((error as Error).message);}finally{setBusy(false);}
+  const inputPreference = state.settings.voice.desktopInputDevice;
+  const outputPreference = state.settings.voice.desktopOutputDevice;
+  const deviceValue = (preference: typeof inputPreference) =>
+    preference
+      ? String(
+          devices.find(
+            (device) =>
+              device.name === preference.name &&
+              device.hostapi === preference.hostapi,
+          )?.id ?? "saved",
+        )
+      : "";
+  useEffect(() => {
+    void api("/voice/devices")
+      .then(setDevices)
+      .catch((error) => setError(error.message));
+  }, []);
+  async function saveDevice(
+    field: "desktopInputDevice" | "desktopOutputDevice",
+    id: string,
+  ) {
+    setBusy(true);
+    setError("");
+    const device = devices.find((value) => String(value.id) === id);
+    try {
+      await mutate("/settings", {
+        voice: {
+          [field]: device
+            ? { name: device.name, hostapi: device.hostapi }
+            : null,
+        },
+      });
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
-  useEffect(() => { if (state.voice.desktop) setRunning(state.voice.desktop.running); }, [state.voice.desktop?.running]);
+  useEffect(() => {
+    if (state.voice.desktop) setRunning(state.voice.desktop.running);
+  }, [state.voice.desktop?.running]);
   useEffect(() => {
     const browserEnabled = () => setRunning(false);
     window.addEventListener("companion-browser-voice", browserEnabled);
@@ -516,11 +752,33 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
       <div>
         <h3>Talk while Minecraft is focused</h3>
         <p>
-          Desktop voice starts automatically when you connect or resume. Hold {hotkey} to speak from any app. Pause and disconnect stop capture; your choices stay saved.
+          Desktop voice starts automatically when you connect or resume. Hold{" "}
+          {hotkey} to speak from any app. Pause and disconnect stop capture;
+          your choices stay saved.
         </p>
       </div>
-      <label className="toggle-row"><span>Automatically enable desktop push to talk</span><input type="checkbox" checked={state.settings.voice.desktopEnabled!==false} disabled={busy} onChange={event=>{if(event.target.checked)window.dispatchEvent(new Event('companion-native-voice'));attempt(mutate('/settings',{voice:{desktopEnabled:event.target.checked}}));}} /></label>
-      <PushToTalkSetting state={state} mutate={mutate} onStopped={() => setRunning(false)} />
+      <label className="toggle-row">
+        <span>Automatically enable desktop push to talk</span>
+        <input
+          type="checkbox"
+          checked={state.settings.voice.desktopEnabled !== false}
+          disabled={busy}
+          onChange={(event) => {
+            if (event.target.checked)
+              window.dispatchEvent(new Event("companion-native-voice"));
+            attempt(
+              mutate("/settings", {
+                voice: { desktopEnabled: event.target.checked },
+              }),
+            );
+          }}
+        />
+      </label>
+      <PushToTalkSetting
+        state={state}
+        mutate={mutate}
+        onStopped={() => setRunning(false)}
+      />
       <button
         className="text-button"
         onClick={() =>
@@ -540,28 +798,32 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
             value={deviceValue(inputPreference)}
             options={{
               "": "System default",
-              ...(inputPreference&&deviceValue(inputPreference)==='saved'?{saved:`${inputPreference.name} · unavailable`}:{}),
+              ...(inputPreference && deviceValue(inputPreference) === "saved"
+                ? { saved: `${inputPreference.name} · unavailable` }
+                : {}),
               ...Object.fromEntries(
                 devices
                   .filter((d) => d.max_input_channels > 0)
                   .map((d) => [String(d.id), d.name]),
               ),
             }}
-            onChange={value=>void saveDevice('desktopInputDevice',value)}
+            onChange={(value) => void saveDevice("desktopInputDevice", value)}
           />
           <SettingSelect
             label="Desktop speakers"
             value={deviceValue(outputPreference)}
             options={{
               "": "System default",
-              ...(outputPreference&&deviceValue(outputPreference)==='saved'?{saved:`${outputPreference.name} · unavailable`}:{}),
+              ...(outputPreference && deviceValue(outputPreference) === "saved"
+                ? { saved: `${outputPreference.name} · unavailable` }
+                : {}),
               ...Object.fromEntries(
                 devices
                   .filter((d) => d.max_output_channels > 0)
                   .map((d) => [String(d.id), d.name]),
               ),
             }}
-            onChange={value=>void saveDevice('desktopOutputDevice',value)}
+            onChange={(value) => void saveDevice("desktopOutputDevice", value)}
           />
         </>
       ) : null}
@@ -571,10 +833,18 @@ function NativeVoice({ state, mutate }: { state: CompanionState; mutate: Mutate 
         onClick={() => attempt(toggle())}
       >
         <Mic size={14} />
-        {running ? 'Disable desktop voice' : 'Enable desktop voice'}
+        {running ? "Disable desktop voice" : "Enable desktop voice"}
       </button>
-      {running ? <Badge tone={state.voice.desktop?.error ? "muted" : "green"}>{hotkey} · {desktopVoiceLabel(state.voice.desktop)}</Badge> : null}
-      {error || state.voice.desktop?.error || state.voice.error ? <p className="inline-error">{error || state.voice.desktop?.error || state.voice.error}</p> : null}
+      {running ? (
+        <Badge tone={state.voice.desktop?.error ? "muted" : "green"}>
+          {hotkey} · {desktopVoiceLabel(state.voice.desktop)}
+        </Badge>
+      ) : null}
+      {error || state.voice.desktop?.error || state.voice.error ? (
+        <p className="inline-error">
+          {error || state.voice.desktop?.error || state.voice.error}
+        </p>
+      ) : null}
     </div>
   );
 }

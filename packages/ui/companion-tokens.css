@@ -1,17 +1,17 @@
 :root {
-  --wp-bg: #10141c;
-  --wp-surface: #191f2a;
-  --wp-raised: #222b38;
-  --wp-ink: #f5f1e8;
-  --wp-muted: #adb8c7;
-  --wp-border: #303a48;
-  --wp-mint: #83e5ba;
-  --wp-mint-surface: #1e3430;
-  --wp-violet: #aaa7f2;
-  --wp-gold: #e3bf7c;
-  --wp-danger: #f3a09b;
-  --wp-shadow: #080b11;
-  --wp-display: 'Space Grotesk', sans-serif;
-  --wp-body: 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  --wp-bg: #141e2c;
+  --wp-surface: #1c2a3b;
+  --wp-raised: #27374b;
+  --wp-ink: #f0eee7;
+  --wp-muted: #b6c1cd;
+  --wp-border: #43546b;
+  --wp-mint: #e9b589;
+  --wp-mint-surface: #342c29;
+  --wp-violet: #b6cbef;
+  --wp-gold: #e9bd80;
+  --wp-danger: #ffb3ae;
+  --wp-shadow: #0c1521;
+  --wp-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --wp-body: 'Space Grotesk', 'Segoe UI', sans-serif;
   --wp-detail: ui-monospace, Consolas, monospace;
 }
