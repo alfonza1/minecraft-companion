@@ -9,6 +9,7 @@ playable integration.** Other games are community research, not available produc
 - [Prerelease](https://github.com/alfonza1/minecraft-companion/releases/tag/v0.3.0-alpha.1)
 - [Install and update](INSTALLATION.md) · [Workspace](WORKSPACE.md)
 - [Architecture](ARCHITECTURE.md) · [Contribute](../CONTRIBUTING.md)
+- [Passing Windows/Linux CI](https://github.com/alfonza1/minecraft-companion/actions/runs/41299475153)
 
 ## Delivered
 

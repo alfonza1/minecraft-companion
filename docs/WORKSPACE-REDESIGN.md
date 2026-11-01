@@ -53,7 +53,19 @@ keeps company without displacing the task. Technical logs have their own page.
 - [x] Persistent assistance actions and consumed-material accounting
 - [x] Complete workspace/browser integration and responsive review
 - [x] Regression, gameplay, security and release validation
-- [ ] Update docs/screenshots and publish verified release
+- [x] Update docs/screenshots and publish verified release
 
 See GAME-ADAPTERS.md for the contract and extension example. Existing data and
 launcher paths retain the MinecraftCompanion name to avoid breaking installations.
+
+## Published evidence
+
+- [Website](https://alfonza1.github.io/minecraft-companion/): all nine deployed
+  pages and mobile homepage smoke-tested with no private API calls/page errors.
+- [Windows and Linux CI](https://github.com/alfonza1/minecraft-companion/actions/runs/41299475153): passed on release source.
+- [Source prerelease](https://github.com/alfonza1/minecraft-companion/releases/tag/v0.3.0-alpha.1): archive, checksum and dependency license inventory.
+- Local app updated through the existing launcher while disconnected, after a
+  database backup. Settings hash and project/memory/conversation counts matched
+  before and after. No Realm join or gameplay was triggered by the update.
+
+See DELIVERY.md for evidence scope and remaining consumer-release limitations.
