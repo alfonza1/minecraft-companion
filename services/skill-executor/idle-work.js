@@ -1,3 +1,4 @@
+import { companionProfile } from '../companion-personality/index.js';
 import {gearNeedsAttention} from './gear-upkeep.js';
 import {storageAnchor} from './storage-policy.js';
 import {inventoryCounts} from '../../src/actions.js';
@@ -10,6 +11,8 @@ export const STOCK_TARGETS={logs:64,cobblestone:96,food:16};
 
 export function chooseIdleWork(service,blocked=new Set()){
   const bot=service.runtime.bot,prefs=service.preferences(),settings=service.store.settings();
+  const profile=companionProfile(service.store);
+  if(profile.modeSelected&&['teammate','hangout'].includes(profile.mode))return {reason:profile.mode==='hangout'?'Hangout mode: no background chores. Explicit tasks still run.':'Teammate mode: waiting for your next shared objective.'};
   if(!prefs.busyMode||settings.autonomy==='instructions'||!bot?.minenessReady||!service.runtime.isActive())return {reason:'Automatic work is off.'};
   if(bot.companionTransport?.projected||bot.companionInventoryUnverified||bot.entity.isInWater||bot.entity.isInLava||bot.health<14||bot.food<6||service.threats(bot.entity.position,12).length)return {reason:'Waiting for safe health, food, terrain and clear surroundings.'};
   const candidates=[],counts=inventoryCounts(bot),stores=approvedStores(service),surplus=depositPlan(service),valuable=valuableCargo(bot);
@@ -36,6 +39,7 @@ export function chooseIdleWork(service,blocked=new Set()){
   if(time!==undefined&&time>13000&&time<23000)return candidates.find(value=>!blocked.has(value.tool))||{reason:'Nighttime: staying near supplies instead of roaming.'};
   if(!stores.length&&storageAnchor(service)&&!blocked.has('ensure_storage'))return {tool:'ensure_storage',args:{},reason:'Making storage at Home/spawn before background gathering.'};
   if(!stores.length)return {reason:'Approve a loot-deposit chest at Home/Base, or server spawn when no home is set, before background gathering.'};
+  if(profile.modeSelected&&profile.mode==='adventure')return candidates.find(value=>!blocked.has(value.tool))||(!blocked.has('explore_nearby')?{tool:'explore_nearby',args:{radius:24,steps:2},reason:'Adventure mode: scouting a nearby safe surface route, then returning.'}:{reason:'Recent scouting attempt needs time to recover.'});
   const stock={...counts};for(const chest of stores){if(!chest.observedAt||Date.now()-Date.parse(chest.observedAt)>300000)continue;for(const item of chest.inventory||[])stock[item.name]=(stock[item.name]||0)+item.count;}
   const logs=Object.entries(stock).filter(([name])=>name.endsWith('_log')).reduce((sum,[,n])=>sum+n,0);
   if(logs<STOCK_TARGETS.logs){try{requireNaturalTree(bot);candidates.push({tool:'chop_tree',args:{count:Math.min(8,STOCK_TARGETS.logs-logs)},reason:'Topping up the shared wood supply.'});}catch{}}

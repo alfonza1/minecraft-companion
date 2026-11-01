@@ -15,8 +15,8 @@ export function projectConversation(text,store,world){
   if(!project)return 'Choose a build reference in Build Studio first so I know which project you mean.';
   if(!project.materials)return `We haven’t got a complete blueprint for ${project.name} yet. Choose an inspired design or import a schematic in Build Studio; the video alone doesn’t give us verified material counts.`;
   if(needs.test(message)){
-    const rows=project.assignments||[],remaining=rows.map(row=>({...row,missing:Math.max(0,row.total-row.aiProgress-row.userProgress)})).filter(row=>row.missing);
-    if(!remaining.length)return 'The material assignments are covered by my observed inventory and your reported contributions. We still need to check that everything is available at the build site.';
+    const rows=project.assignments||[],remaining=rows.map(row=>({...row,missing:Math.max(0,row.total-(row.aiProgress||0)-Math.max(row.userProgress||0,row.constructionSatisfied||0))})).filter(row=>row.missing);
+    if(!remaining.length)return 'The material assignments are covered by allocated inventory, verified construction and your reported contributions. Any remaining loose supplies still need checking at the build site.';
     return `For our saved design, we still need ${remaining.slice(0,8).map(row=>`${row.missing} ${row.material.replaceAll('_',' ')}`).join(', ')}${remaining.length>8?`, plus ${remaining.length-8} other materials in Shared tasks`:''}. Counts describe our blueprint, not the original tutorial. Your contributions are based on what you’ve reported.`;
   }
   if(project.status==='designing')return 'Let the design finish first, then we can split its material list.';

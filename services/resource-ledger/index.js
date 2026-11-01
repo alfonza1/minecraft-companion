@@ -1,9 +1,11 @@
+import { constructionSatisfaction } from './construction-credit.js';
+
 export function splitAssignments(materials, aiPercent = 50, previous = []) {
   if (!Number.isFinite(aiPercent) || aiPercent < 0 || aiPercent > 100) throw new Error('AI percentage must be between 0 and 100.');
   return materials.map(({ name, quantity }) => {
     const old = previous.find((assignment) => assignment.material === name);
     const aiRequired = Math.floor(quantity * aiPercent / 100);
-    return { material: name, total: quantity, aiRequired, userRequired: quantity - aiRequired, aiProgress: old?.aiProgress ?? 0, userProgress: old?.userProgress ?? 0, aiObservedAt: old?.aiObservedAt ?? null, userObservedAt: old?.userObservedAt ?? null, aiProvenance: old?.aiProvenance ?? 'unknown', userProvenance: 'manual' };
+    return { material: name, total: quantity, aiRequired, userRequired: quantity - aiRequired, aiProgress: old?.aiProgress ?? 0, userProgress: old?.userProgress ?? 0, constructionSatisfied: old?.constructionSatisfied ?? 0, aiObservedAt: old?.aiObservedAt ?? null, userObservedAt: old?.userObservedAt ?? null, aiProvenance: old?.aiProvenance ?? 'unknown', userProvenance: 'manual' };
   });
 }
 
@@ -26,14 +28,15 @@ export function reconcileAssignments(assignments, inventory, observedAt) {
 }
 
 export function reconcileProjectInventory(projects, inventory, observedAt) {
-  if (!observedAt) return projects.map((project) => ({ ...project, assignments: reconcileAssignments(project.assignments, inventory, null) }));
+  const withConstruction=projects.map(project=>{const credit=constructionSatisfaction(project);return {...project,assignments:project.assignments.map(assignment=>({...assignment,constructionSatisfied:credit[assignment.material]||0}))};});
+  if (!observedAt) return withConstruction.map((project) => ({ ...project, assignments: reconcileAssignments(project.assignments, inventory, null) }));
   const stock = inventoryCounts(inventory);
   const available = { ...stock };
-  const ordered = [...projects].sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')) || a.id.localeCompare(b.id));
+  const ordered = [...withConstruction].sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')) || a.id.localeCompare(b.id));
   const allocated = new Map();
   for (const project of ordered) {
     const assignments = project.assignments.map((assignment) => {
-      const needed = project.status === 'complete' ? 0 : Math.max(0, Math.min(assignment.aiRequired, assignment.total - assignment.userProgress));
+      const needed = Math.max(0, Math.min(assignment.aiRequired, assignment.total - Math.max(assignment.userProgress,assignment.constructionSatisfied)));
       const quantity = Math.min(available[assignment.material] ?? 0, needed);
       available[assignment.material] = (available[assignment.material] ?? 0) - quantity;
       return { ...assignment, aiProgress: quantity, aiInventoryTotal: stock[assignment.material] ?? 0, aiObservedAt: observedAt, aiProvenance: 'live-inventory-allocation' };
@@ -60,6 +63,7 @@ export function reserveMaterials(projects, projectId, required, inventory, { par
 }
 
 export function assignmentNeeds(assignment) {
-  const remainingTotal = Math.max(0, assignment.total - assignment.userProgress - assignment.aiProgress);
-  return Math.min(remainingTotal, Math.max(0, assignment.aiRequired - assignment.aiProgress));
+  const covered=assignment.constructionSatisfied||0;
+  const remainingTarget = Math.max(0, Math.min(assignment.aiRequired, assignment.total - Math.max(assignment.userProgress,covered)));
+  return Math.max(0,remainingTarget - assignment.aiProgress);
 }

@@ -52,17 +52,17 @@ export class TaskStack {
     frame.observedRemaining = remainingAction(frame.actions[frame.index], frame.beforeInventory, counts(world)); this.save();
   }
   save() { this.store.put('taskStack', { id: 'active', frames: this.frames, held: this.held }); this.publish(); }
-  snapshot() { return { held: this.held, switching: this.switching, frames: this.frames.map(frame => ({ id: frame.id, label: frame.label, status: frame.status, step: frame.index + 1, steps: frame.actions.length, actions: frame.actions, error: frame.error })) }; }
+  snapshot() { return { held: this.held, switching: this.switching, frames: this.frames.map(frame => ({ id: frame.id, label: frame.label, status: frame.status, owner:frame.owner || 'companion',revision:frame.revision || 0,step: frame.index + 1, steps: frame.actions.length, actions: frame.actions, error: frame.error })) }; }
   hold() { this.held = true; this.save(); }
   clear() { this.version++; this.frames = []; this.held = true; this.save(); }
   async cancel({ preserveTasks = false } = {}) { preserveTasks ? this.hold() : this.clear(); await this.worker; }
-  async suspendBody() {
-    if (this.runtime.suspendWork) await this.runtime.suspendWork('Helping with a temporary request.');
+  async suspendBody(reason = 'Helping with a temporary request.') {
+    if (this.runtime.suspendWork) await this.runtime.suspendWork(reason);
     else await this.runtime.cancelTask?.();
     await this.worker;
     await this.runtime.waitForIdle?.();
   }
-  submit(actions, label) {
+  submit(actions, label, { beforeEnqueue } = {}) {
     const expected = this.version;
     const operation = this.mutations.catch(() => {}).then(async () => {
       if (expected !== this.version) throw new Error('That request was stopped before it could begin.');
@@ -83,6 +83,9 @@ export class TaskStack {
           this.frames.push({ id: randomUUID(), label: externalTask.name || external.tool, actions: [external], index: 0, status: unverified ? 'blocked' : 'saved', error: unverified ? 'Check the unverified inventory before explicitly resuming.' : undefined, returnTo: ['chop_tree', 'gather_blocks', 'craft_item', 'resume_build'].includes(external.tool) ? externalTask.site : null });
         }
         if (following && actions[0]?.tool !== 'follow_player') this.frames.push({ id: randomUUID(), label: `following ${following}`, actions: [{ tool: 'follow_player', args: { player: following, distance: this.store.settings().followDistance || 3 } }], index: 0, status: 'saved' });
+        // Recheck a source request after asynchronous suspension, before any new action starts.
+        try { beforeEnqueue?.(); }
+        catch (error) { this.held = true; this.save(); throw error; }
         this.frames.push({ id: randomUUID(), label: label.slice(0, 140), actions: structuredClone(actions), index: 0, status: 'queued' });
         this.held = false; this.save();
       } finally { this.switching = false; }
@@ -92,9 +95,11 @@ export class TaskStack {
   }
   async resume() {
     if (!this.runtime.isActive()) throw new Error('Resume companion before resuming saved work.');
+    if (this.switching) throw new Error('Wait for the current task change to finish.');
     if (this.worker && !this.held) return;
     await this.runtime.waitForIdle?.();
     const frame = this.frames.at(-1);
+    if (frame?.owner === 'player') throw new Error('This task is assigned to you. Transfer it to the companion before resuming.');
     if (frame) { frame.status = 'queued'; delete frame.error; }
     this.held = false; this.save(); this.start();
   }
@@ -104,6 +109,34 @@ export class TaskStack {
     if (frame.status === 'running' || this.switching) throw new Error('Stop or pause the current task before discarding it.');
     this.frames = this.frames.filter(value => value.id !== id); this.save();
   }
+  manage(id, { action, revision }) {
+    const expected = this.version;
+    const operation = this.mutations.catch(() => {}).then(async () => {
+      if (!['claim','transfer','defer','prioritize','cancel'].includes(action)) throw new Error('Unsupported saved-task change.');
+      const frame = this.frames.find(value => value.id === id);
+      if (!frame) throw new Error('Saved task not found.');
+      if ((frame.revision || 0) !== revision || expected !== this.version) throw new Error('This task changed. Review the latest task before updating it.');
+      if (action === 'prioritize' && (this.worker || this.runtime.currentTask || !this.held)) throw new Error('Pause or hold current work before changing saved-task priority.');
+      this.switching = true;
+      try {
+        if (frame === this.frames.at(-1)) {
+          this.held = true; this.save();
+          if (this.worker || this.runtime.currentTask) await this.suspendBody('Saving current progress before changing task responsibilities.');
+        }
+        if (expected !== this.version || !this.frames.includes(frame)) throw new Error('This task was stopped before the change completed.');
+        if (action === 'cancel') this.frames = this.frames.filter(value => value !== frame);
+        else {
+          if (action === 'claim') { frame.owner = 'player'; frame.status = 'assigned-player'; }
+          if (action === 'transfer') { frame.owner = 'companion'; frame.status = 'saved'; }
+          if (action === 'defer') frame.status = 'deferred';
+          if (action === 'prioritize') { this.frames = [...this.frames.filter(value => value !== frame),frame]; this.held = true; }
+          frame.revision = (frame.revision || 0) + 1;
+        }
+      } finally { this.switching = false; this.save(); }
+      return this.snapshot();
+    });
+    this.mutations = operation; return operation;
+  }
   start() {
     if (this.worker || this.switching || this.held || !this.frames.length || !this.runtime.isActive()) return;
     this.worker = this.drain().catch(error => { this.held = true; this.notify(`I hit a snag: ${error.message}`, 'blocked'); })
@@ -112,7 +145,7 @@ export class TaskStack {
   async drain() {
     while (!this.held && !this.switching && this.runtime.isActive() && this.frames.length) {
       const frame = this.frames.at(-1), action = frame.actions[frame.index];
-      if (frame.status === 'blocked') { this.held = true; this.save(); return; }
+      if (frame.status === 'blocked' || frame.status === 'deferred' || frame.owner === 'player') { this.held = true; this.save(); return; }
       if (!action) {
         this.frames.pop(); this.save();
         const autoResume = this.runtime.teammate?.preferences().resumeAfterHelp !== false;

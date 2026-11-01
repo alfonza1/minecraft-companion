@@ -41,7 +41,7 @@ export function quickPlan(text, { world, playerName, currentTask, locations = []
   const remainingRequest = message.match(/^(?:bring|fetch|get) (?:me )?(?:the )?remaining (wood|stone|[a-z_]+)$/);
   if(remainingRequest&&project?.assignments&&playerName){
     const row=project.assignments.find(value=>remainingRequest[1]==='wood'?value.material.endsWith('_log'):remainingRequest[1]==='stone'?value.material==='cobblestone':value.material===remainingRequest[1]);
-    const missing=row?Math.max(0,row.total-(row.aiProgress||0)-(row.userProgress||0)):0;
+    const missing=row?Math.max(0,row.total-(row.aiProgress||0)-Math.max(row.userProgress||0,row.constructionSatisfied||0)):0;
     if(row)return missing?{reply:`I’ll bring up to ${Math.min(64,missing)} ${row.material.replaceAll('_',' ')} from this project’s missing amount.`,intent:'minecraft_action',actions:[{tool:'bring_items',args:{item:row.material,count:Math.min(64,missing),player:playerName}}]}:{reply:'The reported assignments for that material are covered. Check the stock at the build site before gathering more.',intent:'minecraft_question',actions:[]};
   }
   if (/^(?:help me|come help me|come help|i need help|rescue me)$/.test(message)) return { reply: 'Coming to help. I’ll pick up my work afterward.', intent: 'minecraft_action', actions: [{ tool: 'rescue_player', args: {} }] };

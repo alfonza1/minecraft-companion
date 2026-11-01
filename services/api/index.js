@@ -1,4 +1,7 @@
 import { registerObservers } from './extensions.js';
+import { createWorkspaceService } from '../workspace/index.js';
+import { registerWorkspaceRoutes } from '../workspace/routes.js';
+import { registerPersonalityRoutes, personalitySnapshot } from '../companion-personality/index.js';
 import nativeProtocol from '../native-26.3/preload.cjs';
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
@@ -46,16 +49,19 @@ export async function createApp(options = {}) {
   const modelCatalog = options.modelCatalog || createModelCatalog();
   const clients = new Set();
   let providerRegistry;
-  let orchestrator, teammate, idleWork, voiceModule = options.voiceModule;
+  let orchestrator, teammate, idleWork, workspace, voiceModule = options.voiceModule;
+  const streamInstance = randomUUID(), streamStartedAt = Date.now();
+  let streamRevision = 0;
   let codexStatus = { available: null, authenticated: null, version: null, error: null };
-  const snapshot = () => ({ ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
+  const snapshot = () => { const raw = { ...runtime.snapshot(), auth: connector.auth, realms: connector.realms,
     performance: companionPerformance.snapshot(), materialRequests: store.get('materialRequests'), resourceLocations: store.get('resourceLocations'), projects: store.get('projects'),referenceSearches:store.get('referenceSearches').slice(-10), memories: store.get('memories'), conversation: store.get('conversation').slice(-100),
     usage: orchestrator?.usage || { requests: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, billingCost: null },
     ai: { ...modelSelection(store.settings()), ...((store.settings().provider || 'codex') === 'codex' ? codexStatus : providerRegistry?.status(store.settings().provider)), modelState: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } },
     settings: store.settings(), teammate: teammate?.snapshot(), codex: { ...codexStatus, model: orchestrator?.modelState || { active: null, last: store.get('modelRuns').find(value => value.id === 'last') || null } }, voice: voiceModule?.getVoiceStatus() || { available: false, status: 'setup-required', error: null },
-  });
+  }; return { ...raw, ...personalitySnapshot(store), workspace: workspace?.snapshot(raw), stream: { instance: streamInstance, startedAt: streamStartedAt, revision: streamRevision, sentAt: new Date().toISOString() } }; };
   let scheduled = false;
   const publish = () => {
+    streamRevision++;
     if (scheduled) return; scheduled = true;
     queueMicrotask(() => {
       scheduled = false;
@@ -84,6 +90,9 @@ export async function createApp(options = {}) {
   if(options.youtubeAnalysis)context.youtubeAnalysis=options.youtubeAnalysis;
   teammate = new TeammateService(context); context.teammate = teammate;
   idleWork=new IdleWorkService({runtime,teammate,publish});
+  workspace = createWorkspaceService({runtime,teammate,store,publish});
+  registerWorkspaceRoutes(app,workspace);
+  registerPersonalityRoutes(app,context);
   app.decorate('companion', { ...context, snapshot });
   const allowedHosts = new Set(['127.0.0.1', 'localhost', '[::1]']);
   app.addHook('onRequest', async (request, reply) => {
@@ -110,6 +119,10 @@ export async function createApp(options = {}) {
     clients.add(socket); socket.send(JSON.stringify({ type: 'state', state: snapshot() }));
     socket.on('close', () => clients.delete(socket)); socket.on('error', () => clients.delete(socket));
   });
+  const heartbeat = setInterval(() => {
+    for (const client of clients) if (client.readyState === 1 && client.bufferedAmount < 1024 * 1024) client.send(JSON.stringify({ type: 'heartbeat', at: new Date().toISOString() }));
+  }, 15000);
+  heartbeat.unref?.();
   runtime.on('change', publish); connector.on('change', publish);
   connector.on('diagnostic', message => runtime.log('error', message));
   app.get('/api/state', async () => snapshot());
@@ -155,7 +168,12 @@ export async function createApp(options = {}) {
     const value = z.object({ label: z.string().trim().min(1).max(100), value: z.string().trim().min(1).max(3000) }).strict().parse(request.body);
     const record = store.put('memories', { ...value, id: randomUUID(), provenance: 'user-reported', at: new Date().toISOString() }); publish(); return record;
   });
-  app.post('/api/memories/delete', async request => { const { id } = z.object({ id: z.string().uuid() }).strict().parse(request.body); store.delete('memories', id); publish(); return { deleted: true }; });
+  app.post('/api/memories/delete', async request => {
+    const { id } = z.object({ id: z.string().uuid() }).strict().parse(request.body);
+    store.delete('memories', id);
+    await orchestrator?.cancelInference(); await runtime.audioStop();
+    publish(); return { deleted: true };
+  });
   app.post('/api/data/backup', async () => ({ path: store.backup() }));
   app.post('/api/system/shutdown', async (_, reply) => { reply.send({ shuttingDown: true }); setImmediate(() => app.close().catch(() => { process.exitCode = 1; })); });
   app.get('/api/data/export', async () => ({ format: 'minecraft-companion/v1', settings: store.settings(), projects: store.get('projects'), memories: store.get('memories'), exportedAt: new Date().toISOString() }));
@@ -193,6 +211,7 @@ export async function createApp(options = {}) {
     app.setNotFoundHandler((request, reply) => request.url.startsWith('/api/') ? reply.code(404).send({ error: 'API endpoint not found.' }) : reply.sendFile('index.html'));
   } else app.get('/', async (_, reply) => reply.type('text/plain').send('Minecraft Companion: run npm run build, then restart the launcher.'));
   app.addHook('onClose', async () => {
+    clearInterval(heartbeat);
     idleWork.close();
     for (const client of clients) client.close(1001, 'Companion shutting down'); clients.clear();
     await runtime.close(); await orchestrator?.close(); await providerRegistry.close(); await modelCatalog.close(); store.close();

@@ -5,6 +5,7 @@ import {getIron,reservedMiningMaterials} from './iron-mining.js';
 import {findFood} from './food-search.js';
 import { storageAnchor } from './storage-policy.js';
 import { randomUUID } from 'node:crypto';
+import { companionProfile } from '../companion-personality/index.js';
 import { z } from 'zod';
 import { SEARCH_LIMITS } from './search-route.js';
 import { findResource } from './resource-search.js';
@@ -103,7 +104,8 @@ export class TeammateService {
     if (!this.runtime.isActive()) return;
     if (world.health <= 8) this.notice('I’m hurt pretty bad. Can you give me a hand?', 'danger', 'low-health');
     if (world.food < 8) this.notice('I’m running low on food.', 'danger', 'low-food');
-    if (this.preferences().updates === 'chatty' && !this.runtime.currentTask && !this.runtime.taskStack?.frames.length) this.notice('I’m free if you want a hand gathering or building.', 'useful', 'idle-suggestion');
+    const personality = companionProfile(this.store);
+    if (personality.proactive && personality.talkativeness === 'chatty' && !this.runtime.currentTask && !this.runtime.taskStack?.frames.length) this.notice('I’m free if you want a hand gathering or building.', 'useful', 'idle-suggestion');
   }
   saveLocation({ name, source }) {
     const world = this.runtime.world;

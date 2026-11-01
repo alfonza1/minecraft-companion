@@ -12,6 +12,7 @@ export interface Item {
   type: number;
   stackSize: number;
   durabilityRemaining?: number;
+  maxDurability?: number;
 }
 export interface Realm {
   id: number;
@@ -68,6 +69,10 @@ export interface Project {
   [key: string]: any;
 }
 export interface CompanionState {
+  stream?: {instance:string;startedAt:number;revision:number;sentAt:string};
+  workspace?: import('../game-adapters').WorkspaceSnapshot;
+  profile?: {name:string;style:'relaxed'|'dry-humor'|'encouraging';talkativeness:'focused'|'balanced'|'chatty';proactive:boolean;memoryEnabled:boolean;mode:'teammate'|'hangout'|'adventure'|'autonomous';modeSelected:boolean};
+  moments?: {id:string;title:string;text:string;sourceType:string;sourceId:string;occurredAt:string|null;savedAt:string;provenance:string}[];
   performance?: {stage:string;count:number;failures:number;totalMs:number;lastMs:number;medianMs:number;p95Ms:number;sampleCount:number}[];
   materialRequests?: {id:string;projectId:string;revision:number;item:string;count:number;reason:string;status:string;at:string}[];
   resourceLocations?: {id:string;item:string;block:string;position:{x:number;y:number;z:number};provenance:string;at:string}[];
@@ -115,7 +120,7 @@ export interface CompanionState {
     timeOfDay: number;
   };
   currentTask: any | null;
-  taskStack?: { held: boolean; switching: boolean; frames: { id: string; label: string; status: string; step: number; steps: number; actions: { tool: string; args: Record<string, any> }[]; error?: string }[] };
+  taskStack?: { held: boolean; switching: boolean; frames: { id: string; label: string; status: string; owner?:'player'|'companion';revision?:number; step: number; steps: number; actions: { tool: string; args: Record<string, any> }[]; error?: string }[] };
   teammate?: {
     preferences: { autoRestock: boolean;busyMode?:boolean;autoDeposit?:boolean;autoGear?:boolean; updates: 'quiet' | 'useful' | 'chatty'; resumeAfterHelp: boolean };
     workAreas?:{id:string;radius:number;dimension:string;position:{x:number;y:number;z:number}}[];

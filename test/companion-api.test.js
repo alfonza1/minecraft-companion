@@ -55,3 +55,20 @@ test('API validates settings, persists memory, protects paused controls and serv
   const resume = await app.inject({ method: 'POST', url: '/api/control', payload: { command: 'resume' } }); assert.equal(resume.statusCode, 409);
   const asset = await app.inject('/api/assets/item/oak_log'); assert.equal(asset.statusCode, 200); assert.equal(asset.headers['content-type'], 'image/png');
 });
+
+test('workspace and companion routes retain host and origin protection', async t => {
+  const app = await fixture(t);
+  for (const url of ['/api/games', '/api/companion/export']) {
+    assert.equal((await app.inject({url, headers:{host:'localhost',origin:'https://evil.example'}})).statusCode, 403);
+  }
+  for (const [url,payload] of [
+    ['/api/companion/profile',{name:'Unwanted change'}],
+    ['/api/companion/mode',{mode:'autonomous'}],
+    ['/api/workspace/game',{gameId:'minecraft-survival'}],
+    ['/api/workspace/assistance/test',{action:'player',revision:0}],
+  ]) {
+    assert.equal((await app.inject({method:'POST',url,payload,headers:{host:'localhost',origin:'https://evil.example'}})).statusCode,403);
+  }
+  assert.equal((await app.inject('/api/companion/profile')).json().name,'Waypoint');
+  assert.equal((await app.inject('/api/state')).json().usage.requests,0);
+});
