@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { chromium } from 'playwright';
+import { chromium, expect } from '@playwright/test';
 import { createApp } from '../../../services/api/index.js';
 import { Store } from '../../../services/memory/store.js';
 
@@ -37,14 +37,21 @@ try {
   await page.getByText('Fixture updater unavailable.', { exact: true }).waitFor();
   await page.evaluate(() => window.fixtureReply({ type: 'desktop-update', status: 'current' }));
   await page.getByText('Linked to your local working copy', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('textbox', { name: 'What are we doing next?' }).isDisabled(), true);
+  const composer = page.getByRole('textbox', { name: 'Message your companion', exact: true });
+  const send = page.getByRole('button', { name: 'Send message', exact: true });
+  await expect(send).toBeDisabled();
   await app.companion.runtime.control('plan');
-  await page.getByRole('textbox', { name: 'What are we doing next?' }).fill('Follow me');
-  await page.getByRole('button', { name: 'Send companion request', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('#overview-request').value === '');
+  await composer.fill('Follow me');
+  await send.click();
+  await expect(composer).toHaveValue('');
   assert.deepEqual(requests, ['Follow me']);
   await app.companion.runtime.control('pause');
-  await page.waitForFunction(() => document.querySelector('#overview-request').disabled);
+  await expect(page.getByRole('complementary', { name: 'Talk to your companion' }).getByText('Paused · resume to talk', { exact: true })).toBeVisible();
+  await composer.fill('Keep this as a draft');
+  await expect(send).toBeDisabled();
+  await composer.press('Enter');
+  await expect(composer).toHaveValue('Keep this as a draft');
+  assert.deepEqual(requests, ['Follow me']);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     assert.equal(await page.locator('body').evaluate(element => element.scrollWidth > innerWidth), false);

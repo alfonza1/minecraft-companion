@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -14,12 +15,12 @@ const evidence = { at: new Date().toISOString(), passed: false, errors: [], scop
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' }); page.on('pageerror', error => evidence.errors.push(error.message));
   await page.goto(`http://127.0.0.1:${app.server.address().port}`);
-  await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Session', exact: true }).waitFor();
   const banner = page.getByRole('alert', { name: 'Setup needs attention' });
   assert.equal(await banner.count(), 0);
   assert.equal(await page.getByText('Get ready for your first session', { exact: true }).count(), 0);
   app.companion.connector.auth = { status: 'authenticating', username: 'CachedFixture', device: null }; app.companion.connector.emit('change');
-  await page.getByRole('heading', { name: 'CachedFixture', exact: true }).waitFor();
+  // The companion profile name is independent of its Minecraft account name.
   assert.equal(await banner.count(), 0);
   app.companion.connector.auth = { status: 'expired', username: 'FixtureBot', error: 'Your Minecraft session expired. Reconnect the bot account to continue.' }; app.companion.connector.emit('change');
   await page.getByRole('heading', { name: 'Minecraft sign-in needs attention', exact: true }).waitFor();
@@ -31,10 +32,10 @@ try {
   await banner.getByRole('button', { name: 'Review issue', exact: true }).click();
   await page.getByRole('navigation', { name: 'Setup steps' }).waitFor();
   app.companion.connector.auth = { status: 'connected', username: 'FixtureBot', device: null }; app.companion.connector.emit('change');
-  await page.getByRole('navigation').first().getByRole('button', { name: 'Overview', exact: true }).click();
-  await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor(); await banner.waitFor({ state: 'hidden' });
+  await navigateWorkspace(page, 'Session');
+  await page.getByRole('heading', { name: 'Session', exact: true }).waitFor(); await banner.waitFor({ state: 'hidden' });
   await page.setViewportSize({ width: 1440, height: 1100 }); await page.screenshot({ path: join(output, 'configured-offline.png'), fullPage: true });
-  await page.getByRole('navigation').getByRole('button', { name: 'Settings', exact: true }).click();
+  await navigateWorkspace(page, 'Settings');
   await page.getByRole('heading', { name: 'Minecraft account', exact: true }).waitFor();
   assert.equal(await banner.count(), 0); assert.equal(await page.getByText('Setting up your companion?', { exact: true }).count(), 0);
   await app.companion.runtime.control('plan'); await app.companion.runtime.control('pause');

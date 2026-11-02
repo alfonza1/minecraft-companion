@@ -328,10 +328,12 @@ export function ConversationPane({
   const active = ["ACTIVE", "BUSY"].includes(state.state);
   useEffect(() => {
     if (messages.current)
-      messages.current.scrollTop = messages.current.scrollHeight;
+      messages.current.scrollTop = state.conversation.length
+        ? messages.current.scrollHeight
+        : 0;
   }, [state.conversation.length]);
   async function send() {
-    if (!text.trim() || sending) return;
+    if (!active || busy || !text.trim() || sending) return;
     const outgoing = text;
     setSending(true);
     try {

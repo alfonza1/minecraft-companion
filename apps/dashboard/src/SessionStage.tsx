@@ -3,8 +3,6 @@ import {
   ArrowRight,
   MessageCircle,
   Navigation,
-  Pause,
-  Radio,
   ShieldAlert,
 } from "lucide-react";
 import { Assistance } from "./Workspace";
@@ -56,13 +54,13 @@ export default function SessionStage({
   const exploring = ["exploring", "navigating"].includes(context);
   const building = context === "building" && blueprint;
   const title = paused
-    ? "Taking a breather."
+    ? "Companion paused"
     : disconnected
-      ? "Ready when you are."
+      ? "Companion disconnected"
       : blocked
-        ? "Let’s sort this out."
+        ? "Action needed"
         : context === "idle"
-          ? "What shall we do?"
+          ? "Ready for a task"
           : context === "planning"
             ? "Thinking through the plan."
             : activity?.label || "What shall we do?";
@@ -77,7 +75,7 @@ export default function SessionStage({
   const description = paused
     ? "Your place in the plan is saved. Resume when you’re ready to play."
     : disconnected
-      ? "Bring your companion into the game, or talk through the next adventure here."
+      ? "Start the companion to join your selected Realm, or use chat to plan offline."
       : descriptor && activity?.detail === descriptor.tool?.replaceAll("_", " ")
         ? actionDescriptions[descriptor.tool] || activity?.detail
         : activity?.detail;
@@ -95,9 +93,6 @@ export default function SessionStage({
   const requests =
     workspace?.assistance.filter((request) => request.status === "pending") ||
     [];
-  const lastMessage = state.conversation
-    .filter((message) => message.role === "companion")
-    .at(-1);
   const fraction =
     progress && progress.total > 0
       ? Math.min(1, Math.max(0, progress.completed / progress.total))
@@ -219,34 +214,7 @@ export default function SessionStage({
                   Review what’s needed <ArrowRight size={16} />
                 </button>
               </div>
-            ) : (
-              <div className="stage-channel">
-                <span className="channel-number" aria-hidden="true">
-                  01<span> / TOGETHER</span>
-                </span>
-                <div className="channel-line" />
-                {paused ? <Pause size={24} /> : <Radio size={24} />}
-                <h3>
-                  {paused
-                    ? "The plan can wait."
-                    : lastMessage
-                      ? "Last on the channel"
-                      : "A place to play. And talk."}
-                </h3>
-                <p>
-                  {lastMessage
-                    ? lastMessage.text
-                    : "Ask for a hand with the next build, talk about your day, or decide where to go together."}
-                </p>
-                {lastMessage ? (
-                  <small>Saved conversation · {time(lastMessage.at)}</small>
-                ) : (
-                  <small>
-                    Conversations and memories stay under your control.
-                  </small>
-                )}
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
         {fraction !== null ? (

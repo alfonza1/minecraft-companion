@@ -11,6 +11,7 @@ import "@fontsource/space-grotesk/latin-600.css";
 import "../../../packages/ui/companion-tokens.css";
 import "./workspace.css";
 import "./play-desk.css";
+import "./console.css";
 import "@fontsource/barlow-condensed/latin-600.css";
 import "@fontsource/barlow-condensed/latin-700.css";
 createRoot(document.getElementById("root")!).render(

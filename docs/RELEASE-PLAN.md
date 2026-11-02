@@ -67,5 +67,5 @@ ore and a cottage. It is labeled illustration, never live gameplay.
 
 Version 0.4 removes the concept artwork and permanent sidebar. The shared play
 desk uses real application captures, contextual work, an item-focused resource
-workbench, a compact bottom rail and searchable navigation. See
+workbench, a visible everyday-tool strip, inline session chat and secondary searchable navigation. See
 [the three-direction comparison and browser iteration log](DESIGN-CORRECTION.md).

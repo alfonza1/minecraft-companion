@@ -116,7 +116,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
       } else if (state.planning && state.state === "PAUSED") await mutate("/control", { command: "resume" });
       else if (!state.planning) await mutate("/control", { command: "plan" });
       ownsPlanning.current = false;
-      navigate(realm ? "overview" : "communication");
+      navigate(realm ? "session" : "communication");
     });
   }
 
@@ -168,7 +168,7 @@ export default function Setup({ state, mutate, busy, navigate }: Common & { navi
         <div className="setup-launch"><button className="button primary" disabled={blocked || !accountReady || !selectedRealm || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(true))}>Connect to selected Realm <ArrowRight size={15} /></button><button className="button" disabled={blocked || Boolean(state.world) || state.connection.status === "connecting"} onClick={() => attempt(startSession(false))}><Compass size={15} />Start planning offline</button></div>
         <p className="note">Offline planning supports conversation and building design without a Realm. Starting a session alone makes no model requests. In-game movement, survival decisions and construction still need supervised validation on your Realm.</p>
       </Panel> : null}
-      <div className="setup-pagination"><button className="button" disabled={step === 0} onClick={() => changeStep(step - 1)}><ArrowLeft size={14} />Back</button><span>Step {step + 1} of {steps.length}</span>{step < steps.length - 1 ? <button className="button" onClick={() => changeStep(step + 1)}>Continue <ArrowRight size={14} /></button> : <button className="button" onClick={() => navigate("overview")}>Back to overview</button>}</div>
+      <div className="setup-pagination"><button className="button" disabled={step === 0} onClick={() => changeStep(step - 1)}><ArrowLeft size={14} />Back</button><span>Step {step + 1} of {steps.length}</span>{step < steps.length - 1 ? <button className="button" onClick={() => changeStep(step + 1)}>Continue <ArrowRight size={14} /></button> : <button className="button" onClick={() => navigate("session")}>Back to session</button>}</div>
     </div><aside className="setup-notes"><span className="eyebrow">WHAT NEEDS YOU</span><h3>Keep the human parts human.</h3><p>Microsoft sign-in, Realm invitations, microphone permission and confirming what you hear need your input.</p><hr /><h3>One step at a time.</h3><p>You can revisit any step. Your account, Realm and audio preferences are saved locally; test results never stand in for gameplay.</p><div className="setup-privacy"><Shield size={17} /><span>Local dashboard. Encrypted account session. No recorded audio.</span></div></aside></div>
   </div>;
 }

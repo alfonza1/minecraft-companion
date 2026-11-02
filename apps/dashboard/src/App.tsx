@@ -40,9 +40,7 @@ import DesktopBar from "./DesktopBar";
 import SetupIssues from "./SetupIssues";
 import { attempt, Badge, Empty, human, Panel, type Common } from "./shared";
 import {
-  WorkspaceOverview,
   Mission,
-  Resources,
   Assistance,
   ActivityFeed,
   Games,
@@ -55,8 +53,8 @@ import { CompanionHome, ConversationPane } from "./CompanionHome";
 const navigation = [
   {
     group: "Together",
-    id: "overview",
-    name: "Overview",
+    id: "session",
+    name: "Session",
     icon: LayoutDashboard,
   },
   {
@@ -100,24 +98,6 @@ const navigation = [
     icon: Terminal,
   },
 ];
-const descriptions: Record<string, string> = {
-  overview: "A little company. A shared adventure.",
-  companion: "Your companion, your pace, your way to play.",
-  mission: "The goal, the next step, and anything in the way.",
-  tasks: "Shared work with clear responsibilities.",
-  inventory: "Everything your companion is actually carrying.",
-  resources: "What you have. What you need. Who’s getting it.",
-  collaboration: "A hand when it matters. A plan you both understand.",
-  activity: "The adventure as it happens. No hidden thoughts.",
-  communication: "Talk about the game. Or absolutely anything else.",
-  studio: "Minecraft references, materials and approved construction.",
-  games: "Starting in Minecraft. Open to worlds beyond.",
-  extensions: "Small capabilities. New possibilities.",
-  community: "Help shape the next adventure.",
-  settings: "Your models, account, voice and permissions.",
-  setup: "Choose a game and get ready for your first session.",
-  diagnostics: "Execution evidence and local service health.",
-};
 function Controls({ state, mutate, busy }: Common) {
   const active = ["ACTIVE", "BUSY"].includes(state.state);
   return (
@@ -165,8 +145,11 @@ function Controls({ state, mutate, busy }: Common) {
 export default function App() {
   const { state, error, connected, busy, mutate, clearError } = useCompanion();
   const [page, setPage] = useState(() => {
-    const saved = sessionStorage.getItem("player-two-page") ?? sessionStorage.getItem("waypoint-page");
-    return navigation.some((item) => item.id === saved) ? saved! : "overview";
+    const stored =
+      sessionStorage.getItem("player-two-page") ??
+      sessionStorage.getItem("waypoint-page");
+    const saved = stored === "overview" ? "session" : stored;
+    return navigation.some((item) => item.id === saved) ? saved! : "session";
   });
   const [menu, setMenu] = useState(false),
     [conversation, setConversation] = useState(false);
@@ -194,7 +177,7 @@ export default function App() {
     if (conversation) conversationDialog.current?.showModal();
     else conversationDialog.current?.close();
   }, [conversation]);
-  const title = navigation.find((item) => item.id === page)?.name || "Overview";
+  const title = navigation.find((item) => item.id === page)?.name || "Session";
   const common = state ? { state, mutate, busy } : null;
   const pending =
     state?.workspace?.assistance.filter(
@@ -209,7 +192,7 @@ export default function App() {
       <header className="play-header">
         <button
           className="play-wordmark"
-          onClick={() => navigate("overview")}
+          onClick={() => navigate("session")}
           aria-label="Player Two home"
         >
           <PlayerTwoMark />
@@ -240,25 +223,62 @@ export default function App() {
           </button>
           <button
             className="button play-tools-button"
-            aria-label="Open navigation"
+            aria-label="More tools"
             aria-keyshortcuts="Control+k Meta+k"
             aria-haspopup="dialog"
             onClick={() => setMenu(true)}
           >
             <Menu size={16} />
-            <span>Navigation</span>
+            <span>More tools</span>
           </button>
           <kbd className="navigation-shortcut" aria-hidden="true">
             Ctrl K
           </kbd>
         </div>
       </header>
+      <nav className="console-tools" aria-label="Companion tools">
+        {[
+          ["session", "Session", Gamepad2],
+          ["tasks", "Tasks", ListTodo],
+          ["inventory", "Inventory", Backpack],
+          ["resources", "Resources", Construction],
+          ["studio", "Build studio", Wrench],
+          ["communication", "Chat", MessageCircle],
+          ["collaboration", "Help & teamwork", Users],
+          ["companion", "My companion", HeartHandshake],
+        ].map(([id, label, Icon]) => {
+          const ToolIcon = Icon as typeof Gamepad2;
+          return (
+            <button
+              key={id as string}
+              aria-current={page === id ? "page" : undefined}
+              onClick={() => navigate(id as string)}
+            >
+              <ToolIcon size={17} />
+              <span>{label as string}</span>
+              {id === "collaboration" && pending > 0 ? (
+                <b aria-hidden="true" title={pending + " pending requests"}>
+                  {pending}
+                </b>
+              ) : null}
+            </button>
+          );
+        })}
+      </nav>
       <main id="workspace-main" className={`play-main page-${page}`}>
         <div className="play-workarea-heading">
           <h1 tabIndex={-1}>{title}</h1>
           {common ? (
             <>
               <Controls {...common} />
+              <button
+                className="icon-button"
+                aria-label="Open conversation panel"
+                title="Open conversation panel"
+                onClick={() => setConversation(true)}
+              >
+                <MessageCircle size={17} />
+              </button>
               <button
                 className="icon-button danger-text"
                 aria-label="Emergency stop companion"
@@ -307,15 +327,31 @@ export default function App() {
           </div>
         ) : (
           <>
-            {page === "overview" || page === "settings" ? (
+            {page === "session" || page === "settings" ? (
               <SetupIssues state={state!} navigate={navigate} />
             ) : null}
-            {page === "overview" ? (
-              <SessionStage
-                {...common}
-                navigate={navigate}
-                talk={() => setConversation(true)}
-              />
+            {page === "session" ? (
+              <div className="console-session">
+                <div className="console-session-work">
+                  <SessionStage
+                    {...common}
+                    navigate={navigate}
+                    talk={() =>
+                      document
+                        .querySelector<HTMLTextAreaElement>(
+                          ".console-session-chat textarea",
+                        )
+                        ?.focus()
+                    }
+                  />
+                </div>
+                <aside
+                  className="console-session-chat"
+                  aria-label="Talk to your companion"
+                >
+                  <ConversationPane {...common} compact />
+                </aside>
+              </div>
             ) : null}
             {page === "mission" ? <Mission {...common} /> : null}
             {page === "resources" ? (
@@ -387,36 +423,6 @@ export default function App() {
           <span>Player Two · early access</span>
         </footer>
       </main>
-      <nav className="play-dock" aria-label="Play desk">
-        {[
-          ["overview", "Session"],
-          ["mission", "Plan"],
-          ["resources", "Supplies"],
-          ["communication", "Talk"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            aria-current={page === id ? "page" : undefined}
-            onClick={() => navigate(id)}
-          >
-            <span>{label}</span>
-          </button>
-        ))}
-        <button
-          className={pending ? "has-request" : ""}
-          onClick={() => navigate("collaboration")}
-        >
-          {pending ? <b>{pending}</b> : null}
-          <span>Together</span>
-        </button>
-        <button
-          className="play-talk-toggle"
-          aria-label="Open conversation panel"
-          onClick={() => setConversation(true)}
-        >
-          <MessageCircle size={18} />
-        </button>
-      </nav>
       <ToolMenu
         open={menu}
         close={() => setMenu(false)}
@@ -430,7 +436,7 @@ export default function App() {
         aria-label="Companion conversation"
       >
         <header>
-          <span>On the same channel.</span>
+          <span>Companion chat</span>
           <button
             className="icon-button"
             aria-label="Close conversation panel"

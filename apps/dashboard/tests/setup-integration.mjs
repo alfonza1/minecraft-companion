@@ -27,14 +27,14 @@ page.on('pageerror', error => errors.push(error.message));
 page.on('request', request => { if (request.method() === 'POST') mutations.push(new URL(request.url()).pathname); });
 try {
   await page.goto(base);
-  await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Session', exact: true }).waitFor();
   await navigateWorkspace(page, 'Setup');
   await page.getByRole('heading', { name: 'Setup', exact: true, level: 1 }).waitFor();
   await page.getByRole('heading', { name: 'Check your local services', exact: true }).waitFor();
   await page.getByText(/Showing existing service status|Status checked/).waitFor();
   assert.equal(await page.evaluate(() => window.__setupMicRequests), 0);
   assert.equal(mutations.some(path => /\/auth\/|\/conversation$|\/control$|\/voice\/(?:desktop|transcribe|speak)$|\/realms\/check$/.test(path)), false);
-  checks.push('Overview opens a real five-step setup page. Mounting performs no sign-in, model, Realm, microphone or gameplay action.');
+  checks.push('Session opens a real five-step setup page. Mounting performs no sign-in, model, Realm, microphone or gameplay action.');
   await page.getByRole('button', { name: 'Check local services', exact: true }).click();
   await page.getByRole('button', { name: 'Check local services', exact: true }).waitFor();
   assert.equal(mutations.includes('/api/setup/check'), true);
@@ -68,7 +68,7 @@ try {
     await page.getByRole('button', { name: 'Start local audio checks', exact: true }).click();
     await page.getByText('Microphone permission denied by setup test', { exact: true }).waitFor();
     assert.equal(await page.evaluate(() => window.__setupMicRequests), 1);
-    await navigateWorkspace(page, 'Overview');
+    await navigateWorkspace(page, 'Session');
     await page.getByRole('button', { name: 'Resume companion', exact: true }).waitFor();
     assert.equal((await (await fetch(`${base}/api/state`)).json()).state, 'PAUSED');
     await page.getByRole('button', { name: 'Stop and disconnect', exact: true }).click();

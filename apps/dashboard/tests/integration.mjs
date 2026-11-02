@@ -23,7 +23,7 @@ const evidenceLines = [];
 page.on("pageerror", (error) => errors.push(error.message));
 try {
   await page.goto("http://127.0.0.1:4367");
-  await page.getByRole("heading", { name: "Overview", exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Session", exact: true }).waitFor();
   await page.getByText("Connected to local runtime", { exact: true }).waitFor();
   assert.equal(
     await page
@@ -191,7 +191,7 @@ try {
   );
   await page.setViewportSize({ width: 390, height: 844 });
   for (const label of [
-    "Overview",
+    "Session",
     "Inventory",
     "Build studio",
     "Tasks & plans",

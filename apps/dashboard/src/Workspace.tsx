@@ -407,7 +407,7 @@ export function Games({
                 mutate("/workspace/game", {
                   gameId: "minecraft-survival",
                 }).then(() =>
-                  navigate(state.settings.realmId ? "overview" : "setup"),
+                  navigate(state.settings.realmId ? "session" : "setup"),
                 ),
               )
             }

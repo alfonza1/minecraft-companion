@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -22,8 +23,8 @@ try {
   await page.goto(base);
   // This live app keeps background requests open. Wait for rendered readiness
   // instead of a global network-idle condition unrelated to account setup.
-  await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await page.getByRole('heading', { name: 'Session', exact: true }).waitFor();
+  await navigateWorkspace(page, 'Setup');
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /Minecraft account/ }).click();
   await page.getByRole('button', { name: 'Connect Minecraft account', exact: true }).click();
   const signIn = page.getByRole('link', { name: 'Open Microsoft sign-in' });

@@ -1,0 +1,365 @@
+/* Everyday controls stay visible; the menu is only a secondary shortcut. */
+.play-desk .play-header {
+  min-height: 66px;
+  padding: 12px 28px;
+}
+.play-desk .play-wordmark {
+  font-size: 22px;
+}
+.console-tools {
+  display: flex;
+  gap: 4px;
+  padding: 8px 28px;
+  border-bottom: 1px solid var(--wp-border);
+  background: var(--wp-surface);
+  flex-wrap: wrap;
+}
+.console-tools button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 16px;
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--wp-muted);
+}
+.console-tools button:hover {
+  color: var(--wp-ink);
+  background: var(--wp-raised);
+}
+.console-tools button[aria-current] {
+  color: var(--wp-mint);
+  background: var(--wp-mint-surface);
+  border-color: var(--wp-border);
+}
+.console-tools b {
+  font: 11px var(--wp-detail);
+  color: var(--wp-bg);
+  background: var(--wp-gold);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+.play-desk .play-main {
+  max-width: 1600px;
+  padding: 18px 28px 24px;
+}
+.play-desk .play-workarea-heading {
+  margin-bottom: 16px;
+}
+.play-desk .play-workarea-heading h1 {
+  font-size: 18px;
+  color: var(--wp-ink);
+}
+.play-desk .play-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+}
+.console-session {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 370px);
+  gap: 20px;
+  align-items: start;
+}
+.console-session-work,
+.console-session-chat {
+  min-width: 0;
+}
+.console-session .stage-kicker {
+  padding: 13px 20px;
+}
+.console-session .stage-composition {
+  grid-template-columns: minmax(0, 1.35fr) minmax(160px, 0.7fr);
+  min-height: 200px;
+}
+.console-session .stage-composition:has(.stage-focus:empty) {
+  grid-template-columns: 1fr;
+}
+.console-session .stage-focus:empty {
+  display: none;
+}
+.console-session .stage-story {
+  padding: 20px;
+  justify-content: start;
+}
+.play-desk .console-session .stage-story h2 {
+  font: 600 clamp(25px, 2.5vw, 36px)/1.12 var(--wp-body);
+  letter-spacing: -0.04em;
+  margin: 12px 0;
+  text-wrap: initial;
+}
+.console-session .stage-story > p {
+  font-size: 12px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.console-session .stage-actions {
+  gap: 12px;
+  margin-top: auto;
+}
+.console-session .stage-actions .button {
+  padding: 9px 11px;
+  font-size: 11px;
+}
+.console-session .stage-actions .text-button {
+  font-size: 11px;
+}
+.console-session .stage-focus {
+  padding: 18px;
+}
+.console-session .gathering-object {
+  gap: 4px;
+}
+.console-session .gathering-object > img,
+.console-session .gathering-object > svg {
+  width: 44px;
+  height: 44px;
+  margin: 8px 0;
+}
+.console-session .gathering-count strong {
+  font-size: 52px;
+}
+.console-session .gathering-count span {
+  font-size: 22px;
+}
+.console-session .gathering-object:has(.gathering-count) > p {
+  display: none;
+} /* Basis is shown once below the progress bar. */
+.console-session .stage-progress {
+  padding: 0 20px 14px;
+}
+.console-session .stage-next {
+  padding: 13px 20px;
+  grid-template-columns: 65px 1fr 30px;
+  gap: 8px;
+}
+.console-session .stage-next p {
+  font-size: 11px;
+}
+.console-session .session-world {
+  padding: 12px 0;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.console-session .session-pocket {
+  padding: 17px 0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.console-session .session-pocket h3 {
+  font: 500 14px var(--wp-body);
+}
+.console-session .pocket-items {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.console-session .stage-blueprint .voxel-view {
+  height: 230px;
+}
+.console-session .stage-blueprint .preview-toolbar {
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+.console-session .stage-blueprint .preview-toolbar select {
+  flex: 1 1 110px;
+  min-width: 110px;
+}
+.console-session .stage-blueprint .preview-caption {
+  flex-wrap: wrap;
+  padding: 10px;
+}
+.console-session .stage-blocker h3 {
+  font: 600 18px/1.3 var(--wp-body);
+}
+.console-session .coordinate-readout strong {
+  font-size: 30px;
+}
+.console-session .stage-location {
+  gap: 12px;
+}
+.play-desk .console-session-chat .ws-chat {
+  min-height: 0;
+  height: 560px;
+  max-height: calc(100dvh - 205px);
+  display: flex;
+  flex-direction: column;
+}
+.play-desk .console-session-chat .ws-chat > header {
+  padding: 14px;
+  gap: 10px;
+}
+.console-session-chat .ws-chat > header h2 {
+  font: 600 16px var(--wp-body);
+}
+.console-session-chat .ws-chat > header small {
+  font-size: 10px;
+}
+.console-session-chat .ws-chat > header .badge {
+  margin-left: auto;
+  font-size: 9px;
+}
+.play-desk .console-session-chat .ws-chat > .ws-chat-messages {
+  flex: 1;
+  min-height: 90px;
+  max-height: none;
+  padding: 14px;
+  overflow: auto;
+}
+.console-session-chat .ws-chat-welcome {
+  padding: 16px 0;
+}
+.console-session-chat .ws-chat-welcome > svg {
+  display: none;
+}
+.console-session-chat .ws-chat-welcome h3 {
+  font-size: 18px;
+}
+.console-session-chat .ws-chat-welcome p {
+  font-size: 12px;
+}
+.console-session-chat .ws-chat-welcome > div {
+  display: grid;
+  gap: 7px;
+}
+.console-session-chat .ws-chat-welcome .button {
+  font-size: 11px;
+  min-height: 36px;
+}
+.console-session-chat .ws-chat-composer {
+  padding: 12px;
+}
+.console-session-chat .ws-chat-composer textarea {
+  min-height: 64px;
+  font-size: 12px;
+}
+.console-session-chat .ws-chat-footer {
+  padding: 10px 12px;
+  gap: 8px;
+  font-size: 9px;
+}
+.console-session-chat .ws-chat-offline {
+  padding: 12px 14px;
+}
+.console-session-chat .ws-chat-message {
+  padding: 12px;
+}
+.console-session-chat .ws-chat-message p {
+  font-size: 12px;
+}
+.play-desk .play-voice {
+  margin-top: 16px;
+}
+.play-desk .rw-inspector {
+  padding: 22px;
+}
+.play-desk .ws-page-intro {
+  margin-bottom: 20px;
+}
+@media (max-width: 1100px) {
+  .console-tools button {
+    padding: 9px 12px;
+  }
+  .console-session {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px;
+  }
+  .console-session .stage-composition {
+    grid-template-columns: 1fr;
+  }
+  .console-session .stage-focus {
+    border-left: 0;
+    border-top: 1px solid var(--wp-border);
+  }
+  .console-session .gathering-object {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+@media (max-width: 800px) {
+  .play-desk .play-header {
+    padding: 12px 18px;
+  }
+  .play-desk .play-main {
+    padding: 16px 18px 22px;
+  }
+  .console-tools {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 8px 14px;
+    gap: 4px;
+  }
+  .console-tools button {
+    padding: 9px 5px;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .console-session {
+    grid-template-columns: 1fr;
+  }
+  .console-session .stage-composition {
+    grid-template-columns: minmax(0, 1.3fr) minmax(150px, 0.7fr);
+  }
+  .play-desk .console-session-chat .ws-chat {
+    height: 450px;
+    max-height: none;
+  }
+  .console-session .stage-focus {
+    border-left: 1px solid var(--wp-border);
+    border-top: 0;
+  }
+}
+@media (max-width: 650px) {
+  .play-desk .play-workarea-heading {
+    grid-template-columns: minmax(0, 1fr) 32px 32px;
+    gap: 6px;
+  }
+  .play-desk .play-workarea-heading > .icon-button {
+    width: 32px;
+    min-width: 32px;
+  }
+  .play-desk .play-workarea-heading .runtime-controls .button {
+    padding: 8px;
+  }
+}
+@media (max-width: 500px) {
+  .console-tools button {
+    flex-direction: column;
+    font-size: 10px;
+    min-height: 52px;
+  }
+  .console-tools button b {
+    position: absolute;
+    margin-left: 46px;
+    margin-top: -25px;
+  }
+  .console-session .stage-composition {
+    grid-template-columns: 1fr;
+  }
+  .console-session .stage-focus {
+    border-left: 0;
+    border-top: 1px solid var(--wp-border);
+  }
+  .play-desk .console-session .stage-story {
+    padding: 18px;
+  }
+  .play-desk .console-session .stage-story h2 {
+    font-size: 27px;
+    margin: 10px 0;
+  }
+  .console-session .gathering-object {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .console-session .stage-next {
+    grid-template-columns: 1fr 30px;
+  }
+  .console-session .stage-next .eyebrow {
+    grid-column: 1/-1;
+  }
+}

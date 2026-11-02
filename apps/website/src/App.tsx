@@ -181,7 +181,7 @@ function ProductImage({ eager = false }: { eager?: boolean }) {
         <img
           src={base + filename}
           width="1440"
-          height="1050"
+          height="900"
           loading={eager ? "eager" : "lazy"}
           alt={
             fixture
@@ -214,38 +214,28 @@ function Home() {
             <br />
             <em>Better games.</em>
           </h1>
+          <div className="hero-brief">
+            <p>
+              An AI companion to share the work, talk through a plan, or just
+              hang out while you play.
+            </p>
+            <p className="hero-game">
+              Starting with <strong>Minecraft Survival.</strong>
+            </p>
+            <LinkButton to={href("/get-started/")}>
+              Get started — free
+            </LinkButton>
+            <a className="text-link" href={source}>
+              Explore the source <Arrow />
+            </a>
+          </div>
         </div>
-        <div className="hero-brief">
-          <p>
-            An AI companion to share the work, talk through a plan, or just hang
-            out while you play.
-          </p>
-          <p className="hero-game">
-            Starting with <strong>Minecraft Survival.</strong>
-          </p>
-          <LinkButton to={href("/get-started/")}>Get started — free</LinkButton>
-          <a className="text-link" href={source}>
-            Explore the source <Arrow />
-          </a>
-        </div>
+        <ProductImage eager />
       </section>
-      <ProductImage eager />
-      <div className="product-caption">
-        <span>YOUR GAME. YOUR COMPANION. ONE SHARED DESK.</span>
-        <a className="text-link" href={href("/features/")}>
-          Take a closer look <Arrow />
-        </a>
-      </div>
       <section className="section play-notes">
         <SectionHeading
           label="WHAT IT’S LIKE TO PLAY TOGETHER"
-          title={
-            <>
-              You keep playing.
-              <br />
-              Stay in the picture.
-            </>
-          }
+          title={<>A hand with the game. Company for the rest.</>}
         />
         <div className="play-notes-body">
           <article>
@@ -275,11 +265,7 @@ function Home() {
       <section className="home-game">
         <div>
           <span className="eyebrow">FIRST SUPPORTED GAME / EARLY ACCESS</span>
-          <h2>
-            Minecraft
-            <br />
-            Survival.
-          </h2>
+          <h2>Minecraft Survival.</h2>
           <p>
             Gather, craft, build and explore through a legitimate Java client.
             It is a bounded, experimental teammate — not a promise of unattended
@@ -312,11 +298,7 @@ function Home() {
         <span className="eyebrow">
           THE PLATFORM GROWS WITH ITS CONTRIBUTORS
         </span>
-        <h2>
-          Bring a good idea.
-          <br />
-          Build one useful thing.
-        </h2>
+        <h2>Make it your own.</h2>
         <div>
           <p>
             A clearer observation. A better recovery. A permitted way into

@@ -1,0 +1,339 @@
+/* Bounded reading widths and shorter sections, including wide desktop screens. */
+.site-shell {
+  max-width: 1280px;
+}
+main {
+  padding: 0 40px;
+}
+.header,
+footer {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+.header {
+  min-height: 78px;
+}
+.hero {
+  grid-template-columns: minmax(330px, 0.85fr) minmax(0, 1.4fr);
+  gap: 36px;
+  align-items: center;
+  padding: 52px 0;
+}
+.hero h1 {
+  font-size: clamp(60px, 5.6vw, 80px);
+  line-height: 1;
+}
+.hero .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  margin-bottom: 22px;
+}
+.hero-brief {
+  margin-top: 22px;
+}
+.hero-brief > p:first-child {
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 370px;
+}
+.hero-game {
+  margin: 14px 0 20px;
+}
+.hero .workspace-preview {
+  min-width: 0;
+}
+.workspace-preview {
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.workspace-preview img {
+  height: auto;
+  aspect-ratio: 8 / 5;
+  object-fit: contain;
+}
+.preview-toolbar {
+  padding: 10px 12px;
+  gap: 12px;
+}
+.preview-toolbar > span {
+  font-size: 8px;
+}
+.preview-toolbar button {
+  padding: 7px 8px;
+  font-size: 9px;
+}
+.workspace-preview figcaption {
+  padding: 10px 12px;
+  font-size: 9px;
+  gap: 12px;
+}
+.hero .workspace-preview figcaption {
+  display: block;
+}
+.hero .workspace-preview figcaption > span {
+  display: block;
+  margin-top: 3px;
+}
+h2 {
+  font-size: clamp(32px, 3.1vw, 44px);
+}
+.section {
+  padding: 44px 0;
+}
+.section-heading {
+  margin-bottom: 24px;
+}
+.play-notes {
+  display: block;
+  margin-top: 0;
+}
+.play-notes .section-heading {
+  margin-bottom: 26px;
+}
+.play-notes .section-heading h2 {
+  max-width: 700px;
+}
+.play-notes-body {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.play-notes-body article {
+  display: block;
+  padding-right: 24px;
+  border-right: 1px solid var(--site-border);
+}
+.play-notes-body article:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.play-notes-body h3 {
+  max-width: none;
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+.play-notes-body p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.home-game,
+.game-spec {
+  padding: 32px;
+  gap: 44px;
+}
+.home-game h2 {
+  font-size: 50px;
+  max-width: 360px;
+}
+.home-game p {
+  margin: 16px 0 10px;
+  max-width: 400px;
+}
+.spec-list > div {
+  padding: 15px 0;
+  gap: 22px;
+}
+.open-invitation {
+  padding: 46px 0;
+  column-gap: 50px;
+  grid-template-columns: 1fr 1fr;
+}
+.open-invitation h2 {
+  font-size: 46px;
+}
+.open-invitation .eyebrow {
+  margin-bottom: 16px;
+}
+.open-invitation p {
+  margin-bottom: 14px;
+}
+footer {
+  padding: 30px 0 22px;
+}
+.footer-top {
+  gap: 45px;
+}
+.footer-top p {
+  margin-top: 16px;
+}
+.footer-links {
+  gap: 10px 22px;
+}
+.footer-bottom {
+  margin-top: 24px;
+  padding-top: 22px;
+}
+.page-intro {
+  padding: 42px 0 36px;
+}
+.page-intro > div {
+  gap: 48px;
+}
+.page-intro h1 {
+  font-size: clamp(52px, 5.8vw, 76px);
+}
+.page-intro p {
+  font-size: 14px;
+  line-height: 1.75;
+}
+.page-intro .eyebrow {
+  margin-bottom: 16px;
+}
+.setup-layout {
+  gap: 46px;
+}
+.setup-steps > section {
+  padding-bottom: 28px;
+  margin-bottom: 28px;
+}
+.setup-steps h2 {
+  font-size: 34px;
+}
+.code-block pre {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.callout {
+  padding: 20px;
+  margin-bottom: 30px;
+}
+.workspace-functions,
+.plain-split,
+.reproduce,
+.contribution-start {
+  padding: 40px 0;
+  gap: 44px;
+}
+.proposal-brief {
+  gap: 44px;
+  padding-top: 40px;
+}
+.explanation-list section {
+  gap: 44px;
+  padding: 24px 0;
+}
+.situation-detail {
+  min-height: 0;
+  padding: 28px 0;
+  gap: 44px;
+}
+.situation-detail h2 {
+  font-size: 44px;
+}
+.roadmap > section {
+  padding: 30px 0;
+  gap: 44px;
+}
+.roadmap h2 {
+  font-size: 42px;
+}
+.game-name h2 {
+  font-size: 62px;
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .hero {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  .hero h1 {
+    font-size: 60px;
+  }
+  .hero .preview-toolbar {
+    display: block;
+  }
+  .hero .preview-toolbar > span {
+    display: block;
+    margin-bottom: 7px;
+  }
+  .hero .preview-toolbar > div {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  main {
+    padding: 0 22px;
+  }
+  .header,
+  footer {
+    margin-left: 22px;
+    margin-right: 22px;
+  }
+  .hero {
+    display: block;
+    padding: 32px 0;
+  }
+  .hero h1 {
+    font-size: clamp(58px, 12vw, 80px);
+  }
+  .hero-brief {
+    margin-top: 18px;
+  }
+  .hero .workspace-preview {
+    margin-top: 26px;
+  }
+  .hero-brief .text-link {
+    margin: 5px 0 0;
+    display: flex;
+  }
+  .section {
+    padding: 32px 0;
+  }
+  .play-notes-body {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 0;
+  }
+  .play-notes-body article {
+    padding: 0 0 18px;
+    border-right: 0;
+    border-bottom: 1px solid var(--site-border);
+  }
+  .play-notes-body article:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .home-game,
+  .game-spec {
+    padding: 24px;
+  }
+  .home-game h2 {
+    font-size: 44px;
+  }
+  .home-game .spec-list,
+  .game-spec .spec-list {
+    margin-top: 22px;
+  }
+  .open-invitation {
+    padding: 34px 0;
+  }
+  .open-invitation h2 {
+    font-size: 42px;
+    margin-bottom: 20px;
+  }
+  .page-intro {
+    padding: 32px 0;
+  }
+  .page-intro h1 {
+    font-size: clamp(52px, 10vw, 68px);
+  }
+  .page-intro p {
+    margin-top: 20px;
+  }
+  .setup-layout {
+    gap: 30px;
+  }
+  .workspace-functions,
+  .plain-split,
+  .reproduce,
+  .contribution-start {
+    padding: 32px 0;
+    gap: 24px;
+  }
+  .proposal-brief,
+  .explanation-list section {
+    gap: 22px;
+  }
+  .game-name h2 {
+    font-size: 54px;
+  }
+}

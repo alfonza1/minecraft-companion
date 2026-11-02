@@ -14,7 +14,7 @@ import voices from '../services/voice/voices.json' with { type: 'json' };
 
 export const DESIGN_TIME = Date.parse('2026-11-01T12:00:00.000Z');
 export const DESIGN_SCENARIOS = ['disconnected', 'gathering', 'building', 'exploring', 'hangout', 'blocked', 'mission', 'inventory', 'collaboration'];
-export const WORKSPACE_PAGES = ['Overview', 'My companion', 'Current mission', 'Tasks & plans', 'Inventory', 'Resources', 'Collaboration', 'Activity', 'Communication', 'Build studio', 'Games', 'Extensions', 'Community', 'Settings', 'Setup', 'Diagnostics & logs'];
+export const WORKSPACE_PAGES = ['Session', 'My companion', 'Current mission', 'Tasks & plans', 'Inventory', 'Resources', 'Collaboration', 'Activity', 'Communication', 'Build studio', 'Games', 'Extensions', 'Community', 'Settings', 'Setup', 'Diagnostics & logs'];
 export const WEBSITE_PAGES = ['', 'get-started/', 'games/', 'how-it-works/', 'features/', 'docs/', 'engineering/', 'roadmap/', 'contribute/'];
 const id = number => `00000000-0000-4000-8000-${String(number).padStart(12, '0')}`;
 const collections = ['projects', 'tasks', 'taskStack', 'materialRequests', 'assistance', 'conversation', 'adventureMoments', 'companionProfile', 'supplyChests', 'locations', 'memories', 'workspaceDecisions', 'spawnPoints'];

@@ -8,7 +8,7 @@ import { servePublicWebsite } from './static-server.mjs';
 
 let fixture, website;
 const slug = value => value.toLowerCase().replaceAll('&', 'and').replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
-const pageScenario = { Overview: 'gathering', 'My companion': 'hangout', 'Current mission': 'mission', 'Tasks & plans': 'mission', Inventory: 'inventory', Resources: 'collaboration', Collaboration: 'collaboration', Activity: 'gathering', Communication: 'hangout', 'Build studio': 'building', 'Diagnostics & logs': 'blocked' };
+const pageScenario = { Session: 'gathering', 'My companion': 'hangout', 'Current mission': 'mission', 'Tasks & plans': 'mission', Inventory: 'inventory', Resources: 'collaboration', Collaboration: 'collaboration', Activity: 'gathering', Communication: 'hangout', 'Build studio': 'building', 'Diagnostics & logs': 'blocked' };
 
 test.beforeAll(async () => { fixture = await createDesignFixture(); website = await servePublicWebsite(); });
 test.afterAll(async () => { await website?.close(); await fixture?.close(); });
@@ -93,7 +93,7 @@ for (const section of ['Game account', 'AI & usage', 'Voice & devices', 'Data & 
 
 test('navigation dialog supports keyboard dismissal and complete destinations', async ({ page }, info) => {
   fixture.setFixture('disconnected'); await page.goto(fixture.base);
-  const trigger = page.getByRole('button', { name: 'Open navigation', exact: true });
+  const trigger = page.getByRole('button', { name: 'More tools', exact: true });
   await trigger.focus(); await page.keyboard.press('Enter');
   const navigation = page.getByRole('navigation', { name: 'Main navigation', exact: true });
   await expect(navigation).toBeVisible();
@@ -116,4 +116,25 @@ test('conversation dialog keeps a failed message visible and recoverable', async
   await checkScreen(page, 'conversation-failed-message', info, { synthetic: true });
   await dialog.getByRole('button', { name: 'Dismiss conversation error', exact: true }).click();
   await expect(dialog.getByRole('alert')).toHaveCount(0);
+});
+
+test('session exposes everyday tools and an inline composer without opening the menu', async ({ page }) => {
+  fixture.setFixture('gathering');
+  await page.addInitScript(() => sessionStorage.setItem('player-two-page', 'overview'));
+  await page.goto(fixture.base);
+  await expect(page.getByRole('heading', { level: 1, name: 'Session', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Message your companion', exact: true })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Current action progress' })).toHaveAttribute('aria-valuenow', '42');
+  const tools = page.getByRole('navigation', { name: 'Companion tools', exact: true });
+  for (const [label, title] of [['Tasks', 'Tasks & plans'], ['Inventory', 'Inventory'], ['Resources', 'Resources'], ['Build studio', 'Build studio'], ['Chat', 'Communication'], ['My companion', 'My companion'], ['Help & teamwork', 'Collaboration'], ['Session', 'Session']]) {
+    const button = tools.getByRole('button', { name: label, exact: true });
+    await expect(button).toBeVisible();
+    await button.click();
+    await expect(button).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('heading', { name: title, level: 1, exact: true })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Main navigation', exact: true })).not.toBeVisible();
+  }
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1, name: 'Session', exact: true })).toBeVisible();
 });

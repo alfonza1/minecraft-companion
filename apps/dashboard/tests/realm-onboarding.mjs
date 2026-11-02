@@ -1,3 +1,4 @@
+import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -37,7 +38,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(base, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await navigateWorkspace(page, 'Setup');
   const steps = page.getByRole('navigation', { name: 'Setup steps' });
   await steps.getByRole('button', { name: /First session/ }).click();
   await page.getByText(/Fixture Realm.*Saved/).waitFor();
@@ -54,9 +55,9 @@ try {
   assert.deepEqual(calls, ['check']);
   available = true;
   await connect.click();
-  await page.getByRole('heading', { name: 'Overview', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Session', exact: true }).waitFor();
   assert.deepEqual(calls, ['check', 'check', 'join']);
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', { name: 'Setup', exact: true }).click();
+  await navigateWorkspace(page, 'Setup');
   await page.getByRole('navigation', { name: 'Setup steps' }).getByRole('button', { name: /First session/ }).click();
   await page.getByText('Translation required', { exact: true }).waitFor();
   for (const width of [1440, 390]) {

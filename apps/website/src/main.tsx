@@ -7,6 +7,7 @@ import "@fontsource/space-grotesk/latin-500.css";
 import "@fontsource/space-grotesk/latin-600.css";
 import "./style.css";
 import "./worlds.css";
+import "./compact.css";
 import "../../../packages/ui/companion-tokens.css";
 const base = import.meta.env.BASE_URL;
 const route = "/" + location.pathname.slice(base.length).replace(/^\//, "");

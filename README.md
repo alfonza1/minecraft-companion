@@ -24,8 +24,9 @@ emotional pressure or claims of unattended human-level gameplay.
 The shared workspace puts your companion, current activity, mission, resources,
 help requests and conversation together. Adjust its name, style and talkativeness;
 save a real conversation or completed task as a moment; inspect or delete it later.
-A compact tool rail keeps the session in view. Press **Ctrl+K** (or **⌘K**) for
-the full navigation menu. Gathering, construction, exploration and blockers each
+A visible tool strip opens tasks, inventory, resources, building and teamwork
+directly. Session keeps activity, carried items and chat together. **More tools**
+or **Ctrl+K** (or **⌘K**) opens secondary tools. Gathering, construction, exploration and blockers each
 bring different information forward. No friendship scores, fabricated memories
 or fake live telemetry.
 
@@ -46,7 +47,7 @@ npm run install:agent
 npm start
 ```
 
-Open **http://127.0.0.1:4365 → Navigation → Games → Minecraft Survival**, then **Navigation → Setup**. Select an installed local Ollama model for
+Open **http://127.0.0.1:4365 → More tools → Setup**. Minecraft Survival is the supported game. Select an installed local Ollama model for
 no-subscription inference, or configure an existing supported provider account.
 Connect a separate licensed Minecraft Java account through Microsoft's device-code
 flow. Choose its invited Realm and check compatibility before joining.

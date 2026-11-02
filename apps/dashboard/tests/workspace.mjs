@@ -1,6 +1,6 @@
 import { navigateWorkspace } from './navigation.mjs';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,copyFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
@@ -18,7 +18,7 @@ const base=`http://127.0.0.1:${app.server.address().port}`;
 const browser=await chromium.launch();
 const page=await browser.newPage({viewport:{width:1440,height:1050},reducedMotion:'reduce'});
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
-const routes=['Overview','My companion','Current mission','Tasks & plans','Inventory','Resources','Collaboration','Activity','Communication','Build studio','Games','Extensions','Community','Settings','Setup','Diagnostics & logs'];
+const routes=['Session','My companion','Current mission','Tasks & plans','Inventory','Resources','Collaboration','Activity','Communication','Build studio','Games','Extensions','Community','Settings','Setup','Diagnostics & logs'];
 const post=async(path,body={})=>{const response=await fetch(base+'/api'+path,{method:'POST',headers:{'content-type':'application/json',origin:base},body:JSON.stringify(body)});const data=await response.json();assert.equal(response.ok,true,JSON.stringify(data));return data;};
 async function navigate(label){return navigateWorkspace(page,label);}
 try{
@@ -26,12 +26,11 @@ try{
   for(const width of [1440,768,414,375,320]){
     await page.setViewportSize({width,height:1050});
     for(const label of routes){await navigate(label);await page.waitForTimeout(40);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${label}: ${width}px overflow`);}
-    await navigate('Overview');await page.screenshot({path:join(evidence,`overview-${width}.png`),fullPage:true});
+    await navigate('Session');await page.screenshot({path:join(evidence,`overview-${width}.png`),fullPage:true});
   }
-  await page.setViewportSize({width:1440,height:1050});await navigate('Overview');
-  // Publish only this genuine disconnected test session, never synthetic gameplay fixtures below.
+  await page.setViewportSize({width:1440,height:1050});await navigate('Session');
+  // Keep test evidence separate from the website's deliberately framed product capture.
   await page.screenshot({path:join(evidence,'public-workspace.png'),fullPage:false});
-  await copyFile(join(evidence,'public-workspace.png'),'apps/website/public/dashboard.png');
   await navigate('My companion');await page.getByRole('textbox',{name:'Companion name',exact:true}).fill('Trail');await page.getByRole('button',{name:'Save name',exact:true}).click();
   await page.getByRole('combobox',{name:'Conversation style',exact:true}).selectOption('dry-humor');
   await expect(page.getByRole('combobox',{name:'Conversation style',exact:true})).toHaveValue('dry-humor');
@@ -48,7 +47,7 @@ try{
   await delayedFetch;
   await expect(page.getByRole('heading',{name:'Trailblazer',exact:true})).toBeVisible();
   await expect(page.getByRole('textbox',{name:'Companion name',exact:true})).toHaveValue('Trailblazer');
-  await navigate('Communication');await page.getByRole('button',{name:'Start planning offline',exact:true}).click();
+  await navigate('Session');await page.getByRole('button',{name:'Start planning offline',exact:true}).click();
   await page.getByRole('textbox',{name:'Message your companion',exact:true}).fill('Let’s just hang out');
   await page.getByRole('button',{name:'Send message',exact:true}).click();
   // Curly apostrophe may use model routing; explicit mode command is deterministic.
@@ -70,7 +69,7 @@ try{
   const observedAt=new Date().toISOString();
   runtime.world={observedAt,inventoryExact:true,provenance:'observed',position:{x:10,y:64,z:15},dimension:'overworld',health:20,food:20,oxygen:20,experience:{level:0},equipment:{head:null,torso:null,legs:null,feet:null,hand:null,offhand:null},inventory:[{slot:36,name:'oak_log',count:42,displayName:'Oak Log',stackSize:64,type:1}],nearbyPlayers:[],nearbyEntities:[],timeOfDay:1000};
   runtime.currentTask={id:randomUUID(),name:'chop_tree',tool:'chop_tree',status:'running',descriptor:{tool:'chop_tree',args:{count:64,species:'oak'}},baselineInventory:{},startedAt:observedAt};
-  runtime.emit('change');await navigate('Overview');await expect(page.getByText('42', {exact:false}).first()).toBeVisible();
+  runtime.emit('change');await navigate('Session');await expect(page.getByText('42', {exact:false}).first()).toBeVisible();
   await navigate('Inventory');await page.getByRole('button',{name:'Slot 36: 42 Oak Log',exact:true}).click();await page.getByRole('heading',{name:'Oak Log',exact:true}).waitFor();
   runtime.world.inventory[0].count=64;runtime.world.observedAt=new Date().toISOString();runtime.emit('change');await expect(page.getByRole('button',{name:'Slot 36: 64 Oak Log',exact:true})).toBeVisible();
   const project=await post('/projects',{name:'Browser fixture build',version:'26.3'});

@@ -24,7 +24,9 @@ rendering can vary across operating systems; update baselines only after review
 on the recorded Windows baseline environment.
 
 The reference environment is Windows 10.0.26300, Node 24.18.1, Playwright 1.64.1
-and Chromium 156.0.0.0. There are 117 references (39 screens at each width).
+and Chromium 156.0.0.0. There are 117 references (39 screens at each width), plus
+three interaction tests that open every everyday tool directly, exercise the
+legacy Overview-to-Session bookmark and verify inline chat is available.
 Linux CI runs `npm run test:visual -- --ignore-snapshots`: it still captures real
 screens, checks accessibility, errors and interactions, but does not compare
 Linux font rasterization to the Windows pixel references. Run the ordinary

@@ -10,14 +10,14 @@ mission, fabricated inventory or proof of gameplay success.
 
 ## Find your bearings
 
-The header identifies the selected game, companion and connection. Overview puts
+The header identifies the selected game, companion and connection. Session puts
 the current activity, objective, credible progress, resources, next steps and help
 requests together. The companion panel offers a quick conversation without
 turning low-level execution logs into chat.
 
 | View | What it is for |
 | --- | --- |
-| Overview | Current activity, mission, companion status and useful next steps |
+| Session | Current activity, carried items, useful next steps and inline chat |
 | My companion | Name, personality, talkativeness, modes and saved moments |
 | Current mission / Tasks & plans | Saved task steps, prerequisites, blockers and interruption controls |
 | Inventory | Actual Minecraft slots, equipment and known storage |
@@ -31,10 +31,12 @@ turning low-level execution logs into chat.
 | Settings / Setup | Existing model, Realm, voice, permissions and installation controls |
 | Diagnostics | Searchable logs, service status, model usage and technical errors |
 
-There is no permanent navigation sidebar. The bottom rail opens Session, Plan,
-Supplies, Talk and Together; **Navigation** or **Ctrl/⌘K** opens a searchable tool
-menu. Escape closes the native dialog and returns keyboard focus. The conversation
-button opens a focused conversation window; failed requests appear inside it.
+The visible tool strip opens Session, Tasks, Inventory, Resources, Build studio,
+Chat, Help & teamwork and My companion directly. Settings has its own header
+button. **More tools** or **Ctrl/⌘K** opens the secondary searchable menu for Setup,
+Games, Activity and advanced tools. Escape closes the dialog and returns keyboard
+focus. Session shows activity and carried items beside a working chat composer;
+the conversation button also opens a focused chat window from any tool.
 Settings separates Game account, AI & usage, Voice & devices and Data & diagnostics.
 Small displays use compact resource progress and stacked work areas. Reduced-motion
 preferences are respected.
