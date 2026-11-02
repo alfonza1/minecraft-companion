@@ -105,9 +105,11 @@ try {
     0,
     "Retired concept artwork must not appear",
   );
-  await page
-    .getByRole("button", { name: "Gathering test fixture", exact: true })
-    .click();
+  assert.equal(
+    await page.getByRole("button", { name: "Gathering test fixture", exact: true }).getAttribute("aria-pressed"),
+    "true",
+    "The gathering example is selected on first load",
+  );
   assert.match(
     await page.locator(".workspace-preview figcaption").innerText(),
     /Synthetic test fixture/,
@@ -124,6 +126,8 @@ try {
   await page
     .getByRole("button", { name: "Disconnected session", exact: true })
     .click();
+  assert.match(await page.locator(".workspace-preview img").getAttribute("src"), /dashboard\.png$/);
+  await page.getByRole("button", { name: "Gathering test fixture", exact: true }).click();
   await page.screenshot({
     path: join(artifact, "home-desktop.png"),
     fullPage: true,

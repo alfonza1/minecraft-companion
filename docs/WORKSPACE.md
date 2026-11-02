@@ -4,9 +4,10 @@ Player Two is the shared home for an AI gaming companion. Minecraft Survival is 
 only playable game. The workspace uses game-aware observations and keeps
 Minecraft-specific inventory and building controls in dedicated views.
 
-The screenshot in the [README](../README.md) and public website comes from the
-actual application in a disconnected test session. It is not a simulated live
-mission, fabricated inventory or proof of gameplay success.
+The workspace screenshot in the [README](../README.md) shows a disconnected test
+session. The public website defaults to a labeled gathering example rendered by
+the actual application with synthetic observations. Neither is proof of live
+gameplay success; the disconnected screenshot remains available on the website.
 
 ## Find your bearings
 

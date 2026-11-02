@@ -159,18 +159,18 @@ function SectionHeading({
   );
 }
 function ProductImage({ eager = false }: { eager?: boolean }) {
-  const [fixture, setFixture] = useState(false);
+  const [fixture, setFixture] = useState(true);
   const filename = fixture ? "gathering-fixture.png" : "dashboard.png";
   return (
     <figure className="workspace-preview">
       <div className="preview-toolbar">
         <span>INSIDE THE WORKSPACE</span>
         <div aria-label="Workspace screenshot">
-          <button aria-pressed={!fixture} onClick={() => setFixture(false)}>
-            Disconnected session
-          </button>
           <button aria-pressed={fixture} onClick={() => setFixture(true)}>
             Gathering test fixture
+          </button>
+          <button aria-pressed={!fixture} onClick={() => setFixture(false)}>
+            Disconnected session
           </button>
         </div>
       </div>
