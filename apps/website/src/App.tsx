@@ -174,10 +174,7 @@ function ProductImage({ eager = false }: { eager?: boolean }) {
           </button>
         </div>
       </div>
-      <a
-        href={base + filename}
-        aria-label="Open actual companion workspace screenshot"
-      >
+      <div className="preview-image">
         <img
           src={base + filename}
           width="1440"
@@ -189,13 +186,13 @@ function ProductImage({ eager = false }: { eager?: boolean }) {
               : "Actual Player Two workspace in a disconnected test session; no live gameplay data is invented"
           }
         />
-      </a>
+      </div>
       <figcaption>
         <strong>The local workspace / actual application</strong>
         <span>
           {fixture
             ? "Synthetic test fixture · not recorded gameplay"
-            : "Disconnected test session · open image for detail"}
+            : "Disconnected test session"}
         </span>
       </figcaption>
     </figure>

@@ -98,6 +98,10 @@ try {
     true,
   );
   assert.match(await page.locator(".hero-copy").innerText(), /Good company/i);
+  assert.equal(await page.locator(".workspace-preview a").count(), 0);
+  const previewPageUrl = page.url();
+  await page.locator(".workspace-preview img").click();
+  assert.equal(page.url(), previewPageUrl, "The screenshot stays inline when clicked");
   assert.equal(
     await page
       .locator('.companion-emblem,.game-art,img[src*="survival-teammates"]')

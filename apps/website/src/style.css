@@ -311,7 +311,7 @@ button.text-link {
   overflow: hidden;
   background: var(--site-surface);
 }
-.workspace-preview a {
+.workspace-preview .preview-image {
   display: block;
 }
 .preview-toolbar {
