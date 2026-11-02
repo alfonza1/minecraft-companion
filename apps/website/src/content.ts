@@ -4,7 +4,7 @@ export const pages = [
   [
     "/",
     "Home",
-    "Meet your new gaming buddy. An open-source AI companion to explore, build and hang out with, starting with Minecraft Survival.",
+    "An AI agent. On your team. An open-source gaming agent that observes, plans and acts alongside you, starting with Minecraft Survival.",
   ],
   [
     "/get-started/",

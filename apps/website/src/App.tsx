@@ -207,14 +207,14 @@ function Home() {
             PLAYER TWO / OPEN-SOURCE AI GAMING COMPANION
           </span>
           <h1>
-            Meet your new
+            An AI agent.
             <br />
-            <em>gaming buddy.</em>
+            <em>On your team.</em>
           </h1>
           <div className="hero-brief">
             <p>
-              An AI companion to explore with, build with, and joke around with.
-              Ask for a hand, chase your next adventure, or just talk while you play.
+              Give it a goal. It observes the world, plans its next steps, and takes
+              action—gathering resources, helping with builds, and coordinating with you.
             </p>
             <p className="hero-game">
               Starting with <strong>Minecraft Survival.</strong>
