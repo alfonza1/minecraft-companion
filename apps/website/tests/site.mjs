@@ -97,7 +97,7 @@ try {
       .evaluate((image) => image.complete && image.naturalWidth > 0),
     true,
   );
-  assert.match(await page.locator(".hero-copy").innerText(), /Good company/i);
+  assert.match(await page.locator(".hero-copy").innerText(), /Meet your new\s+gaming buddy/i);
   assert.equal(await page.locator(".workspace-preview a").count(), 0);
   const previewPageUrl = page.url();
   await page.locator(".workspace-preview img").click();

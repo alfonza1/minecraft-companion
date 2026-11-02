@@ -1,6 +1,6 @@
 # Player Two
 
-**Good company. Better games.**
+**Meet your new gaming buddy.**
 
 Player Two is a free, open-source **AI gaming companion platform**: a companion to
 play with, talk to, share goals with and improve together. **Minecraft Survival is

@@ -4,7 +4,7 @@ export const pages = [
   [
     "/",
     "Home",
-    "Good company. Better games. An open-source AI gaming companion, starting with Minecraft Survival.",
+    "Meet your new gaming buddy. An open-source AI companion to explore, build and hang out with, starting with Minecraft Survival.",
   ],
   [
     "/get-started/",
