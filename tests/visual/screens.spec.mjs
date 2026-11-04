@@ -140,3 +140,47 @@ test('session exposes everyday tools and an inline composer without opening the 
   await page.reload();
   await expect(page.getByRole('heading', { level: 1, name: 'Session', exact: true })).toBeVisible();
 });
+
+test('disconnected session separates supplies and keeps long conversation usable', async ({ page }, info) => {
+  fixture.setFixture('disconnected');
+  for (let index = 0; index < 40; index++) {
+    fixture.store.put('conversation', {
+      id: `layout-history-${index}`,
+      role: index % 2 ? 'companion' : 'user',
+      text: index % 2
+        ? 'The wood is ready. I can check the supply chest before the next task. We still need glass for the windows, so that part is waiting.'
+        : 'What should we work on next?',
+      at: new Date(DESIGN_TIME + index * 60000).toISOString(),
+    });
+  }
+  fixture.runtime.emit('change');
+  await page.goto(fixture.base);
+  await page.getByText('Connected to local runtime', { exact: true }).waitFor();
+  const chat = page.locator('.console-session-chat');
+  await expect(chat.locator('.ws-chat-message')).toHaveCount(40);
+  const layout = await page.locator('.console-session').evaluate(session => {
+    const activity = session.querySelector('.session-stage').getBoundingClientRect();
+    const supplies = session.querySelector('.session-pocket').getBoundingClientRect();
+    const conversation = session.querySelector('.ws-chat').getBoundingClientRect();
+    const history = session.querySelector('.ws-chat-messages');
+    const composer = session.querySelector('.ws-chat-composer').getBoundingClientRect();
+    return {
+      suppliesGap: supplies.top - activity.bottom,
+      conversationWidth: conversation.width,
+      historyScrolls: history.scrollHeight > history.clientHeight,
+      composerInside: composer.bottom <= conversation.bottom && composer.top >= history.getBoundingClientRect().bottom,
+      messageRadius: getComputedStyle(history.querySelector('article')).borderRadius,
+    };
+  });
+  expect(layout.suppliesGap).toBeGreaterThanOrEqual(24);
+  if (page.viewportSize().width >= 1200) expect(layout.conversationWidth).toBeGreaterThanOrEqual(400);
+  expect(layout.historyScrolls).toBe(true);
+  expect(layout.composerInside).toBe(true);
+  expect(layout.messageRadius).toBe('0px');
+  await checkScreen(page, 'session-offline-history', info, { synthetic: true });
+  const remember = chat.getByRole('button', { name: /Remember this message from/ }).last();
+  await remember.focus();
+  await page.keyboard.press('Enter');
+  await expect(chat.getByRole('status')).toHaveText('Moment saved to My companion.');
+  expect(fixture.store.get('adventureMoments').some(moment => moment.sourceId === 'layout-history-39')).toBe(true);
+});

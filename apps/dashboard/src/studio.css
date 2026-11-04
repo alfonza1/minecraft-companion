@@ -340,9 +340,13 @@
 }
 .console-session {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 355px);
-  gap: 22px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(400px, 1fr);
+  gap: 32px;
   align-items: start;
+}
+.console-session-work {
+  display: grid;
+  gap: 24px;
 }
 .console-session-work,
 .console-session-chat {
@@ -350,14 +354,14 @@
 }
 .play-desk .session-stage {
   border: 1px solid #303035;
-  border-radius: var(--wp-radius-stage);
+  border-radius: var(--wp-radius-md);
   overflow: hidden;
   background: var(--wp-surface);
-  box-shadow: 0 12px 40px #0002;
+  box-shadow: none;
 }
 .stage-kicker {
-  padding: 18px 26px;
-  border: 0;
+  padding: 18px 24px;
+  border-bottom: 1px solid #303035;
   font-size: 13px;
   gap: 10px;
 }
@@ -391,12 +395,12 @@
   display: none;
 }
 .play-desk .stage-story {
-  padding: 12px 26px 20px;
+  padding: 28px 24px;
   justify-content: center;
 }
 .play-desk .stage-story h2 {
-  font: 650 clamp(26px, 2.5vw, 38px)/1.12 var(--wp-body);
-  letter-spacing: -0.04em;
+  font: 600 clamp(24px, 2.2vw, 32px)/1.2 var(--wp-body);
+  letter-spacing: -0.03em;
   margin: 14px 0;
   text-wrap: balance;
 }
@@ -507,8 +511,8 @@
 }
 .stage-next {
   padding: 18px 26px;
-  background: #202023;
-  border: 0;
+  background: transparent;
+  border-top: 1px solid #303035;
   grid-template-columns: 60px minmax(0, 1fr) 30px;
   gap: 12px;
 }
@@ -524,7 +528,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px 20px;
-  padding: 16px 6px;
+  padding: 0 4px;
   border: 0;
   font: 11px/1.5 var(--wp-body);
   color: var(--wp-muted);
@@ -534,11 +538,12 @@
   font-weight: 500;
 }
 .play-desk .session-pocket {
-  padding: 20px 24px;
+  padding: 24px 0 0;
   gap: 20px;
-  border: 1px solid #29292d;
-  border-radius: var(--wp-radius-lg);
-  background: var(--wp-surface);
+  border: 0;
+  border-top: 1px solid var(--wp-border);
+  border-radius: 0;
+  background: transparent;
   flex-wrap: wrap;
 }
 .session-pocket h3 {
@@ -600,16 +605,19 @@
 }
 .play-desk .ws-chat {
   border: 1px solid #303035;
-  border-radius: var(--wp-radius-stage);
+  border-radius: var(--wp-radius-md);
   overflow: hidden;
   background: var(--wp-surface);
 }
 .play-desk .console-session-chat .ws-chat {
   display: flex;
   flex-direction: column;
-  height: 550px;
-  max-height: calc(100dvh - 225px);
-  min-height: 450px;
+  height: clamp(520px, calc(100dvh - 280px), 760px);
+  max-height: none;
+  min-height: 0;
+}
+.play-desk .ws-chat > :not(.ws-chat-messages) {
+  flex-shrink: 0;
 }
 .play-desk .ws-chat > header {
   padding: 20px;
@@ -645,16 +653,16 @@
   background: var(--wp-success);
 }
 .play-desk .ws-chat-messages {
-  padding: 20px;
+  padding: 8px 24px;
 }
 .play-desk .console-session-chat .ws-chat-messages {
   flex: 1;
-  min-height: 100px;
+  min-height: 0;
   max-height: none;
   overflow: auto;
 }
 .console-session-chat .ws-chat-welcome {
-  padding: 0;
+  padding: 24px 0;
   margin: 0 auto;
 }
 .console-session-chat .ws-chat-welcome h3 {
@@ -693,27 +701,49 @@
 .play-desk .ws-chat-welcome .button:hover {
   background: var(--wp-control);
 }
-.play-desk .ws-chat-message {
-  background: var(--wp-control);
+.play-desk .ws-chat .ws-chat-message {
+  background: transparent;
   border: 0;
-  border-radius: 14px 14px 14px 4px;
-  padding: 16px;
-  margin-bottom: 14px;
+  border-bottom: 1px solid #303035;
+  border-radius: 0;
+  padding: 20px 0;
+  margin: 0;
+  max-width: none;
 }
-.play-desk .ws-chat-message.user {
-  background: var(--wp-mint-surface);
-  border-radius: 14px 14px 4px 14px;
-  margin-left: 20px;
+.play-desk .ws-chat-message.user strong {
+  color: var(--wp-mint);
 }
-.ws-chat-message p {
-  font-size: 13px;
+.play-desk .ws-chat .ws-chat-message p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 10px 0 0;
+}
+.ws-message-heading time {
+  margin-left: auto;
+  font-size: 10px;
+}
+.play-desk .ws-message-heading {
+  gap: 12px;
+  font-size: 12px;
+}
+.play-desk .ws-chat-message .ws-save-message {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  border-radius: 4px;
+}
+.play-desk .ws-chat-message .ws-save-message:hover {
+  background: var(--wp-control);
+}
+.play-desk .ws-chat-message:last-child {
+  border-bottom: 0;
 }
 .play-desk .ws-chat-composer {
-  margin: 0 14px;
+  margin: 12px 20px 0;
   padding: 8px;
   background: var(--wp-inset);
   border: 1px solid #505055;
-  border-radius: 16px;
+  border-radius: 8px;
   gap: 6px;
 }
 .play-desk .ws-chat-composer textarea {
@@ -738,9 +768,22 @@
   gap: 8px;
   font: 11px var(--wp-body);
 }
-.ws-chat-offline {
+.play-desk .ws-chat .ws-chat-offline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   background: var(--wp-inset);
-  padding: 14px 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #303035;
+}
+.play-desk .ws-chat-offline p {
+  margin: 0;
+  flex: 1 1 150px;
+}
+.play-desk .ws-chat-offline .button {
+  min-height: 36px;
+  padding: 8px 12px;
 }
 .play-desk .play-voice {
   padding: 0;
@@ -1382,8 +1425,8 @@
     padding: 22px 24px;
   }
   .console-session {
-    grid-template-columns: minmax(0, 1fr) 310px;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+    gap: 24px;
   }
   .stage-composition {
     grid-template-columns: minmax(0, 1fr);
@@ -1476,7 +1519,7 @@
     justify-content: center;
   }
   .play-desk .console-session-chat .ws-chat {
-    height: 480px;
+    height: 600px;
     max-height: none;
     min-height: 0;
   }
@@ -1614,7 +1657,7 @@
     grid-column: 1/-1;
   }
   .play-desk .session-pocket {
-    padding: 20px;
+    padding: 20px 0 0;
   }
   .session-world {
     gap: 10px 16px;

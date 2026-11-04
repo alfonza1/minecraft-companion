@@ -122,3 +122,34 @@ does not alter gameplay, providers or stored user settings. Real-Realm gameplay
 and physical voice-device tests were not rerun for this presentation-only change.
 Local evidence is under `.git/layout-review/`, `.git/website-checks/` and the
 verification record under `.git/hackers-lair/`.
+
+## Session spacing and conversation refinement
+
+The disconnected screen exposed a spacing defect: the work column relied on the
+optional world-status row to separate activity from inventory. It now owns a
+24 px grid gap regardless of connection state. Inventory is an open shelf with
+a divider, rather than another rounded panel attached to the activity panel.
+The two main columns have 32 px separation on desktop and 24 px at smaller
+widths. Main session panels use the 12 px radius token, without a drop shadow.
+
+The conversation column is wider, and messages use full-width, separated rows
+instead of nested bubbles. The existing save-memory action is a labeled,
+keyboard-accessible bookmark beside each timestamp. Its endpoint, permissions
+and saved data are unchanged. Offline controls and the composer cannot shrink
+into the message history; only the history scrolls.
+
+A new browser regression uses 40 synthetic messages in a disconnected session
+at desktop, tablet and mobile sizes. It checks the inventory gap, chat width,
+scrolling history, composer bounds and keyboard saving of a real fixture memory.
+The first test run used the wrong store collection name for its final assertion;
+the assertion now reads `adventureMoments`, matching the implementation. No user
+conversation was copied into the fixtures or public captures. Local visual
+evidence and test logs are under `.git/session-layout/`.
+
+The corrected full visual run passed all 123 tests, including accessibility
+checks and the new history regression at three widths. The workspace integration
+suite passed 80 viewport checks across 16 routes. The website passed its 45
+page/viewport checks, 12 interaction flows and 18 accessibility pages with zero
+violations or browser errors. Public previews were recaptured from the isolated
+fixture. Source review found no introduced data-handling or action-dispatch
+changes; gameplay and physical audio tests were not rerun for this layout fix.

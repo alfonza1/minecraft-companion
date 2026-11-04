@@ -399,31 +399,31 @@ export function ConversationPane({
               className={`ws-chat-message ${message.role}`}
               key={message.id}
             >
-              <div>
+              <div className="ws-message-heading">
                 <strong>
                   {message.role === "user"
                     ? "You"
                     : state.profile?.name || "Companion"}
                 </strong>
                 <time>{time(message.at)}</time>
+                <button
+                  className="text-button ws-save-message"
+                  aria-label={`Remember this message from ${time(message.at)}`}
+                  title="Remember this message"
+                  disabled={busy || state.profile?.memoryEnabled === false}
+                  onClick={() =>
+                    attempt(
+                      mutate("/companion/moments", {
+                        sourceType: "conversation",
+                        sourceId: message.id,
+                      }).then(() => setSaved("Moment saved to My companion.")),
+                    )
+                  }
+                >
+                  <Bookmark size={14} />
+                </button>
               </div>
               <p>{message.text}</p>
-              <button
-                className="text-button ws-save-message"
-                aria-label={`Remember this message from ${time(message.at)}`}
-                disabled={busy || state.profile?.memoryEnabled === false}
-                onClick={() =>
-                  attempt(
-                    mutate("/companion/moments", {
-                      sourceType: "conversation",
-                      sourceId: message.id,
-                    }).then(() => setSaved("Moment saved to My companion.")),
-                  )
-                }
-              >
-                <Bookmark size={12} />
-                Remember this
-              </button>
             </article>
           ))
         ) : (
