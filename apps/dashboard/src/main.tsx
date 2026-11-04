@@ -6,14 +6,10 @@ import "./style.css";
 import "./voice.css";
 import "./desktop.css";
 
-import "@fontsource/space-grotesk/latin-500.css";
-import "@fontsource/space-grotesk/latin-600.css";
 import "../../../packages/ui/companion-tokens.css";
 import "./workspace.css";
 import "./play-desk.css";
-import "./console.css";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "@fontsource/barlow-condensed/latin-700.css";
+import "./studio.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

@@ -65,8 +65,8 @@ export default function BuildPreview({
     const grid = new THREE.GridHelper(
       Math.max(x, z) + 8,
       Math.max(x, z) + 8,
-      0x4d685f,
-      0x25352f,
+      0x50505a,
+      0x2b2b32,
     );
     grid.position.set(x / 2, -0.51, z / 2);
     scene.add(grid);

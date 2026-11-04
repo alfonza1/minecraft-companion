@@ -44,7 +44,7 @@ function Header({ route }: { route: string }) {
   return (
     <header className="header">
       <Logo />
-      <span className="brand-context">A shared place to play.</span>
+      <span className="brand-context">AI gaming companion</span>
       <button
         className="menu-toggle"
         aria-expanded={open}
@@ -164,7 +164,7 @@ function ProductImage({ eager = false }: { eager?: boolean }) {
   return (
     <figure className="workspace-preview">
       <div className="preview-toolbar">
-        <span>INSIDE THE WORKSPACE</span>
+        <span>Player Two in action</span>
         <div aria-label="Workspace screenshot">
           <button aria-pressed={fixture} onClick={() => setFixture(true)}>
             Gathering test fixture
@@ -203,9 +203,7 @@ function Home() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">
-            PLAYER TWO / OPEN-SOURCE AI GAMING COMPANION
-          </span>
+          <span className="eyebrow">Open-source AI gaming companion</span>
           <h1>
             An AI agent.
             <br />
@@ -213,44 +211,56 @@ function Home() {
           </h1>
           <div className="hero-brief">
             <p>
-              Give it a goal. It observes the world, plans its next steps, and takes
-              action—gathering resources, helping with builds, and coordinating with you.
+              Give it a goal. It observes the world, plans its next steps, and
+              takes action—gathering resources, helping with builds, and
+              coordinating with you.
             </p>
             <p className="hero-game">
               Starting with <strong>Minecraft Survival.</strong>
             </p>
-            <LinkButton to={href("/get-started/")}>
-              Get started — free
-            </LinkButton>
-            <a className="text-link" href={source}>
-              Explore the source <Arrow />
-            </a>
+            <div className="hero-actions">
+              <LinkButton to={href("/get-started/")}>
+                Get started — free
+              </LinkButton>
+              <a className="text-link" href={source}>
+                Explore the source <Arrow />
+              </a>
+            </div>
           </div>
         </div>
         <ProductImage eager />
       </section>
       <section className="section play-notes">
         <SectionHeading
-          label="WHAT IT’S LIKE TO PLAY TOGETHER"
-          title={<>A hand with the game. Company for the rest.</>}
+          label="More than a conversation"
+          title={<>A goal. A plan. A teammate.</>}
         />
         <div className="play-notes-body">
           <article>
-            <h3>Give it a useful job.</h3>
+            <span className="feature-index" aria-hidden="true">
+              01
+            </span>
+            <h3>Put a plan into play.</h3>
             <p>
               Gather supplies, prepare for a trip or work on an approved build.
               See what is happening, what comes next and where it needs a hand.
             </p>
           </article>
           <article>
-            <h3>Keep a conversation going.</h3>
+            <span className="feature-index" aria-hidden="true">
+              02
+            </span>
+            <h3>Talk while you play.</h3>
             <p>
               Talk about the game or something else entirely. Adjust the tone
               and talkativeness; save the moments you want it to remember.
             </p>
           </article>
           <article>
-            <h3>Make the decisions together.</h3>
+            <span className="feature-index" aria-hidden="true">
+              03
+            </span>
+            <h3>You’re still in charge.</h3>
             <p>
               Split resources, change a responsibility or pause the whole
               session. Help requests explain the blocker before asking you to

@@ -25,6 +25,8 @@ async function checkScreen(page, name, info, { synthetic = false } = {}) {
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(() => document.fonts.ready);
   await page.locator('h1').waitFor({ state: 'visible' });
+  // Review the actual lazy-loaded workbench, not its transient loading shell.
+  await page.locator('.preview-loading').waitFor({ state: 'hidden' });
   await page.evaluate(() => Promise.all([...document.images].map(image => image.complete ? undefined : new Promise(resolve => { image.addEventListener('load', resolve, { once: true }); image.addEventListener('error', resolve, { once: true }); }))));
   if (synthetic) await page.evaluate(() => {
     if (document.getElementById('visual-fixture-label')) return;

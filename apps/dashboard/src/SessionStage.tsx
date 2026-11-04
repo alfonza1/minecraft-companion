@@ -116,8 +116,8 @@ export default function SessionStage({
           <div className="stage-story">
             <span className="eyebrow">
               {workspace?.mission && workspace.mission.title !== title
-                ? "WORKING TOWARD"
-                : "RIGHT NOW"}
+                ? "Working toward"
+                : "Current activity"}
             </span>
             {workspace?.mission && workspace.mission.title !== title ? (
               <button
@@ -150,7 +150,28 @@ export default function SessionStage({
                 <span className="eyebrow">
                   {itemName ? human(itemName) : "CURRENT RESOURCE"}
                 </span>
-                {itemName ? <ItemIcon key={itemName} name={itemName} /> : null}
+                <div className="gathering-orbit">
+                  {fraction !== null ? (
+                    <svg
+                      className="gathering-ring"
+                      viewBox="0 0 120 120"
+                      aria-hidden="true"
+                    >
+                      <circle className="ring-track" cx="60" cy="60" r="54" />
+                      <circle
+                        className="ring-value"
+                        cx="60"
+                        cy="60"
+                        r="54"
+                        pathLength="100"
+                        strokeDasharray={`${fraction * 100} 100`}
+                      />
+                    </svg>
+                  ) : null}
+                  {itemName ? (
+                    <ItemIcon key={itemName} name={itemName} />
+                  ) : null}
+                </div>
                 {progress ? (
                   <>
                     <div className="gathering-count">
@@ -236,7 +257,7 @@ export default function SessionStage({
           </div>
         ) : null}
         <div className="stage-next">
-          <span className="eyebrow">UP NEXT</span>
+          <span className="eyebrow">Up next</span>
           <p>
             {paused
               ? "Explicit resume before further actions."
@@ -279,7 +300,7 @@ export default function SessionStage({
       ) : null}
       <section className="session-pocket" aria-label="Carried supplies">
         <div>
-          <span className="eyebrow">IN THE BACKPACK</span>
+          <span className="eyebrow">In the backpack</span>
           <h3>
             {state.world
               ? `${carried.length} of 36 slots occupied`

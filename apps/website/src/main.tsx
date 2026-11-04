@@ -1,14 +1,9 @@
 import { hydrateRoot, createRoot } from "react-dom/client";
 import App from "./App";
-import "@fontsource/barlow-condensed/latin-600.css";
-import "@fontsource/barlow-condensed/latin-700.css";
-import "@fontsource/space-grotesk/latin-400.css";
-import "@fontsource/space-grotesk/latin-500.css";
-import "@fontsource/space-grotesk/latin-600.css";
 import "./style.css";
 import "./worlds.css";
-import "./compact.css";
 import "../../../packages/ui/companion-tokens.css";
+import "./studio.css";
 const base = import.meta.env.BASE_URL;
 const route = "/" + location.pathname.slice(base.length).replace(/^\//, "");
 const root = document.getElementById("root")!;

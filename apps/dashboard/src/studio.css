@@ -1,0 +1,1668 @@
+/* Graphite studio · professional software · blue action accent · session stage + contextual inspectors. */
+:root {
+  color-scheme: dark;
+  font-family: var(--wp-body);
+  -webkit-font-smoothing: antialiased;
+}
+.play-desk {
+  font-family: var(--wp-body);
+  font-size: 14px;
+}
+.play-desk h1,
+.play-desk h2,
+.play-desk h3 {
+  font-family: var(--wp-body);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-transform: none;
+}
+.play-desk h2 {
+  font-size: 22px;
+}
+.play-desk h3 {
+  font-size: 16px;
+}
+.play-desk p {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.play-desk .eyebrow {
+  font: 500 11px/1.5 var(--wp-body);
+  letter-spacing: 0.015em;
+}
+.play-desk small,
+.play-desk .note {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.play-desk button,
+.play-desk a {
+  transition:
+    background var(--wp-duration) var(--wp-ease),
+    color var(--wp-duration) var(--wp-ease),
+    box-shadow var(--wp-duration) var(--wp-ease);
+}
+.play-desk .button {
+  min-height: 40px;
+  padding: 10px 15px;
+  border: 1px solid transparent;
+  border-radius: var(--wp-radius-sm);
+  color: var(--wp-ink);
+  background: var(--wp-control);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px #0003;
+}
+.play-desk .button:not(:disabled):hover {
+  background: var(--wp-border);
+  border-color: transparent;
+  filter: none;
+}
+.play-desk .button.primary,
+.play-desk .rw-primary {
+  background: var(--wp-primary);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 500;
+}
+.play-desk .button.primary:not(:disabled):hover,
+.play-desk .rw-primary:hover {
+  background: var(--wp-primary-hover);
+}
+.play-desk .button:active:not(:disabled) {
+  box-shadow: inset 0 1px 5px #0005;
+}
+.play-desk button:disabled {
+  opacity: 0.45;
+}
+.play-desk .text-button {
+  font-size: 12px;
+  min-height: 36px;
+  color: var(--wp-mint);
+  gap: 8px;
+}
+.play-desk .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--wp-radius-sm);
+}
+.play-desk .icon-button:hover {
+  background: var(--wp-control);
+}
+.play-desk :is(button, a, input, textarea, select, summary):focus-visible {
+  outline: 3px solid var(--wp-mint);
+  outline-offset: 3px;
+}
+.play-desk input:not([type="checkbox"]):not([type="range"]),
+.play-desk textarea,
+.play-desk select {
+  color: var(--wp-ink);
+  background: var(--wp-inset);
+  border: 1px solid #505055;
+  border-radius: var(--wp-radius-sm);
+  font-size: 13px;
+  min-height: 40px;
+  padding: 10px 12px;
+  box-shadow: none;
+}
+.play-desk input:hover,
+.play-desk textarea:hover,
+.play-desk select:hover {
+  border-color: #77777d;
+}
+.play-desk input::placeholder,
+.play-desk textarea::placeholder {
+  color: var(--wp-muted);
+}
+.play-desk input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--wp-primary);
+  border-radius: 5px;
+}
+.play-desk input[type="range"],
+.play-desk progress {
+  accent-color: var(--wp-mint);
+}
+.play-desk label {
+  color: var(--wp-ink);
+}
+.play-desk .field-label {
+  font-size: 12px;
+  gap: 8px;
+}
+.play-desk .panel {
+  background: var(--wp-surface);
+  border: 1px solid #29292d;
+  border-radius: var(--wp-radius-lg);
+  padding: 26px;
+  margin-bottom: 20px;
+  box-shadow: none;
+}
+.play-desk .panel-heading {
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.play-desk .panel-heading h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+.play-desk .panel-heading .eyebrow {
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+.play-desk .badge {
+  padding: 5px 9px;
+  font: 500 10px/1.4 var(--wp-body);
+  border: 0;
+  border-radius: 999px;
+  background: var(--wp-control);
+  color: var(--wp-muted);
+}
+.play-desk .badge.green {
+  color: var(--wp-success);
+  background: #193124;
+}
+.play-desk .badge.gold {
+  color: var(--wp-gold);
+  background: #32281b;
+}
+.play-desk .badge.red {
+  color: var(--wp-danger);
+  background: #372020;
+}
+.play-desk .danger-text,
+.play-desk .inline-error {
+  color: var(--wp-danger);
+}
+.play-desk .info-note,
+.play-desk .error-banner {
+  border-radius: var(--wp-radius-md);
+  padding: 16px 20px;
+  font-size: 12px;
+}
+.play-desk .info-note {
+  border-color: var(--wp-border);
+  background: var(--wp-surface);
+  color: var(--wp-muted);
+}
+.play-desk .info-note.gold {
+  background: #292219;
+  border-color: #54452c;
+  color: var(--wp-gold);
+}
+.play-desk .error-banner {
+  background: #2c1b1e;
+  border-color: #603b41;
+  color: var(--wp-danger);
+}
+.play-desk .empty {
+  padding: 44px 24px;
+}
+.play-desk .empty h3 {
+  font-size: 21px;
+  margin: 16px 0 10px;
+}
+.play-desk .empty p {
+  max-width: 48ch;
+  margin-inline: auto;
+}
+.play-desk .empty-icon {
+  background: var(--wp-control);
+  border: 0;
+  border-radius: 16px;
+  color: var(--wp-muted);
+  width: 56px;
+  height: 56px;
+}
+.play-desk .play-header {
+  min-height: 70px;
+  padding: 14px 32px;
+  gap: 26px;
+  border-bottom: 1px solid #242427;
+  background: #121214;
+}
+.play-desk .play-wordmark {
+  font: 650 22px var(--wp-body);
+  letter-spacing: -0.06em;
+}
+.play-wordmark svg {
+  color: var(--wp-ink);
+  width: 30px;
+  height: 30px;
+}
+.play-desk .play-session-select {
+  border: 0;
+  padding: 9px 13px;
+  gap: 9px;
+  border-radius: 999px;
+  background: var(--wp-control);
+  font-size: 12px;
+  color: var(--wp-ink);
+}
+.play-desk .play-connection {
+  font: 12px var(--wp-body);
+  color: var(--wp-muted);
+}
+.play-desk .play-connection i.online {
+  background: var(--wp-success);
+  box-shadow: none;
+}
+.play-header-tools {
+  gap: 14px;
+}
+.play-header-tools .navigation-shortcut {
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--wp-muted);
+  font-size: 10px;
+}
+.play-desk .play-tools-button {
+  min-height: 34px;
+  padding: 8px 11px;
+  background: none;
+  border-color: var(--wp-border);
+}
+.console-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 24px;
+  margin: 0 auto;
+  background: #121214;
+  border-bottom: 1px solid #242427;
+}
+.console-tools button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 17px;
+  min-height: 42px;
+  color: var(--wp-muted);
+  font-size: 12px;
+  font-weight: 500;
+  border: 0;
+  border-radius: 999px;
+}
+.console-tools button:hover {
+  background: var(--wp-control);
+  color: var(--wp-ink);
+}
+.console-tools button[aria-current] {
+  color: var(--wp-ink);
+  background: #333337;
+  box-shadow: inset 0 1px 0 #ffffff0f;
+}
+.console-tools button[aria-current] svg {
+  color: var(--wp-mint);
+}
+.console-tools b {
+  background: var(--wp-gold);
+  color: var(--wp-bg);
+  border-radius: 999px;
+  font: 600 10px var(--wp-body);
+  padding: 3px 6px;
+}
+.play-desk .play-main {
+  max-width: 1480px;
+  padding: 24px 32px 28px;
+}
+.play-desk .play-workarea-heading {
+  margin-bottom: 22px;
+  gap: 10px;
+}
+.play-desk .play-workarea-heading h1 {
+  color: var(--wp-ink);
+  font: 600 23px/1.25 var(--wp-body);
+  letter-spacing: -0.035em;
+}
+.runtime-controls {
+  gap: 6px;
+}
+.play-desk .runtime-controls .button {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.play-desk .runtime-controls .icon-button {
+  min-width: 36px;
+  width: 36px;
+}
+.console-session {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 355px);
+  gap: 22px;
+  align-items: start;
+}
+.console-session-work,
+.console-session-chat {
+  min-width: 0;
+}
+.play-desk .session-stage {
+  border: 1px solid #303035;
+  border-radius: var(--wp-radius-stage);
+  overflow: hidden;
+  background: var(--wp-surface);
+  box-shadow: 0 12px 40px #0002;
+}
+.stage-kicker {
+  padding: 18px 26px;
+  border: 0;
+  font-size: 13px;
+  gap: 10px;
+}
+.stage-state {
+  margin-left: auto;
+  font: 500 11px var(--wp-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wp-mint);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--wp-mint-surface);
+}
+.session-signal {
+  width: 23px;
+  gap: 3px;
+}
+.session-signal i {
+  border-radius: 2px;
+  background: var(--wp-mint);
+  animation: none;
+}
+.stage-composition {
+  grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.75fr);
+  min-height: 230px;
+}
+.stage-composition:has(.stage-focus:empty) {
+  grid-template-columns: 1fr;
+}
+.stage-focus:empty {
+  display: none;
+}
+.play-desk .stage-story {
+  padding: 18px 28px 26px;
+  justify-content: center;
+}
+.play-desk .stage-story h2 {
+  font: 650 clamp(26px, 2.5vw, 38px)/1.12 var(--wp-body);
+  letter-spacing: -0.04em;
+  margin: 14px 0;
+  text-wrap: balance;
+}
+.stage-story > p {
+  max-width: 46ch;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.stage-mission {
+  font-size: 12px;
+}
+.stage-actions {
+  margin-top: 12px;
+  gap: 14px;
+}
+.stage-actions .button {
+  font-size: 11px;
+  padding: 10px 12px;
+}
+.stage-actions .text-button {
+  font-size: 11px;
+}
+.stage-focus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: transparent;
+  border: 0;
+}
+.gathering-object {
+  gap: 5px;
+}
+.gathering-object .eyebrow {
+  font-size: 12px;
+  color: var(--wp-ink);
+}
+.gathering-orbit {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  display: grid;
+  place-items: center;
+  margin: 14px auto 8px;
+}
+.gathering-orbit > img,
+.gathering-orbit > svg:not(.gathering-ring) {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+.gathering-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.gathering-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.ring-track {
+  stroke: var(--wp-border);
+}
+.ring-value {
+  stroke: var(--wp-mint);
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s var(--wp-ease);
+}
+.gathering-count {
+  align-items: baseline;
+  gap: 7px;
+}
+.gathering-count strong {
+  font: 600 38px/1 var(--wp-body);
+  letter-spacing: -0.05em;
+}
+.gathering-count span {
+  font: 400 19px var(--wp-body);
+  color: var(--wp-muted);
+}
+.gathering-object > span:not(.eyebrow) {
+  font: 12px var(--wp-body);
+  margin: 0;
+}
+.gathering-object:has(.gathering-count) > p {
+  display: none;
+}
+.stage-progress {
+  padding: 0 28px 22px;
+}
+.stage-progress-track {
+  height: 5px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--wp-border);
+}
+.stage-progress-track i {
+  border-radius: 999px;
+  background: var(--wp-mint);
+}
+.stage-progress > span {
+  display: block;
+  font: 11px/1.6 var(--wp-body);
+  color: var(--wp-muted);
+  margin-top: 10px;
+}
+.stage-next {
+  padding: 18px 26px;
+  background: #202023;
+  border: 0;
+  grid-template-columns: 60px minmax(0, 1fr) 30px;
+  gap: 12px;
+}
+.stage-next p {
+  font-size: 12px;
+}
+.stage-next button {
+  border-radius: 50%;
+  min-height: 32px;
+  background: var(--wp-control);
+}
+.session-world {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  padding: 16px 6px;
+  border: 0;
+  font: 11px/1.5 var(--wp-body);
+  color: var(--wp-muted);
+}
+.session-world strong {
+  color: var(--wp-ink);
+  font-weight: 500;
+}
+.play-desk .session-pocket {
+  padding: 20px 24px;
+  gap: 20px;
+  border: 1px solid #29292d;
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-surface);
+  flex-wrap: wrap;
+}
+.session-pocket h3 {
+  font: 600 15px var(--wp-body);
+  margin-top: 5px;
+}
+.session-pocket small {
+  font-size: 10px;
+}
+.pocket-items {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pocket-items button {
+  border: 0;
+  background: var(--wp-control);
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 50px;
+}
+.pocket-items button:hover {
+  background: var(--wp-border);
+}
+.pocket-items button img {
+  width: 28px;
+  height: 28px;
+}
+.pocket-items small {
+  font-size: 9px;
+}
+.stage-blueprint {
+  width: 100%;
+}
+.stage-blueprint .voxel-view {
+  height: 240px;
+  border-radius: var(--wp-radius-md);
+}
+.stage-blueprint .preview-toolbar,
+.stage-blueprint .preview-caption {
+  flex-wrap: wrap;
+  padding: 10px;
+  gap: 8px;
+}
+.stage-blueprint .preview-toolbar select {
+  flex: 1 1 100px;
+  min-width: 100px;
+}
+.coordinate-readout strong {
+  font: 600 30px var(--wp-body);
+}
+.stage-location {
+  gap: 15px;
+}
+.stage-blocker h3 {
+  font-size: 21px;
+}
+.play-desk .context-blocked {
+  border-color: #715a31;
+}
+.play-desk .ws-chat {
+  border: 1px solid #303035;
+  border-radius: var(--wp-radius-stage);
+  overflow: hidden;
+  background: var(--wp-surface);
+}
+.play-desk .console-session-chat .ws-chat {
+  display: flex;
+  flex-direction: column;
+  height: 550px;
+  max-height: calc(100dvh - 225px);
+  min-height: 450px;
+}
+.play-desk .ws-chat > header {
+  padding: 20px;
+  border-color: var(--wp-border);
+  gap: 12px;
+  background: none;
+}
+.ws-chat > header h2 {
+  font: 600 16px var(--wp-body);
+}
+.ws-chat > header small {
+  font-size: 10px;
+}
+.ws-chat > header .badge {
+  margin-left: auto;
+  font-size: 9px;
+}
+.play-desk .ws-companion-avatar {
+  background: linear-gradient(145deg, #4b4b52, #26262b);
+  color: var(--wp-ink);
+  border: 1px solid #626269;
+  border-radius: 20%;
+  box-shadow: inset 0 1px 0 #ffffff20;
+}
+.companion-callsign {
+  font-family: var(--wp-body);
+  font-weight: 650;
+}
+.companion-callsign > span {
+  color: var(--wp-mint);
+}
+.ws-presence-light {
+  background: var(--wp-success);
+}
+.play-desk .ws-chat-messages {
+  padding: 20px;
+}
+.play-desk .console-session-chat .ws-chat-messages {
+  flex: 1;
+  min-height: 100px;
+  max-height: none;
+  overflow: auto;
+}
+.console-session-chat .ws-chat-welcome {
+  padding: 0;
+  margin: 0 auto;
+}
+.console-session-chat .ws-chat-welcome h3 {
+  margin-top: 0;
+}
+.console-session-chat .ws-chat-welcome > div {
+  margin: 16px auto 0;
+}
+.ws-chat-welcome {
+  padding: 12px 0;
+  margin: 12px auto;
+}
+.ws-chat-welcome > svg {
+  display: none;
+}
+.ws-chat-welcome h3 {
+  font: 600 22px var(--wp-body);
+}
+.ws-chat-welcome p {
+  font-size: 12px;
+  margin-top: 10px;
+}
+.ws-chat-welcome > div {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+}
+.play-desk .ws-chat-welcome .button {
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid var(--wp-border);
+  box-shadow: none;
+  text-align: left;
+  justify-content: space-between;
+}
+.play-desk .ws-chat-welcome .button:hover {
+  background: var(--wp-control);
+}
+.play-desk .ws-chat-message {
+  background: var(--wp-control);
+  border: 0;
+  border-radius: 14px 14px 14px 4px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.play-desk .ws-chat-message.user {
+  background: var(--wp-mint-surface);
+  border-radius: 14px 14px 4px 14px;
+  margin-left: 20px;
+}
+.ws-chat-message p {
+  font-size: 13px;
+}
+.play-desk .ws-chat-composer {
+  margin: 0 14px;
+  padding: 8px;
+  background: var(--wp-inset);
+  border: 1px solid #505055;
+  border-radius: 16px;
+  gap: 6px;
+}
+.play-desk .ws-chat-composer textarea {
+  background: transparent;
+  border: 0;
+  min-height: 56px;
+  padding: 8px;
+  font-size: 13px;
+}
+.play-desk .ws-chat-composer button {
+  border-radius: 50%;
+  min-width: 34px;
+  width: 34px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0;
+  align-self: end;
+}
+.play-desk .ws-chat-footer {
+  padding: 12px 20px;
+  border: 0;
+  gap: 8px;
+  font: 11px var(--wp-body);
+}
+.ws-chat-offline {
+  background: var(--wp-inset);
+  padding: 14px 20px;
+}
+.play-desk .play-voice {
+  padding: 0;
+  border: 1px solid #303035;
+  border-radius: var(--wp-radius-md);
+  margin-top: 24px;
+  background: var(--wp-surface);
+}
+.play-voice > summary {
+  padding: 15px 20px;
+  font-size: 12px;
+}
+.play-voice > summary span {
+  font-size: 11px;
+}
+.play-desk .play-footer {
+  margin-top: 20px;
+  padding: 14px 0 0;
+  border-color: #29292d;
+  font: 10px var(--wp-body);
+}
+.play-desk .ws-inventory-summary {
+  border: 0;
+  background: var(--wp-surface);
+  border-radius: var(--wp-radius-lg);
+  padding: 24px;
+  gap: 28px;
+}
+.ws-inventory-summary strong {
+  font: 600 26px var(--wp-body);
+}
+.play-desk .section-toolbar {
+  margin: 22px 0;
+  gap: 18px;
+}
+.play-desk .search-field {
+  border: 1px solid #505055;
+  border-radius: 10px;
+  background: var(--wp-inset);
+}
+.play-desk .search-field input {
+  border: 0;
+  background: transparent;
+}
+.play-desk .ws-filter-pills,
+.settings-area-switch,
+.rw-view-switch {
+  background: var(--wp-surface);
+  border: 0;
+  border-radius: var(--wp-radius-md);
+  padding: 5px;
+  gap: 4px;
+}
+.play-desk .ws-filter-pills button,
+.settings-area-switch button,
+.rw-view-switch button {
+  border: 0;
+  border-radius: var(--wp-radius-sm);
+  padding: 10px 15px;
+  color: var(--wp-muted);
+  font-size: 12px;
+  background: none;
+}
+.play-desk .ws-filter-pills button.selected,
+.settings-area-switch button[aria-pressed="true"],
+.rw-view-switch button[aria-pressed="true"] {
+  background: #35353a;
+  color: var(--wp-ink);
+  border-color: transparent;
+  box-shadow: 0 1px 4px #0003;
+}
+.play-desk .ws-slot {
+  border: 1px solid #37373d;
+  border-radius: 10px;
+  background: var(--wp-inset);
+}
+.play-desk .ws-slot.filled {
+  background: #2b2b30;
+  border-color: #44444c;
+}
+.play-desk .ws-slot.selected {
+  background: var(--wp-mint-surface);
+  outline: 2px solid var(--wp-mint);
+  outline-offset: -2px;
+}
+.play-desk .ws-slot:hover {
+  border-color: var(--wp-mint);
+}
+.play-desk .ws-slot b {
+  background: #19191dcc;
+  border-radius: 5px;
+  padding: 1px 4px;
+  font: 600 12px var(--wp-body);
+}
+.play-desk .ws-item-inspector {
+  background: var(--wp-inset);
+  border: 0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+.play-desk .ws-advanced {
+  border-color: var(--wp-border);
+  border-radius: 12px;
+  background: var(--wp-surface);
+  padding: 0 20px;
+}
+.play-desk .rw-heading h2 {
+  font: 600 30px/1.2 var(--wp-body);
+  letter-spacing: -0.04em;
+}
+.rw-heading {
+  padding-bottom: 22px;
+}
+.rw-kicker,
+.rw-shelf-caption {
+  font: 500 11px var(--wp-body);
+  letter-spacing: 0.015em;
+  text-transform: none;
+}
+.rw-tools {
+  padding: 20px 0;
+}
+.rw-tools .rw-search {
+  border-color: #505055;
+  border-radius: 10px;
+  background: var(--wp-inset);
+}
+.play-desk .rw-tools .rw-search input {
+  border: 0;
+  background: none;
+}
+.rw-desk {
+  border: 1px solid #303035;
+  border-radius: var(--wp-radius-lg);
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.5fr);
+}
+.rw-shelf {
+  background: var(--wp-inset);
+}
+.rw-material {
+  padding: 20px 16px;
+  border-left: 0;
+  border-bottom-color: #29292d;
+}
+.rw-material.rw-selected {
+  background: var(--wp-mint-surface);
+  box-shadow: inset 3px 0 var(--wp-mint);
+}
+.rw-material-name strong {
+  font-size: 14px;
+}
+.play-desk .rw-inspector {
+  padding: 30px;
+  background: var(--wp-surface);
+}
+.play-desk .rw-item-heading h3 {
+  font: 600 28px var(--wp-body);
+  letter-spacing: -0.035em;
+}
+.rw-required strong {
+  font: 600 30px var(--wp-body);
+}
+.rw-mini-track {
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rw-empty-symbol {
+  border: 0;
+  border-radius: 18px;
+  background: var(--wp-control);
+}
+.play-desk .rw-empty-plan h3 {
+  font: 600 26px var(--wp-body);
+}
+.play-desk .rw-primary {
+  border-radius: 10px;
+  padding: 12px 18px;
+}
+.play-desk .rw-no-match button {
+  border-radius: 8px;
+}
+.play-desk .ws-profile-hero {
+  border: 0;
+  border-radius: var(--wp-radius-lg);
+  background: var(--wp-surface);
+  padding: 32px;
+  margin-bottom: 20px;
+}
+.play-desk .ws-profile-hero h2 {
+  font-size: 34px;
+}
+.play-desk .ws-mode-picker {
+  gap: 12px;
+  border: 0;
+}
+.play-desk .ws-mode-picker button {
+  background: var(--wp-surface);
+  border: 1px solid #38383c;
+  border-radius: 14px;
+  padding: 20px;
+}
+.play-desk .ws-mode-picker button.selected {
+  background: var(--wp-mint-surface);
+  border-color: #6489b4;
+}
+.play-desk .settings-workbench {
+  max-width: 1000px;
+}
+.settings-area-switch {
+  margin-bottom: 24px;
+}
+.settings-area-switch button {
+  text-align: center;
+  min-height: 42px;
+}
+.play-desk .settings-workbench .panel {
+  padding: 30px;
+}
+.play-desk .settings-workbench h2 {
+  font-size: 24px;
+}
+.play-desk .account-face {
+  border-radius: 15px;
+  color: var(--wp-ink);
+  background: var(--wp-control);
+}
+.play-desk .native-voice {
+  border: 1px solid #36363b;
+  background: var(--wp-inset);
+  border-radius: var(--wp-radius-md);
+  box-shadow: none;
+}
+.play-desk .voice-dock {
+  border-color: var(--wp-border);
+  border-radius: 12px;
+  background: var(--wp-surface);
+}
+.play-desk .voice-dock.listening {
+  border-color: var(--wp-success);
+}
+.play-desk .voice-preference kbd {
+  background: var(--wp-control);
+  border: 1px solid #606066;
+  border-radius: 7px;
+  color: var(--wp-ink);
+}
+.play-desk .setup-trail {
+  border: 0;
+  background: var(--wp-surface);
+  padding: 5px;
+  gap: 4px;
+  border-radius: 12px;
+}
+.play-desk .setup-trail button {
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: var(--wp-muted);
+  padding: 13px 10px;
+}
+.play-desk .setup-trail button.selected {
+  background: var(--wp-control);
+  color: var(--wp-ink);
+}
+.play-desk .setup-trail button span {
+  border: 0;
+  border-radius: 50%;
+  background: #3b3b42;
+  color: var(--wp-ink);
+}
+.play-desk .setup-notes {
+  border: 0;
+  background: var(--wp-surface);
+  border-radius: 16px;
+  padding: 24px;
+}
+.play-desk .setup-identity,
+.play-desk .setup-compatibility.native {
+  background: #19251e;
+  border-color: #415c49;
+  border-radius: 12px;
+}
+.play-desk .setup-compatibility {
+  background: #292219;
+  border-color: #625035;
+  border-radius: 12px;
+}
+.play-desk .setup-readiness {
+  border-color: var(--wp-border);
+}
+.play-desk .setup-transcript {
+  border-radius: 12px;
+  background: var(--wp-inset);
+  border-color: var(--wp-border);
+}
+.play-desk .setup-check-symbol {
+  background: var(--wp-control);
+  border: 0;
+  border-radius: 50%;
+}
+.play-desk .setup-check-symbol.ready {
+  background: #193124;
+  color: var(--wp-success);
+}
+.play-desk .setup-intro h2 {
+  font-size: 28px;
+}
+.play-desk .setup-intro > svg {
+  color: var(--wp-muted);
+}
+.play-desk .voxel-view {
+  border-radius: 14px;
+  background: var(--wp-inset);
+}
+.play-desk .preview-toolbar {
+  background: var(--wp-surface);
+  border-color: var(--wp-border);
+}
+.play-desk .segmented {
+  border-radius: 10px;
+  padding: 4px;
+  background: var(--wp-inset);
+  border-color: var(--wp-border);
+}
+.play-desk .segmented button {
+  border-radius: 7px;
+}
+.play-desk .segmented button.selected {
+  background: var(--wp-control);
+  color: var(--wp-ink);
+}
+.play-desk .ws-game-card,
+.play-desk .ws-extension {
+  border-radius: 20px;
+  border-color: #303035;
+  background: var(--wp-surface);
+}
+.play-desk pre,
+.play-desk .diagnostic-output {
+  background: var(--wp-inset);
+  color: var(--wp-muted);
+  border-radius: 12px;
+  border-color: var(--wp-border);
+}
+.play-desk .tool-menu,
+.play-desk .conversation-sheet {
+  border: 1px solid #535359;
+  border-radius: var(--wp-radius-stage);
+  background: #1c1c20;
+  box-shadow: 0 28px 100px #000a;
+}
+.play-desk dialog::backdrop {
+  background: #0009;
+  backdrop-filter: blur(8px);
+}
+.tool-menu input {
+  border-radius: 10px;
+}
+.tool-menu nav {
+  gap: 8px;
+  border: 0;
+  background: transparent;
+}
+.tool-menu nav button {
+  border-radius: 9px;
+  background: #262629;
+}
+.tool-menu nav button:hover {
+  background: var(--wp-control);
+}
+.conversation-sheet > header {
+  padding: 18px 22px;
+  border-color: var(--wp-border);
+}
+.conversation-sheet .ws-chat {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.play-desk .desktop-bar {
+  background: #121214;
+  color: var(--wp-muted);
+  border-color: #242427;
+}
+.play-desk .desktop-identity {
+  color: var(--wp-ink);
+}
+.play-desk .desktop-bar.updates-pending {
+  background: #292219;
+  color: var(--wp-gold);
+  border-color: #625035;
+}
+.play-desk .desktop-actions button {
+  border-radius: 8px;
+}
+.play-desk .desktop-actions button:hover {
+  background: var(--wp-control);
+}
+.play-desk .voice-dock-status,
+.play-desk .voice-dock-status strong,
+.play-desk .native-voice h3 {
+  color: var(--wp-ink);
+}
+.play-desk .ws-advanced > summary {
+  padding: 16px 0;
+}
+.play-desk .rw-ruler {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.play-desk input[hidden] {
+  display: none;
+}
+.play-desk .search-field input:not([type="checkbox"]):not([type="range"]),
+.play-desk .rw-search input:not([type="checkbox"]):not([type="range"]) {
+  border: 0;
+  background: transparent;
+}
+.play-desk .toggle-row {
+  padding: 18px 0;
+  gap: 24px;
+  align-items: center;
+}
+.play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"] {
+  appearance: none;
+  position: relative;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #67676e;
+  border-radius: 999px;
+  background: #3e3e44;
+  cursor: pointer;
+  transition: background var(--wp-duration);
+}
+.play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px #0006;
+  transition: transform var(--wp-duration) var(--wp-ease);
+}
+.play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"]:checked {
+  background: var(--wp-primary);
+  border-color: #588ac0;
+}
+.play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"]:checked::before {
+  transform: translateX(16px);
+}
+.play-desk .model-current,
+.play-desk .usage-box {
+  background: var(--wp-inset);
+  border: 1px solid var(--wp-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.play-desk .model-current span,
+.play-desk .usage-box span {
+  color: var(--wp-muted);
+}
+.play-desk .model-current strong,
+.play-desk .usage-box strong {
+  color: var(--wp-ink);
+}
+.play-desk .model-current code {
+  color: var(--wp-mint);
+}
+.play-desk .low-token-setting,
+.play-desk .source-analysis,
+.play-desk .source-analysis .source-report {
+  border-color: var(--wp-border);
+}
+.play-desk .setup-issue-banner {
+  background: #242019;
+  border: 1px solid #55482f;
+  border-radius: 16px;
+  padding: 20px 24px;
+}
+.play-desk .setup-issue-banner h2 {
+  font-size: 20px;
+}
+.play-desk .setup-issue-banner p {
+  color: var(--wp-gold);
+}
+.play-desk .ws-help-request {
+  background: var(--wp-inset);
+  border: 1px solid #615038;
+  border-radius: 14px;
+  padding: 22px;
+}
+.play-desk .ws-help-request.urgent {
+  border-color: #8b5252;
+}
+.play-desk .ws-help-request h3 {
+  font-size: 18px;
+}
+.play-desk .ws-milestones li,
+.play-desk .ws-plan-steps li {
+  border-color: var(--wp-border);
+  padding: 20px 0;
+}
+.play-desk .ws-milestone-icon,
+.play-desk .ws-plan-steps li > span {
+  border-radius: 50%;
+  background: var(--wp-control);
+}
+.play-desk .ws-plan-steps .current > span {
+  background: var(--wp-mint-surface);
+  color: var(--wp-mint);
+}
+.play-desk .ws-plan-stack > details {
+  border: 1px solid var(--wp-border);
+  border-radius: 14px;
+  padding: 0 20px;
+}
+.play-desk .kanban-card {
+  background: var(--wp-raised);
+  border: 1px solid var(--wp-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.play-desk table th {
+  background: var(--wp-control);
+  color: var(--wp-muted);
+  font-weight: 500;
+}
+.play-desk table td {
+  border-color: var(--wp-border);
+}
+.play-desk .blueprint-bottom {
+  background: var(--wp-inset);
+  border-color: var(--wp-border);
+  border-radius: 0 0 12px 12px;
+  color: var(--wp-muted);
+}
+.play-desk .upload-target {
+  background: var(--wp-inset);
+  border: 1px dashed #62626a;
+  border-radius: 14px;
+  color: var(--wp-mint);
+  min-height: 140px;
+}
+.play-desk .upload-target strong {
+  color: var(--wp-ink);
+}
+.play-desk .upload-target span {
+  color: var(--wp-muted);
+}
+.play-desk .checkpoint {
+  background: #19251e;
+  border: 1px solid #415c49;
+  border-radius: 12px;
+}
+.play-desk .checkpoint p,
+.play-desk .checkpoint strong {
+  color: var(--wp-success);
+}
+.play-desk .source-analysis fieldset {
+  border-color: var(--wp-border);
+  border-radius: 10px;
+}
+.play-desk .source-analysis legend,
+.play-desk .source-analysis summary {
+  color: var(--wp-muted);
+}
+.play-desk .source-analysis a {
+  color: var(--wp-mint);
+}
+.studio-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(330px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.studio-design-column,
+.studio-inspector-column {
+  min-width: 0;
+}
+.studio-workspace .blueprint-panel {
+  position: static;
+}
+.play-desk .youtube-discovery {
+  padding: 20px 24px;
+}
+.youtube-discovery .panel-heading {
+  margin-bottom: 16px;
+}
+.youtube-discovery .panel-heading h2 {
+  font-size: 18px;
+}
+.youtube-discovery details {
+  margin-top: 14px;
+  font-size: 12px;
+}
+.youtube-discovery details summary {
+  color: var(--wp-muted);
+  cursor: pointer;
+}
+.youtube-discovery .quiet-empty {
+  padding: 14px 0 0;
+}
+.play-desk .play-voice > summary {
+  padding: 14px 20px;
+}
+@media (forced-colors: active) {
+  .play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"] {
+    appearance: auto;
+  }
+  .play-desk :is(.toggle-row, .ws-toggle) input[type="checkbox"]::before {
+    display: none;
+  }
+}
+@media (min-width: 1800px) {
+  .play-desk .play-main {
+    padding-top: 32px;
+  }
+}
+@media (max-width: 1180px) {
+  .console-tools {
+    padding: 10px 20px;
+    gap: 3px;
+  }
+  .console-tools button {
+    padding: 10px 12px;
+  }
+  .play-desk .play-header {
+    gap: 18px;
+    padding: 14px 24px;
+  }
+  .play-desk .play-main {
+    padding: 22px 24px;
+  }
+  .console-session {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 18px;
+  }
+  .stage-composition {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .play-desk .stage-story {
+    padding: 16px 24px;
+  }
+  .stage-focus {
+    padding: 12px 24px 20px;
+  }
+  .gathering-object {
+    display: grid;
+    grid-template-columns: 85px 1fr;
+    gap: 4px 18px;
+    text-align: left;
+  }
+  .gathering-orbit {
+    grid-column: 1;
+    grid-row: 1/4;
+    width: 82px;
+    height: 82px;
+    margin: 0;
+  }
+  .gathering-orbit > img {
+    width: 36px;
+    height: 36px;
+  }
+  .gathering-count {
+    justify-content: start;
+  }
+  .gathering-object > .eyebrow {
+    grid-column: 2;
+  }
+  .gathering-object > span:not(.eyebrow) {
+    grid-column: 2;
+  }
+  .rw-desk {
+    grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.3fr);
+  }
+}
+@media (max-width: 800px) {
+  .play-desk .play-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
+  }
+  .play-desk .play-wordmark {
+    font-size: 20px;
+  }
+  .play-header-tools {
+    margin-left: auto;
+  }
+  .play-header-tools .navigation-shortcut {
+    display: none;
+  }
+  .play-desk .play-connection {
+    font-size: 11px;
+  }
+  .console-tools {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 8px 16px;
+    gap: 4px;
+  }
+  .console-tools button {
+    border-radius: 10px;
+    padding: 10px 5px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  .play-desk .play-main {
+    padding: 20px;
+  }
+  .console-session {
+    grid-template-columns: 1fr;
+  }
+  .stage-composition {
+    grid-template-columns: minmax(0, 1.4fr) minmax(150px, 0.7fr);
+  }
+  .gathering-object {
+    display: flex;
+    text-align: center;
+  }
+  .gathering-orbit {
+    width: 100px;
+    height: 100px;
+    margin: 10px auto;
+  }
+  .gathering-count {
+    justify-content: center;
+  }
+  .play-desk .console-session-chat .ws-chat {
+    height: 480px;
+    max-height: none;
+    min-height: 0;
+  }
+  .play-desk .rw-inspector {
+    padding: 24px;
+  }
+  .rw-desk {
+    grid-template-columns: 1fr;
+  }
+  .studio-workspace {
+    grid-template-columns: 1fr;
+  }
+  .play-desk .settings-workbench .panel {
+    padding: 24px;
+  }
+  .play-desk .ws-chat > header {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 650px) {
+  .play-desk .play-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    padding: 12px 16px;
+  }
+  .play-desk .play-session-select {
+    grid-row: 2;
+    grid-column: 1;
+    justify-self: start;
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+  .play-desk .play-connection {
+    grid-row: 2;
+    grid-column: 2;
+  }
+  .play-header-tools {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 10px;
+  }
+  .play-header-tools .text-button {
+    font-size: 11px;
+  }
+  .play-desk .play-tools-button {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+  .console-tools {
+    padding: 8px 12px;
+  }
+  .console-tools button {
+    flex-direction: column;
+    min-height: 54px;
+    font-size: 10px;
+    gap: 5px;
+  }
+  .console-tools b {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+  }
+  .play-desk .play-main {
+    padding: 18px 16px;
+  }
+  .play-desk .play-workarea-heading {
+    grid-template-columns: minmax(0, 1fr) 34px 34px;
+    gap: 5px;
+  }
+  .play-desk .play-workarea-heading h1 {
+    font-size: 22px;
+  }
+  .play-desk .play-workarea-heading > .icon-button {
+    min-width: 34px;
+    width: 34px;
+  }
+  .play-desk .panel {
+    padding: 22px;
+    border-radius: 16px;
+  }
+  .stage-composition {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .stage-kicker {
+    padding: 16px 20px;
+  }
+  .play-desk .context-gathering .stage-story,
+  .play-desk .stage-story {
+    padding: 14px 20px 20px;
+  }
+  .play-desk .context-gathering .stage-story h2,
+  .play-desk .stage-story h2 {
+    font-size: 29px;
+  }
+  .play-desk .context-gathering .stage-focus,
+  .stage-focus {
+    padding: 10px 20px 22px;
+  }
+  .play-desk .context-gathering .gathering-object,
+  .gathering-object {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 4px 20px;
+    text-align: left;
+  }
+  .play-desk .context-gathering .gathering-object > .eyebrow {
+    grid-column: 2;
+  }
+  .gathering-orbit {
+    grid-column: 1;
+    grid-row: 1/4;
+    width: 88px;
+    height: 88px;
+    margin: 0;
+  }
+  .play-desk .context-gathering .gathering-count,
+  .gathering-count {
+    justify-content: start;
+    grid-column: 2;
+  }
+  .play-desk .context-gathering .gathering-count strong {
+    font: 600 36px var(--wp-body);
+  }
+  .stage-progress {
+    padding: 0 20px 18px;
+  }
+  .stage-next {
+    padding: 16px 20px;
+    grid-template-columns: 1fr 30px;
+    gap: 7px;
+  }
+  .stage-next .eyebrow {
+    grid-column: 1/-1;
+  }
+  .play-desk .session-pocket {
+    padding: 20px;
+  }
+  .session-world {
+    gap: 10px 16px;
+    padding: 16px 4px;
+  }
+  .play-desk .ws-inventory-summary {
+    padding: 20px;
+    gap: 20px;
+  }
+  .play-desk .ws-slot {
+    border-radius: 6px;
+  }
+  .play-desk .ws-slot b {
+    font-size: 10px;
+    padding: 0 2px;
+  }
+  .play-desk .settings-workbench .panel {
+    padding: 20px;
+  }
+  .settings-area-switch button {
+    font-size: 11px;
+    padding: 11px 8px;
+  }
+  .play-desk .ws-profile-hero {
+    padding: 24px;
+  }
+  .play-desk .ws-profile-hero h2 {
+    font-size: 30px;
+  }
+  .play-desk .ws-mode-picker button {
+    padding: 16px;
+  }
+  .play-desk .tool-menu,
+  .play-desk .conversation-sheet {
+    border-radius: 20px;
+  }
+  .play-desk .rw-heading h2 {
+    font-size: 27px;
+  }
+  .play-desk .rw-item-heading h3 {
+    font-size: 25px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}

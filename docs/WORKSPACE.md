@@ -43,6 +43,11 @@ Small displays use compact resource progress and stacked work areas. Reduced-mot
 preferences are respected.
 Your model, voice devices, account and existing private data are preserved.
 
+The graphite studio design uses shared system typography, neutral surfaces and
+blue action controls. Build Studio groups the blueprint and materials beside
+source and construction inspectors. The [design record](../DESIGN.md) documents
+the references, component rules and pre-redesign rollback checkpoint.
+
 ## Start, pause and resume
 
 Select Minecraft Survival in Games, then complete Setup with the separate bot

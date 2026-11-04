@@ -1,17 +1,36 @@
 :root {
-  --wp-bg: #080b10;
-  --wp-surface: #10151d;
-  --wp-raised: #1a2330;
-  --wp-ink: #edf2f8;
-  --wp-muted: #a1afc1;
-  --wp-border: #354356;
-  --wp-mint: #79b8ff;
-  --wp-mint-surface: #122238;
-  --wp-violet: #91d5e7;
-  --wp-gold: #e8bc76;
-  --wp-danger: #ff9eaa;
-  --wp-shadow: #030509;
-  --wp-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
-  --wp-body: 'Space Grotesk', 'Segoe UI', sans-serif;
+  --wp-bg: #0b0b0d;
+  --wp-surface: #18181b;
+  --wp-raised: #262629;
+  --wp-ink: #f5f5f7;
+  --wp-muted: #ababaf;
+  --wp-border: #38383c;
+  --wp-mint: #82baff;
+  --wp-mint-surface: #182b43;
+  --wp-violet: #a8caff;
+  --wp-gold: #e7bd78;
+  --wp-danger: #ff9c9c;
+  --wp-shadow: #000000;
+  --wp-body:
+    -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI",
+    sans-serif;
+  --wp-display: var(--wp-body);
   --wp-detail: ui-monospace, Consolas, monospace;
+  --wp-primary: #0066cc;
+  --wp-primary-hover: #0873df;
+  --wp-success: #83d7a5;
+  --wp-control: #2c2c30;
+  --wp-inset: #111113;
+  --wp-radius-sm: 8px;
+  --wp-radius-md: 12px;
+  --wp-radius-lg: 20px;
+  --wp-radius-stage: 26px;
+  --wp-space-xs: 8px;
+  --wp-space-sm: 12px;
+  --wp-space-md: 20px;
+  --wp-space-lg: 32px;
+  --wp-space-xl: 48px;
+  --wp-space-2xl: 72px;
+  --wp-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --wp-duration: 180ms;
 }
