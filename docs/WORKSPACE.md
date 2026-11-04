@@ -61,6 +61,14 @@ requests while stopping owned work; explicit resume is required. Stop disconnect
 An emergency stop is always available in the header. Existing task checkpoints
 and project data survive a workspace reload.
 
+The small microphone beside Pause turns blue, with a recording dot, while voice
+is capturing your speech. It follows desktop push-to-talk even while Minecraft
+has focus, and browser capture when browser voice is enabled. Release returns it
+to neutral; transcription or reply generation does not keep it blue. Hover for
+the current status and configured shortcut, or click to open voice controls.
+Desktop voice errors use a red indicator. Pause, disconnect and lost live updates clear
+the listening indication. Hands-free capture also lights it while recording.
+
 ## What progress means
 
 Gathering progress uses the current task's inventory baseline and a fresh observed

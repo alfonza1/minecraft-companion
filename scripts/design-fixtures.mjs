@@ -133,7 +133,7 @@ export async function createDesignFixture({ scenario = 'disconnected', freezeTim
     setFixture(scenario);
     await app.listen({ host: '127.0.0.1', port: 0 });
     let closed = false;
-    return { app, store, runtime, base: `http://127.0.0.1:${app.server.address().port}`, directory, setFixture, scope: 'Real local API and SQLite; deterministic synthetic observations; no model, microphone, account or game connection.', async close() { if (closed) return; closed = true; try { await app.close(); } finally { restoreClock(); activeFixture = false; await rm(directory, { recursive: true, force: true }); } } };
+    return { app, store, runtime, base: `http://127.0.0.1:${app.server.address().port}`, directory, setFixture, setVoiceStatus(status) { Object.assign(voice, status); context.publish(); }, scope: 'Real local API and SQLite; deterministic synthetic observations; no model, microphone, account or game connection.', async close() { if (closed) return; closed = true; try { await app.close(); } finally { restoreClock(); activeFixture = false; await rm(directory, { recursive: true, force: true }); } } };
   } catch (error) {
     if (app) await app.close().catch(() => {}); else store.close();
     restoreClock(); activeFixture = false; await rm(directory, { recursive: true, force: true }); throw error;

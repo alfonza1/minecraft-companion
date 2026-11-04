@@ -36,6 +36,9 @@ import Setup from "./Setup";
 import SharedTasks from "./SharedTasks";
 import Studio from "./Studio";
 import VoiceBridge from "./VoiceBridge";
+import PushToTalkIndicator, {
+  type BrowserVoiceStatus,
+} from "./PushToTalkIndicator";
 import DesktopBar from "./DesktopBar";
 import SetupIssues from "./SetupIssues";
 import { attempt, Badge, Empty, human, Panel, type Common } from "./shared";
@@ -98,12 +101,26 @@ const navigation = [
     icon: Terminal,
   },
 ];
-function Controls({ state, mutate, busy }: Common) {
+function Controls({
+  state,
+  mutate,
+  busy,
+  connected,
+  browserVoice,
+  openVoice,
+}: Common & {
+  connected: boolean;
+  browserVoice: BrowserVoiceStatus;
+  openVoice: () => void;
+}) {
   const active = ["ACTIVE", "BUSY"].includes(state.state);
   return (
     <div className="runtime-controls">
       <button
         className="button primary"
+        aria-label={
+          state.state === "PAUSED" ? "Resume companion" : "Start companion"
+        }
         disabled={
           busy || active || (!state.settings.realmId && !state.planning)
         }
@@ -116,7 +133,10 @@ function Controls({ state, mutate, busy }: Common) {
         }
       >
         <Play size={14} />
-        {state.state === "PAUSED" ? "Resume companion" : "Start companion"}
+        <span>
+          {state.state === "PAUSED" ? "Resume" : "Start"}
+          <span className="runtime-control-detail"> companion</span>
+        </span>
       </button>
       <button
         className="button"
@@ -126,6 +146,12 @@ function Controls({ state, mutate, busy }: Common) {
         <Pause size={14} />
         Pause
       </button>
+      <PushToTalkIndicator
+        state={state}
+        connected={connected}
+        browser={browserVoice}
+        openVoice={openVoice}
+      />
       <button
         className="button icon-button"
         aria-label="Stop and disconnect"
@@ -144,6 +170,10 @@ function Controls({ state, mutate, busy }: Common) {
 }
 export default function App() {
   const { state, error, connected, busy, mutate, clearError } = useCompanion();
+  const [browserVoice, setBrowserVoice] = useState<BrowserVoiceStatus>({
+    enabled: false,
+    listening: false,
+  });
   const [page, setPage] = useState(() => {
     const stored =
       sessionStorage.getItem("player-two-page") ??
@@ -270,7 +300,23 @@ export default function App() {
           <h1 tabIndex={-1}>{title}</h1>
           {common ? (
             <>
-              <Controls {...common} />
+              <Controls
+                {...common}
+                connected={connected}
+                browserVoice={browserVoice}
+                openVoice={() => {
+                  navigate("communication");
+                  requestAnimationFrame(() => {
+                    const voice =
+                      document.querySelector<HTMLDetailsElement>(".play-voice");
+                    if (voice) {
+                      voice.open = true;
+                      voice.scrollIntoView({ block: "nearest" });
+                      voice.querySelector("summary")?.focus();
+                    }
+                  });
+                }}
+              />
               <button
                 className="icon-button"
                 aria-label="Open conversation panel"
@@ -409,7 +455,11 @@ export default function App() {
                       : "Setup needed"}
                   </span>
                 </summary>
-                <VoiceBridge state={state!} mutate={mutate} />
+                <VoiceBridge
+                  state={state!}
+                  mutate={mutate}
+                  onStatusChange={setBrowserVoice}
+                />
               </details>
             ) : null}
           </>

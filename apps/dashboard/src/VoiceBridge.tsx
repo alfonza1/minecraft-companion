@@ -6,12 +6,15 @@ import { useVoice } from "../../desktop-voice/useVoice";
 import { attempt, type Mutate } from "./shared";
 import { formatHotkey } from '../../../packages/shared-types/hotkeys';
 import { desktopVoiceLabel } from './desktop-voice-status';
+import type { BrowserVoiceStatus } from './PushToTalkIndicator';
 export default function VoiceBridge({
   state,
   mutate,
+  onStatusChange,
 }: {
   state: CompanionState;
   mutate: Mutate;
+  onStatusChange?: (status: BrowserVoiceStatus) => void;
 }) {
   const [error, setError] = useState("");
   const voice = useVoice({
@@ -24,6 +27,12 @@ export default function VoiceBridge({
     },
   });
   const active = ["ACTIVE", "BUSY"].includes(state.state);
+  useEffect(() => {
+    onStatusChange?.({ enabled: voice.enabled, listening: voice.listening });
+  }, [voice.enabled, voice.listening, onStatusChange]);
+  useEffect(() => () => {
+    onStatusChange?.({ enabled: false, listening: false });
+  }, [onStatusChange]);
   const desktop = state.voice.desktop;
   const nativeRunning = Boolean(desktop?.running);
   const desktopApp = Boolean(window.__COMPANION_DESKTOP__);

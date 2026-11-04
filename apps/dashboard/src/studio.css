@@ -338,6 +338,42 @@
   min-width: 36px;
   width: 36px;
 }
+.play-desk .runtime-controls .ptt-indicator {
+  position: relative;
+  padding: 0;
+}
+.ptt-indicator-dot {
+  display: none;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.play-desk .ptt-indicator.is-listening {
+  background: #0067c0;
+  color: #fff;
+  border-color: #64b5ff;
+}
+.ptt-indicator.is-listening .ptt-indicator-dot {
+  display: block;
+}
+.play-desk .ptt-indicator.needs-attention {
+  color: #ffb4ab;
+  border-color: #ad5149;
+}
+.ptt-indicator-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .console-session {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(400px, 1fr);
@@ -1609,6 +1645,9 @@
   }
   .play-desk .play-workarea-heading h1 {
     font-size: 22px;
+  }
+  .runtime-control-detail {
+    display: none;
   }
   .play-desk .play-workarea-heading > .icon-button {
     min-width: 34px;
