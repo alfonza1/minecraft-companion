@@ -717,6 +717,15 @@
   font-size: 14px;
   line-height: 1.65;
   margin: 10px 0 0;
+  max-width: 75ch;
+}
+.play-desk .page-communication > .ws-chat {
+  max-width: 1040px;
+  margin-inline: auto;
+}
+.play-desk .ws-community-hero p {
+  max-width: 65ch;
+  margin: 16px 0 20px;
 }
 .ws-message-heading time {
   margin-left: auto;
@@ -798,6 +807,14 @@
 }
 .play-voice > summary span {
   font-size: 11px;
+}
+.play-desk .play-voice > .voice-dock {
+  margin: 0;
+  padding: 20px;
+  border: 0;
+  border-top: 1px solid var(--wp-border);
+  border-radius: 0 0 var(--wp-radius-md) var(--wp-radius-md);
+  background: transparent;
 }
 .play-desk .play-footer {
   margin-top: 20px;

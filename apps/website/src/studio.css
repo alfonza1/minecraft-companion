@@ -275,6 +275,9 @@ strong {
   display: block;
   margin-top: 0;
 }
+.play-notes .section-heading {
+  margin-bottom: 32px;
+}
 .play-notes-body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -448,22 +451,27 @@ footer {
   box-shadow: 0 2px 6px #0003;
 }
 .code-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   background: var(--wp-inset);
   border: 1px solid var(--wp-border);
   border-radius: var(--wp-radius-md);
   overflow: hidden;
 }
 .code-block pre {
-  padding: 26px 20px;
+  margin: 0;
+  padding: 12px 20px 20px;
   font-size: 12px;
   line-height: 1.8;
 }
 .code-block button {
+  position: static;
+  justify-self: end;
   border: 0;
   border-radius: var(--wp-radius-sm);
   background: var(--wp-control);
   color: var(--wp-ink);
-  margin: 8px;
+  margin: 12px 12px 0;
 }
 .callout {
   padding: 24px;

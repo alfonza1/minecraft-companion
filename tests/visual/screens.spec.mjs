@@ -53,6 +53,16 @@ for (const route of WEBSITE_PAGES) test(`website ${route || 'home'}`, async ({ p
   const response = await page.goto(website.base + route);
   expect(response.status()).toBe(200);
   await expect(page.locator('h1')).toHaveCount(1);
+  for (const block of await page.locator('.code-block').all()) {
+    const button = await block.locator('button').boundingBox();
+    const code = await block.locator('pre').boundingBox();
+    expect(button.y + button.height, 'copy control stays above the command').toBeLessThanOrEqual(code.y);
+  }
+  if (!route) {
+    const heading = await page.locator('.play-notes .section-heading').boundingBox();
+    const content = await page.locator('.play-notes-body').boundingBox();
+    expect(content.y - heading.y - heading.height).toBeGreaterThanOrEqual(24);
+  }
   await checkScreen(page, `website-${route ? slug(route) : 'home'}`, info);
   expect(errors).toEqual([]); expect(privateCalls).toEqual([]);
 });
@@ -64,6 +74,19 @@ for (const label of WORKSPACE_PAGES) test(`workspace ${label}`, async ({ page },
   await page.goto(fixture.base);
   await page.getByText('Connected to local runtime', { exact: true }).waitFor();
   await navigateWorkspace(page, label);
+  if (label === 'Communication') {
+    expect((await page.locator('.page-communication > .ws-chat').boundingBox()).width).toBeLessThanOrEqual(1040);
+    const voiceLayout = await page.locator('.play-voice > .voice-dock').evaluate(element => {
+      const style = getComputedStyle(element);
+      return { bottomMargin: style.marginBottom, sideBorder: style.borderLeftWidth, padding: style.paddingLeft };
+    });
+    expect(voiceLayout).toEqual({ bottomMargin: '0px', sideBorder: '0px', padding: '20px' });
+  }
+  if (label === 'Community') {
+    const description = await page.locator('.ws-community-hero p').boundingBox();
+    const action = await page.locator('.ws-community-hero a').boundingBox();
+    expect(action.y - description.y - description.height).toBeGreaterThanOrEqual(16);
+  }
   await checkScreen(page, `workspace-${slug(label)}`, info, { synthetic: true });
   expect(errors).toEqual([]);
 });

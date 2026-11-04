@@ -153,3 +153,39 @@ page/viewport checks, 12 interaction flows and 18 accessibility pages with zero
 violations or browser errors. Public previews were recaptured from the isolated
 fixture. Source review found no introduced data-handling or action-dispatch
 changes; gameplay and physical audio tests were not rerun for this layout fix.
+
+## Whole-product formatting audit
+
+Reviewed all nine public pages and sixteen workspace routes in headless Chromium
+at 1440, 1024, 768, 390 and 360 px widths. Captured desktop/mobile screenshots
+and inspected the rendered layouts, including gathering, building, collaboration,
+inventory, conversation, disconnected and blocked fixture states. Also expanded
+all four settings sections and visited all five setup steps at desktop/mobile
+sizes. The audit used isolated synthetic observations, never private conversation
+content or a live Realm.
+
+Corrections from the review:
+
+- Separate the homepage feature heading from its numbered descriptions.
+- Give installation/code-copy controls their own row so long commands cannot
+  run underneath them; command text still scrolls horizontally within its block.
+- Keep standalone conversation at a readable maximum width and cap message lines.
+- Separate the Community introduction from its contribution button.
+- Flatten the expanded voice connection area into one surface with a divider,
+  removing the nested border and trailing empty inset.
+
+Geometry assertions protect heading separation, copy-control placement, chat
+width and Community action spacing alongside the existing screenshot and
+accessibility checks. Local audit artifacts are under `.git/format-audit/` and
+`.git/format-expanded/`. This is a presentation change; it does not alter task
+execution, authentication, audio handling or persisted user data.
+
+Validation: 125 page/width layout checks and 18 expanded setup/settings checks
+reported no horizontal page overflow. All 123 visual/accessibility tests passed;
+the final voice refinement also passed its three viewport checks. Website tests
+passed 45 page/width checks, 12 interactions and 18 accessibility pages with zero
+violations. Workspace integration passed 80 viewport checks across 16 routes.
+Type checking and both production builds passed. The installed app was updated
+while disconnected and checked in a browser; settings, profile, projects,
+memories and conversation hashes were unchanged. Gameplay and physical audio
+were not retested for this CSS-only change.
