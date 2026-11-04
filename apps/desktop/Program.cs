@@ -55,7 +55,7 @@ internal sealed class CompanionWindow : Form
         this.project = project; this.launcher = launcher; this.activation = activation; this.updatesPending = updatesPending; this.testPort = testPort;
         Text = "Player Two"; BackColor = Color.FromArgb(16, 21, 24);
         Size = new Size(1420, 960); MinimumSize = new Size(960, 680); StartPosition = FormStartPosition.CenterScreen;
-        Icon = new Icon(Path.Combine(Path.GetDirectoryName(launcher)!, "companion.ico"));
+        Icon = new Icon(Path.Combine(Path.GetDirectoryName(launcher)!, "player-two.ico"));
         if (minimized) WindowState = FormWindowState.Minimized;
         Controls.Add(web); Controls.Add(status);
         Shown += async (_, _) => await InitializeBrowser();

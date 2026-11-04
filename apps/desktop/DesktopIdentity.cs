@@ -19,7 +19,7 @@ internal static class DesktopIdentity
             SetString(store, 5, AppId);
             SetString(store, 2, "\"" + launcher + "\"");
             SetString(store, 4, "Player Two");
-            SetString(store, 3, Path.Combine(Path.GetDirectoryName(launcher)!, "companion.ico"));
+            SetString(store, 3, Path.Combine(Path.GetDirectoryName(launcher)!, "player-two.ico"));
         }
         finally { Marshal.ReleaseComObject(store); }
     }

@@ -5,23 +5,12 @@ $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $directory = Join-Path $env:LOCALAPPDATA 'MinecraftCompanion/launcher'
 New-Item -ItemType Directory -Path $directory -Force | Out-Null
 [System.IO.File]::WriteAllText((Join-Path $directory 'project-path.txt'), $projectRoot)
-Add-Type -AssemblyName System.Drawing
-$bitmap = New-Object System.Drawing.Bitmap(64, 64)
-$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-$graphics.Clear([System.Drawing.Color]::FromArgb(8, 11, 16))
-$brushes = @('#EDF2F8', '#79B8FF', '#080B10') | ForEach-Object { New-Object System.Drawing.SolidBrush([System.Drawing.ColorTranslator]::FromHtml($_)) }
-try {
-    $graphics.FillPolygon($brushes[0], [System.Drawing.Point[]]@([System.Drawing.Point]::new(4,10), [System.Drawing.Point]::new(26,10), [System.Drawing.Point]::new(32,16), [System.Drawing.Point]::new(32,34), [System.Drawing.Point]::new(26,40), [System.Drawing.Point]::new(12,40), [System.Drawing.Point]::new(12,54), [System.Drawing.Point]::new(4,54)))
-    $graphics.FillRectangle($brushes[2], 12, 18, 12, 14)
-    $graphics.FillPolygon($brushes[1], [System.Drawing.Point[]]@([System.Drawing.Point]::new(38,10), [System.Drawing.Point]::new(54,10), [System.Drawing.Point]::new(60,16), [System.Drawing.Point]::new(60,32), [System.Drawing.Point]::new(46,46), [System.Drawing.Point]::new(60,46), [System.Drawing.Point]::new(60,54), [System.Drawing.Point]::new(36,54), [System.Drawing.Point]::new(36,42), [System.Drawing.Point]::new(52,26), [System.Drawing.Point]::new(52,18), [System.Drawing.Point]::new(38,18)))
-    $icon = [System.Drawing.Icon]::FromHandle($bitmap.GetHicon())
-    $stream = [System.IO.File]::Create((Join-Path $directory 'companion.ico'))
-    try { $icon.Save($stream) } finally { $stream.Dispose(); $icon.Dispose() }
-} finally { $graphics.Dispose(); $bitmap.Dispose(); foreach ($brush in $brushes) { $brush.Dispose() } }
+$iconPath = Join-Path $directory 'player-two.ico'
+& (Join-Path $PSScriptRoot 'Build-DesktopIcon.ps1') -OutputPath $iconPath
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) { throw 'The Windows .NET Framework C# compiler is unavailable.' }
 $executable = Join-Path $directory 'Player Two.exe'
-& $compiler /nologo /target:winexe "/out:$executable" "/win32icon:$(Join-Path $directory 'companion.ico')" /reference:System.Windows.Forms.dll (Join-Path $PSScriptRoot 'desktop/Launcher.cs')
+& $compiler /nologo /target:winexe "/out:$executable" "/win32icon:$iconPath" /reference:System.Windows.Forms.dll (Join-Path $PSScriptRoot 'desktop/Launcher.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Desktop launcher compilation failed.' }
 # Keep previously pinned launch targets working across the product rename.
 $legacyExecutable = Join-Path $directory 'Minecraft Companion.exe'
@@ -37,7 +26,7 @@ $shortcutPath = Join-Path $directory 'Player Two.lnk'
 $shortcut = $shell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $executable
 $shortcut.WorkingDirectory = $projectRoot
-$shortcut.IconLocation = Join-Path $directory 'companion.ico'
+$shortcut.IconLocation = $iconPath
 $shortcut.Description = 'Player Two: open the local working copy and its localhost workspace'
 $shortcut.Save()
 [System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null
@@ -56,12 +45,29 @@ foreach ($location in $locations) {
 }
 # Preserve the registered pin's filename and AppID while updating its target,
 # icon and relaunch display name. Do not edit Windows' taskbar registry.
-$pinnedPath = Join-Path $env:APPDATA 'Microsoft/Internet Explorer/Quick Launch/User Pinned/TaskBar/Minecraft Companion.lnk'
-if (Test-Path -LiteralPath $pinnedPath) {
+$pinnedDirectory = Join-Path $env:APPDATA 'Microsoft/Internet Explorer/Quick Launch/User Pinned/TaskBar'
+$updatedShortcuts = @($shortcutPath) + @($locations | ForEach-Object { Join-Path $_ 'Player Two.lnk' })
+foreach ($name in @('Minecraft Companion.lnk', 'Player Two.lnk')) {
+    $pinnedPath = Join-Path $pinnedDirectory $name
+    if (-not (Test-Path -LiteralPath $pinnedPath)) { continue }
     $pin = $shell.CreateShortcut($pinnedPath)
     $isOurPin = $pin.TargetPath -in @($legacyExecutable, $executable)
     [System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($pin) | Out-Null
-    if ($isOurPin) { Copy-Item -LiteralPath $shortcutPath -Destination $pinnedPath -Force }
+    if ($isOurPin) {
+        Copy-Item -LiteralPath $shortcutPath -Destination $pinnedPath -Force
+        $updatedShortcuts += $pinnedPath
+    }
 }
+if (-not ('PlayerTwoShellIcons' -as [type])) {
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class PlayerTwoShellIcons {
+    [DllImport("shell32.dll", CharSet=CharSet.Unicode)]
+    public static extern void SHChangeNotify(uint change, uint flags, string first, IntPtr second);
+}
+"@
+}
+foreach ($path in $updatedShortcuts) { [PlayerTwoShellIcons]::SHChangeNotify(0x2000, 0x1005, $path, [IntPtr]::Zero) }
 Write-Output "Installed launcher: $executable"
 Write-Output "Start menu shortcut: $(Join-Path $programs 'Player Two.lnk')"
