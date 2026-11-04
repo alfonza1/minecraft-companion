@@ -97,11 +97,18 @@ try {
       .evaluate((image) => image.complete && image.naturalWidth > 0),
     true,
   );
-  assert.match(await page.locator(".hero-copy").innerText(), /An AI agent\.\s+On your team\./i);
+  assert.match(
+    await page.locator(".hero-copy").innerText(),
+    /An AI agent\.\s+On your team\./i,
+  );
   assert.equal(await page.locator(".workspace-preview a").count(), 0);
   const previewPageUrl = page.url();
   await page.locator(".workspace-preview img").click();
-  assert.equal(page.url(), previewPageUrl, "The screenshot stays inline when clicked");
+  assert.equal(
+    page.url(),
+    previewPageUrl,
+    "The screenshot stays inline when clicked",
+  );
   assert.equal(
     await page
       .locator('.companion-emblem,.game-art,img[src*="survival-teammates"]')
@@ -110,7 +117,9 @@ try {
     "Retired concept artwork must not appear",
   );
   assert.equal(
-    await page.getByRole("button", { name: "Gathering test fixture", exact: true }).getAttribute("aria-pressed"),
+    await page
+      .getByRole("button", { name: "Gathering test fixture", exact: true })
+      .getAttribute("aria-pressed"),
     "true",
     "The gathering example is selected on first load",
   );
@@ -130,8 +139,13 @@ try {
   await page
     .getByRole("button", { name: "Disconnected session", exact: true })
     .click();
-  assert.match(await page.locator(".workspace-preview img").getAttribute("src"), /dashboard\.png$/);
-  await page.getByRole("button", { name: "Gathering test fixture", exact: true }).click();
+  assert.match(
+    await page.locator(".workspace-preview img").getAttribute("src"),
+    /dashboard\.png$/,
+  );
+  await page
+    .getByRole("button", { name: "Gathering test fixture", exact: true })
+    .click();
   await page.screenshot({
     path: join(artifact, "home-desktop.png"),
     fullPage: true,
@@ -160,7 +174,23 @@ try {
   await page
     .getByRole("button", { name: "Talk & remember", exact: true })
     .click();
-  assert.match(await page.locator(".situation-detail").innerText(), /memory/i);
+  assert.match(
+    await page.locator(".situation-detail:not([hidden])").innerText(),
+    /memory/i,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Talk & remember", exact: true })
+      .getAttribute("aria-expanded"),
+    "true",
+  );
+  await page
+    .getByRole("button", { name: "Talk & remember", exact: true })
+    .click();
+  assert.equal(
+    await page.locator(".situation-detail:not([hidden])").count(),
+    0,
+  );
   await page.goto(origin + base + "get-started/");
   await page.getByRole("button", { name: "Linux", exact: true }).click();
   assert.match(

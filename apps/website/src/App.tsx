@@ -834,57 +834,56 @@ const situations = [
   },
 ];
 function Features() {
-  const [selected, setSelected] = useState(0),
-    item = situations[selected];
+  const [selected, setSelected] = useState<number | null>(0);
   return (
-    <>
-      <Intro
-        label="THE WORKSPACE"
-        title={
-          <>
-            Less checking in.
-            <br />
-            More playing.
-          </>
-        }
-      >
-        A shared desk for the current session: the companion’s work, your
-        responsibilities and the conversation. Technical logs have their own
-        place.
-      </Intro>
-      <div className="situation-tabs" aria-label="Workspace situations">
-        {situations.map((s, i) => (
-          <button
-            key={s.name}
-            aria-pressed={selected === i}
-            onClick={() => setSelected(i)}
-          >
-            {s.name}
-          </button>
-        ))}
+    <div className="workspace-page">
+      <header className="workspace-intro">
+        <span className="eyebrow">The workspace</span>
+        <h1>Your companion. Your next move.</h1>
+        <p>
+          See what your agent is doing, check supplies, and talk through the
+          plan. Everything for the current session, together.
+        </p>
+      </header>
+      <div className="workspace-tour">
+        <ProductImage />
+        <section
+          className="workspace-tour-guide"
+          aria-label="Workspace situations"
+        >
+          <h2>What you can do</h2>
+          {situations.map((item, i) => (
+            <article key={item.name}>
+              <h3>
+                <button
+                  aria-expanded={selected === i}
+                  aria-controls={`situation-${i}`}
+                  onClick={() => setSelected(selected === i ? null : i)}
+                >
+                  {item.name}
+                  <span aria-hidden="true">{selected === i ? "−" : "+"}</span>
+                </button>
+              </h3>
+              <div
+                id={`situation-${i}`}
+                className="situation-detail"
+                hidden={selected !== i}
+              >
+                <h4>{item.title}</h4>
+                <p>{item.text}</p>
+                <p className="fine">{item.limit}</p>
+                <a className="text-link" href={sourceLink(item.file)}>
+                  Read the behavior guide <Arrow />
+                </a>
+              </div>
+            </article>
+          ))}
+        </section>
       </div>
-      <section className="situation-detail">
-        <div>
-          <span className="eyebrow">{item.name}</span>
-          <h2>{item.title}</h2>
-        </div>
-        <div>
-          <p>{item.text}</p>
-          <p className="fine">{item.limit}</p>
-          <a className="text-link" href={sourceLink(item.file)}>
-            Read the behavior guide <Arrow />
-          </a>
-        </div>
-      </section>
-      <ProductImage />
       <section className="workspace-functions">
         <div>
           <span className="eyebrow">DURING A SESSION</span>
-          <h2>
-            Keep the useful
-            <br />
-            things close.
-          </h2>
+          <h2>Everything within reach.</h2>
         </div>
         <dl className="spec-list">
           <div>
@@ -912,11 +911,7 @@ function Features() {
         </dl>
       </section>
       <section className="plain-split">
-        <h2>
-          Your control
-          <br />
-          does not disappear.
-        </h2>
+        <h2>You call the shots.</h2>
         <div>
           <p>
             Pause stops new gameplay and model work. Stop disconnects. Blueprint
@@ -933,7 +928,7 @@ function Features() {
           </LinkButton>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 function Documentation() {

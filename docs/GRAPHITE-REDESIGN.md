@@ -97,3 +97,28 @@ completed successfully. A fresh headless browser verified the
 new graphite tokens, agent headline, default non-clickable gathering capture,
 mobile fit and no JavaScript page errors. Final live captures are stored locally
 as `.git/apple-redesign/published-home.png` and `published-mobile.png`.
+
+## Layout refinement — November 4
+
+The Workspace website page now groups its gathering preview and feature guide
+in one composition. A compact introduction replaces the oversized split heading;
+expandable explanations replace the secondary navigation strip. The lower
+sections use a narrower label column, and internal-page introductions have less
+vertical padding. In the local console, the everyday tools belong to the content
+area, with a shorter header, tighter spacing and a more compact activity stage.
+All eight destinations and their existing actions remain available.
+
+Validation for this refinement: typecheck and production build passed; the
+website suite passed 45 page/viewport checks, 12 interaction flows and 18
+accessibility pages with zero violations or console errors. The workspace suite
+passed 80 viewport checks across 16 routes using isolated HTTP/WebSocket/SQLite
+state. All 120 visual tests passed with intentional baselines updated. Desktop,
+tablet and mobile captures were inspected, including the feature accordion,
+session, inventory, resources, tasks, building and installation layouts. The
+accordion test checks both opening and collapsing its content.
+
+Code review found no introduced behavioral or data-handling issues. This change
+does not alter gameplay, providers or stored user settings. Real-Realm gameplay
+and physical voice-device tests were not rerun for this presentation-only change.
+Local evidence is under `.git/layout-review/`, `.git/website-checks/` and the
+verification record under `.git/hackers-lair/`.

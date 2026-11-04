@@ -236,36 +236,36 @@ export default function App() {
           </kbd>
         </div>
       </header>
-      <nav className="console-tools" aria-label="Companion tools">
-        {[
-          ["session", "Session", Gamepad2],
-          ["tasks", "Tasks", ListTodo],
-          ["inventory", "Inventory", Backpack],
-          ["resources", "Resources", Construction],
-          ["studio", "Build studio", Wrench],
-          ["communication", "Chat", MessageCircle],
-          ["collaboration", "Help & teamwork", Users],
-          ["companion", "My companion", HeartHandshake],
-        ].map(([id, label, Icon]) => {
-          const ToolIcon = Icon as typeof Gamepad2;
-          return (
-            <button
-              key={id as string}
-              aria-current={page === id ? "page" : undefined}
-              onClick={() => navigate(id as string)}
-            >
-              <ToolIcon size={17} />
-              <span>{label as string}</span>
-              {id === "collaboration" && pending > 0 ? (
-                <b aria-hidden="true" title={pending + " pending requests"}>
-                  {pending}
-                </b>
-              ) : null}
-            </button>
-          );
-        })}
-      </nav>
       <main id="workspace-main" className={`play-main page-${page}`}>
+        <nav className="console-tools" aria-label="Companion tools">
+          {[
+            ["session", "Session", Gamepad2],
+            ["tasks", "Tasks", ListTodo],
+            ["inventory", "Inventory", Backpack],
+            ["resources", "Resources", Construction],
+            ["studio", "Build studio", Wrench],
+            ["communication", "Chat", MessageCircle],
+            ["collaboration", "Help & teamwork", Users],
+            ["companion", "My companion", HeartHandshake],
+          ].map(([id, label, Icon]) => {
+            const ToolIcon = Icon as typeof Gamepad2;
+            return (
+              <button
+                key={id as string}
+                aria-current={page === id ? "page" : undefined}
+                onClick={() => navigate(id as string)}
+              >
+                <ToolIcon size={17} />
+                <span>{label as string}</span>
+                {id === "collaboration" && pending > 0 ? (
+                  <b aria-hidden="true" title={pending + " pending requests"}>
+                    {pending}
+                  </b>
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
         <div className="play-workarea-heading">
           <h1 tabIndex={-1}>{title}</h1>
           {common ? (
