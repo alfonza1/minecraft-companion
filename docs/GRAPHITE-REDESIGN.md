@@ -45,6 +45,11 @@ assertion. Both passed in isolation; the complete serial run passed without
 changing backend code. The initial failure remains recorded locally, rather
 than being represented as a clean first run.
 
+The first GitHub Linux run then exposed a separate pre-existing fixture race:
+`model-control.test.js` wrote readiness JSON directly while the supervisor
+polled it. The fixture now renames a complete temporary file, matching the real
+MCP server's atomic publisher. No production model-control behavior changed.
+
 Actual browser screenshots were inspected for every website page and workspace
 route, plus mobile/tablet session, inventory, resources, settings and building
 layouts. Review corrections included documentation-callout padding, lifecycle

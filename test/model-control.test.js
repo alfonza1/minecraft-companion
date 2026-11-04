@@ -24,7 +24,9 @@ const fs = require('node:fs');
 const model = process.argv[process.argv.indexOf('--model') + 1];
 if (model === 'reject') process.exit(2);
 const launch = JSON.parse(fs.readFileSync('model-launch.json', 'utf8'));
-fs.writeFileSync('model-ready.json', JSON.stringify(launch));
+// Match the real MCP readiness publisher so polling cannot read partial JSON.
+fs.writeFileSync('model-ready.json.tmp', JSON.stringify(launch));
+fs.renameSync('model-ready.json.tmp', 'model-ready.json');
 setInterval(() => {}, 1000);
 `, { mode: 0o700 });
 const status = () => JSON.parse(readFileSync(join(directory, 'model-state.json'), 'utf8'));
