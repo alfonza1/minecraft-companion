@@ -77,7 +77,7 @@ Create this design record and a verification report. Delete no production files.
 - [x] Desktop/mobile visual review and accessibility corrections
 - [x] Behavior regression checks, production builds and source review
 - [x] Updated product captures and safe local application update
-- [ ] Published site verification
+- [x] Published site verification
 
 ## Rollback
 

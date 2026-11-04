@@ -82,3 +82,13 @@ read-only browser check confirmed eight visible tool destinations, inline chat,
 no horizontal overflow and no page errors. Before/after hashes matched for
 settings, profile, projects, memories and conversation; the launcher reports no
 pending source update.
+
+## Published delivery
+
+Redesign commit: `353addc98c74a797a9f6de507a788d40fad6c6ba`.
+[GitHub Pages deployment](https://github.com/alfonza1/minecraft-companion/actions/runs/41783131417)
+completed successfully. A fresh headless browser verified the
+[published homepage](https://alfonza1.github.io/minecraft-companion/): HTTP 200,
+new graphite tokens, agent headline, default non-clickable gathering capture,
+mobile fit and no JavaScript page errors. Final live captures are stored locally
+as `.git/apple-redesign/published-home.png` and `published-mobile.png`.
